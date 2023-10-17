@@ -19,7 +19,8 @@
 
 namespace kumquat {
 
-/** \brief Abelian group \f$\mathbb{Q}/\mathbb{Z}\f$, or its subgroup 
+/** \class Q_mod_Z Q_mod_Z.h kumquat/Q_mod_Z.h 
+  * \brief Abelian group \f$\mathbb{Q}/\mathbb{Z}\f$, or its subgroup 
   * \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$ for a prime p.
   *
   * The structure is an abelian group for +.
