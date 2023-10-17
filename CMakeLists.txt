@@ -6,20 +6,27 @@ set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/src/cmake/modules/")
 
-find_package(Boost 1.71.0)
+find_package(Boost 1.71.0 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-message(STATUS "boost include dirs:" ${Boost_INCLUDE_DIRS})
-message(STATUS "boost library dirs:" ${Boost_LIBRARY_DIRS})
+message(STATUS " -- boost include dirs:" ${Boost_INCLUDE_DIRS})
+message(STATUS " -- boost library dirs:" ${Boost_LIBRARY_DIRS})
 
-find_package(GMP)
+find_package(GMP REQUIRED)
 if(GMP_FOUND)
   include_directories(${GMP_INCLUDE_DIR})
-  find_package(GMPXX)
+  message(STATUS " -- gmp include dirs:" ${GMP_INCLUDE_DIR})
+  message(STATUS " -- gmp library dirs:" ${GMP_LIBRARY_DIR})
+  find_package(GMPXX REQUIRED)
   if(GMPXX_FOUND)
     include_directories(${GMPXX_INCLUDE_DIR})
+    message(STATUS " -- gmpxx include dirs:" ${GMPXX_INCLUDE_DIR})
+    message(STATUS " -- gmpxx library dirs:" ${GMPXX_LIBRARY_DIR})
   endif()
 endif()
 
+find_package(Eigen3 REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+# link_directories(${Eigen_INCLUDE_DIRS})
 
 include(KUMQUAT_modules)
 
