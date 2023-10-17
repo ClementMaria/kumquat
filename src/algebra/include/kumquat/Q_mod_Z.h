@@ -36,7 +36,7 @@ public:
   * 
   * p_ set to -1 indicates that we construct the entire group.
   * */
-  Q_mod_Z() p_(-1) {}
+  Q_mod_Z() : p_(-1) {}
 /** \brief Initialisation of a subgroup \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$ of the 
   * group \f$\mathbb{Q}/\mathbb{Z}\f$.
   * 
@@ -44,7 +44,7 @@ public:
   * \f$ k>0 \f$ and \f$ 0 \leq u < p^k \f$, but may be represented by an 
   * unnormalized fraction \f$x/y\f$ with \f$\gcd(x,y) \neq 1\f$.
   * */
-  Q_mod_Z(int p) p_(p) {}
+  Q_mod_Z(int p) : p_(p) {}
 /** \brief A (multiprecision) signed integer type, notably for the outer product 
   * encoding the \f$Z\f$-module structure of Abelain groups.
   * 
