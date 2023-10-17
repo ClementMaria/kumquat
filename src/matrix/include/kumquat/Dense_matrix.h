@@ -18,27 +18,34 @@
 
 namespace kumquat {
 
-/** \brief A dense matrix type, suited for normalizing small matrices.
+/** \class Dense_matrix Dense_matrix.h kumquat/Dense_matrix.h 
+ * \brief A dense matrix type, suited for normalizing small matrices.
  * 
- * The template type must be a model of the concept AbelianGroup. 
+ * The template type represents the group of coefficients for the matrix entires, 
+ * and must be a model of the concept AbelianGroup. 
  * 
  * All the values of a same row are represented contiguously in memory ; hence 
  * row operations are more efficient than column operations.
- * 
  */
 template< class CoefficientStructure >
 class Dense_matrix {
 public:
+/** The algebraic structure containing the coefficients for the matrix entires.
+ * 
+ * Must be a model of AbelianGroup.*/
   typedef CoefficientStructure Coeff_struct;
+/** \brief The type of coefficients for the matrix entries.*/
   typedef typename Coeff_struct::Element Coefficient;
-
-/** Creates a n by m matrix with uninitialized coefficients. */
+/** \brief Signed integer type. Must be a model of SignedInteger.*/
+  typedef typename Coeff_struct::Integer Integer;
+/** \brief Creates an n by m matrix with uninitialized coefficients. */
   Dense_matrix(size_t n, size_t m, CoefficientStructure G) 
   : n_(n), m_(m), G_(G) {
-    mat_ = std::vector< std::vector< Coefficient > >(n, std::vector< Coefficient >(m));
+    mat_ = std::vector< std::vector< Coefficient > >(n, 
+                                                     std::vector< Coefficient >(m));
   }
-/** Access the vector of the row at index idx.*/
-  std::vector< Coefficient > &operator[](size_t idx) {
+/** \brief Access the vector encoding the row at index idx.*/
+  std::vector< Coefficient > & operator[](size_t idx) {
     return mat_[idx];
   };
 /** \brief Fills up the matrix from the values of a bi-variate function f.
@@ -56,57 +63,64 @@ public:
       }
     }
   }
-/** Set col_i <- z * col_i. */
+/** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
   void times_equal_col(size_t i, Coefficient z) {
     for(size_t k=0; k<n_; ++k) {
       G_.times_equal(mat_[k][i],z);
     }
   }
-/** Set row_i <- z * row_i. */
+/** \brief Set row_i <- z * row_i. */
   void times_equal_row(size_t i, Coefficient z) {
     for(size_t k=0; k<m_; ++k) {
       G_.times_equal(mat_[i][k],z);
     }
   }
-/** Set col_i <- col_i + col_j. */
+/** \brief Set col_i <- col_i + col_j. */
   void plus_equal_column(size_t i, size_t j) {
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i],mat_[k][j]);
     }
   }
-/** Set col_i <- col_i + z * col_j. */
+/** \brief Set col_i <- col_i + z * col_j. */
   void plus_equal_column(size_t i, size_t j, Coefficient z) {
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
     }    
   }
-/** Set row_i <- row_i + row_j. */
+/** \brief Set row_i <- row_i + row_j. */
   void plus_equal_row(size_t i, size_t j) {
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k],mat_[j][k]);
     }
   }
-/** Set row_i <- row_i + z * row_j. */
+/** \brief Set row_i <- row_i + z * row_j. */
   void plus_equal_row(size_t i, size_t j, Coefficient z) {
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k], G_.times(mat_[j][k],z) );
     }    
   }
-/** Exchange the columns of index i and j.*/
+/** \brief Exchange the columns of index i and j.*/
   void exchange_col(size_t i, size_t j) {
+    if(i==j) { return; }
     for(size_t k=0; k<n_; ++k) {
       std::swap(mat_[k][i],mat_[k][j]);
     }
   }
-/** Exchange the rows of index i and j.*/
+/** \brief Exchange the rows of index i and j.*/
   void exchange_row(size_t i, size_t j) {
+    if(i==j) { return; }
     for(size_t k=0; k<m_; ++k) {
       std::swap(mat_[i][k],mat_[j][k]);
     }
   }
 
+/** \brief Return the total number of rows in the matrix.*/
   size_t num_rows() const { return n_; }
+/** \brief Return the total number of columns in the matrix.*/
   size_t num_columns() const { return m_; }
+/** \brief Return a reference to the algebraic structure of the entires of 
+ * the matrix.*/
+  Coeff_struct & coefficient_structure() { return G_; }
 
 private:
   //number of rows of the matrix
