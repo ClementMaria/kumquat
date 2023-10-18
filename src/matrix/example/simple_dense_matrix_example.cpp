@@ -46,4 +46,8 @@ int main() {
 	mat.plus_equal_column(0, 1, G.element(2));
 	std::cout << mat;
 
+	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > col_ops;
+	mat.column_echelon_form(col_ops);
+	std::cout << mat;
+
 }
