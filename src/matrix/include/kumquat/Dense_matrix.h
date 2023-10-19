@@ -163,6 +163,52 @@ public:
     }
     dim_im_ = num_columns() - dim_ker_; 
   }
+/** \brief Reduce the matrix to row echelon form.
+ * 
+ * Keep track of the sequence of operation as a vector of 
+ * tuple (i,j,z), meaning operation row_i <- row_i + z * row_j, 
+ * pushed into the input row_ops.
+ * 
+ * The Dense_matrix is in row echelon form after the operation
+ * 
+ * The coefficient structure must be a field.
+ * */
+  void row_echelon_form(std::vector< 
+                              std::tuple<size_t,size_t,Coefficient> > & row_ops) {
+    // dim_ker_ = 0;
+    dim_im_ = 0;
+    //low_to_row_idx[low] = i indicates that non-trivial reduced row_i has rightmost non-zero element at index low
+    std::map<size_t, size_t> low_to_row_idx;
+    //track the column operations in the appropriate order
+    for(size_t i=0; i<num_rows(); ++i) {
+      int curr_low = low_row(i);//rightmost non-trivial index for row_i
+      
+      std::cout << " low_row = " << curr_low << "\n";
+
+      auto it_conflict = low_to_row_idx.find(curr_low);//is it already taken?
+      while(it_conflict != low_to_row_idx.end()) {
+        //found a row with index < i and with same rightmost index
+        // z = - row_i[low] / row_j[low]
+        Coefficient z = G_.additive_inverse(
+                          G_.times(mat_[i][curr_low],
+                              G_.multiplicative_inverse(
+                                mat_[it_conflict->second][curr_low]
+                                                             )));
+        //row_i <_ row_i - z * row_j
+        plus_equal_row(i,it_conflict->second,z);
+        row_ops.emplace_back(i,it_conflict->second,z);//memorize operation
+        curr_low = low_row(i,curr_low);//new value for lowest index
+        it_conflict = low_to_row_idx.find(curr_low);////is there a conflict?
+      }
+      
+      if(curr_low != -1) {//col_i != 0 after reduction
+        low_to_row_idx[curr_low] = i;//low_to_col_idx does not contain -1
+        ++dim_im_;
+      }
+      // else { ++dim_ker_; }
+    }
+    dim_ker_ = num_columns() - dim_im_; 
+  }
 /** \brief Return the dimension of the kernel of the matrix, seen 
  * as a morphism.
  * 
@@ -200,11 +246,13 @@ private:
  * @param[in] hint an optional upper bound on the indices of the row to check (everything right of hint, index hint included, is known to be 0) .
  * */  
   int low_row(size_t i, size_t hint 
-                         = std::numeric_limits<size_t>::infinity()) {
+                         = std::numeric_limits<size_t>::max()) {
+    std::cout << "   *** low_row_" << i << "   hint=" << hint << "\n";
     if(hint < 1) { return -1; }
     size_t start = num_columns();
     if(hint < start) { start = hint; }
     for(int j = start-1 ; j >= 0; --j) {
+      std::cout << "   " << j << "\n";
       if(!G_.trivial(mat_[i][j])) { return j; }
     }
     return -1;

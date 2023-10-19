@@ -46,9 +46,16 @@ int main() {
 	mat.plus_equal_column(0, 1, G.element(2));
 	std::cout << mat;
 
-	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > col_ops;
-	mat.column_echelon_form(col_ops);
+	std::cout << "Put to row echelon form: \n";
+
+	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > row_ops;
+	mat.row_echelon_form(row_ops);
 	std::cout << mat;
+
+	std::cout << "with operations: \n";
+	for(auto op : row_ops) {
+		std::cout << " row_" << std::get<0>(op) << " <- row_" << std::get<0>(op) << " + (" << std::get<2>(op) << ") * row_" << std::get<1>(op) << "\n";
+	}
 
 	std::cout << "dimension of kernel = " << mat.dim_kernel() << "  and dimension of image = " << mat.dim_image() << "\n";
 
