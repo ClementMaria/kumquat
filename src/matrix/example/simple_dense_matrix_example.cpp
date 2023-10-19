@@ -50,4 +50,6 @@ int main() {
 	mat.column_echelon_form(col_ops);
 	std::cout << mat;
 
+	std::cout << "dimension of kernel = " << mat.dim_kernel() << "  and dimension of image = " << mat.dim_image() << "\n";
+
 }

@@ -140,10 +140,7 @@ public:
     //track the column operations in the appropriate order
     for(size_t i=0; i<num_columns(); ++i) {
       int curr_low = low_col(i);//lowest non-trivial index
-      
-      std::cout << "curr_low = " << curr_low << "\n";
-
-      auto it_conflict = low_to_col_idx.find(curr_low);
+      auto it_conflict = low_to_col_idx.find(curr_low);//is it already taken?
       while(it_conflict != low_to_col_idx.end()) {
         //found a column with index < i and with same lowest index
         // z = - col_i[low] / col_j[low]
@@ -154,10 +151,11 @@ public:
                                                              )));
         //col_i <_ col_i - z * col_j
         plus_equal_column(i,it_conflict->second,z);
-        col_ops.emplace_back(i,it_conflict->second,z);//mem operation
-        curr_low = low_col(i,curr_low);
-        it_conflict = low_to_col_idx.find(curr_low);
+        col_ops.emplace_back(i,it_conflict->second,z);//memorize operation
+        curr_low = low_col(i,curr_low);//new value for lowest index
+        it_conflict = low_to_col_idx.find(curr_low);////is there a conflict?
       }
+      
       if(curr_low != -1) {//col_i != 0 after reduction
         low_to_col_idx[curr_low] = i;//low_to_col_idx does not contain -1
       }
@@ -188,10 +186,10 @@ private:
  * */  
   int low_col(size_t i, size_t hint 
                          = std::numeric_limits<size_t>::max()) {
-    if(hint == 0) { return -1; }
+    if(hint < 1) { return -1; }
     size_t start = num_rows();
     if(hint < start) { start = hint; }
-    for(size_t j = start-1 ; j >= 0; --j) {
+    for(int j = start-1 ; j >= 0; --j) {
       if(!G_.trivial(mat_[j][i])) { return j; }
     }
     return -1;
@@ -203,9 +201,10 @@ private:
  * */  
   int low_row(size_t i, size_t hint 
                          = std::numeric_limits<size_t>::infinity()) {
+    if(hint < 1) { return -1; }
     size_t start = num_columns();
     if(hint < start) { start = hint; }
-    for(size_t j = start-1 ; j >= 0; --j) {
+    for(int j = start-1 ; j >= 0; --j) {
       if(!G_.trivial(mat_[i][j])) { return j; }
     }
     return -1;
