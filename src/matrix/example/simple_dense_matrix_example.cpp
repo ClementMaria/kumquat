@@ -65,7 +65,7 @@ int main() {
 	std::cout << "Put to column echelon form: \n";
 
 	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > col_ops;
-	mat2.col_echelon_form(col_ops);
+	mat2.column_echelon_form(col_ops);
 	std::cout << mat2;
 
 	std::cout << "with operations: \n";

@@ -47,7 +47,7 @@ public:
   }
 /** \brief Copy constructor. */
   Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_) {}
-  
+
 /** \brief Access the vector encoding the row at index idx.*/
   std::vector< Coefficient > & operator[](size_t idx) {
     return mat_[idx];
@@ -270,8 +270,18 @@ public:
   }
 
 public:
-/** \brief Computes the Smith normal form of a matrix with coefficients in a PID.*/
-  void smith_normal_form() {
+  enum Operation_type {
+    col_plus_eq,//(i,j,z)     col_i <- col_i + z*col_j 
+    row_plus_eq,//(i,j,z)     row_i <- row_i + z*row_j
+    col_exch,//(i,j,1)        col_i <-> col_j 
+    row_exch,//(i,j,1)        row_i <-> row_j 
+    col_times_eq,//(i,i,z)    col_i <- z*col_i 
+    row_times_eq };//(i,i,z)  row_i <- z*row_i
+/** \brief Computes the Smith normal form of a matrix with coefficients in a PID.
+ * 
+ * After computai
+ * */
+  void smith_normal_form( std::vector< std::tuple<size_t,size_t,Coefficient,Operation_type> > & ops) {
     for(size_t i=0; i < num_columns(); ++i) {
       //at this stage, the top left corner up to i-1 is diagonal
       int c_idx = -1;//idx for a non-trivial column, 0 if not found
@@ -295,7 +305,7 @@ public:
           auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
                                          mat_[k][c_idx]   );
           //if x does not divide y, i.e., |gcd| < |x|
-          if( std::abs(std::get<2>(u_v_gcd)) < std::abs(mat_[r_idx][c_idx]) ) {
+          if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
             //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
             times_row(r_idx, std::get<0>(u_v_gcd));
             plus_equal_row(r_idx, k, std::get<1>(u_v_gcd));
@@ -310,7 +320,7 @@ public:
           auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
                                          mat_[r_idx][k]   );
           //if x does not divide y, i.e., |gcd| < |x|
-          if( std::abs(std::get<2>(u_v_gcd)) < std::abs(mat_[r_idx][c_idx]) ) {
+          if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
             //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
             times_col(c_idx, std::get<0>(u_v_gcd));
             plus_equal_col(c_idx, k, std::get<1>(u_v_gcd));
@@ -344,7 +354,7 @@ private:
     if(hint < 0) { start = 0; }
     else { start = hint; }
     for(size_t i=start; i<num_rows(); ++i) {
-      if(!G.trivial(mat_[i][idx])) { return i; }
+      if(!G_.trivial(mat_[i][idx])) { return i; }
     }
     return -1;
   }

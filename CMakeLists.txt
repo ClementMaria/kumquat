@@ -28,6 +28,8 @@ find_package(Eigen3 REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 # link_directories(${Eigen_INCLUDE_DIRS})
 
+add_compile_options(-Wall -Wextra -Wpedantic)
+
 include(KUMQUAT_modules)
 
 add_kumquat_module(algebra)

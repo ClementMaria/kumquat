@@ -78,6 +78,14 @@ public:
   bool equal(Element a, Element b) {
     return a==b;
   }
+/** Check whether an element is trivial.*/
+  bool trivial(Element a) { return a == 0; }
+
+/** \brief Return the absolute value of an integer. */
+  Element abs(Element a) { 
+    if(a < 0) { times_equal(a,-1); }
+    return a;
+  }
 };
 
 }  //namespace kumquat
