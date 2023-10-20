@@ -45,6 +45,9 @@ public:
     mat_ = std::vector< std::vector< Coefficient > >
                                   (n, std::vector< Coefficient >(m));
   }
+/** \brief Copy constructor. */
+  Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_) {}
+  
 /** \brief Access the vector encoding the row at index idx.*/
   std::vector< Coefficient > & operator[](size_t idx) {
     return mat_[idx];
@@ -257,7 +260,96 @@ private:
     }
     return -1;
   }
+public:
+/** \brief Diagonalize the Gram matrix of a bilinear form.
+ * 
+ * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
+ * */
+  void diagonalize_gram_matrix() {
+    //check Matrix_reduction
+  }
 
+public:
+/** \brief Computes the Smith normal form of a matrix with coefficients in a PID.*/
+  void smith_normal_form() {
+    for(size_t i=0; i < num_columns(); ++i) {
+      //at this stage, the top left corner up to i-1 is diagonal
+      int c_idx = -1;//idx for a non-trivial column, 0 if not found
+      int r_idx = -1;//idx of any non-trivial elem of col_{c_idx}
+      for(size_t j=i; j<num_columns(); ++j) {
+        //check whether col_j is non-trivial
+        r_idx = trivial_column(j);
+        if( r_idx != -1 ) { //found a non-trivial column
+          c_idx = j; break;
+        }
+      }
+      //if no non-trivial column has been found, we are done
+      if(c_idx == -1) { return; }
+      //o.w., col_i to col_{c_idx-1} are trivial, and col_{c_idx}[0...r_idx-1] is trivial
+      //enforce col_{c_idx}[r_idx] divides all other non-trivial elements of its column and its row
+      //first the rows
+      for(size_t k = r_idx+1; k<num_rows(); ++k) {
+        //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
+        if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
+          //write u*x + v*y = gcd(x,y), with gcd > 0
+          auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
+                                         mat_[k][c_idx]   );
+          //if x does not divide y, i.e., |gcd| < |x|
+          if( std::abs(std::get<2>(u_v_gcd)) < std::abs(mat_[r_idx][c_idx]) ) {
+            //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
+            times_row(r_idx, std::get<0>(u_v_gcd));
+            plus_equal_row(r_idx, k, std::get<1>(u_v_gcd));
+          }//now x <- gcd(x,y) and new_x divides y
+        }
+      }
+      //then the columns
+      for(size_t k = c_idx+1; k<num_columns(); ++k) {
+        //call x=mat_[r_idx][c_idx] and y=mat_[r_idx][k]
+        if(!G_.trivial(mat_[r_idx][k])) {//if y!=0
+          //write u*x + v*y = gcd(x,y), with gcd > 0
+          auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
+                                         mat_[r_idx][k]   );
+          //if x does not divide y, i.e., |gcd| < |x|
+          if( std::abs(std::get<2>(u_v_gcd)) < std::abs(mat_[r_idx][c_idx]) ) {
+            //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
+            times_col(c_idx, std::get<0>(u_v_gcd));
+            plus_equal_col(c_idx, k, std::get<1>(u_v_gcd));
+          }//now x <- gcd(x,y) and new_x divides y
+        }
+      }
+      //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancle the column then the row
+      for(size_t k = r_idx+1; k<num_rows(); ++k) {
+        //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
+        if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
+          //perform row_k <- y/x * row_{r_idx}
+          plus_equal_row(k, r_idx, mat_[k][c_idx] / mat_[r_idx][c_idx]);
+        }
+      }
+      //we can directly trivialize the row r_idx now
+      for(size_t k = c_idx+1; k<num_columns(); ++k) {
+        mat_[r_idx][k] = G_.additive_identity();
+      }
+      //put the new divisor on the diagonal
+      exchange_row(r_idx,i);
+      exchange_col(r_idx,i);
+    }
+  }
+private:
+  /** \brief Check whether a column is trivial.*
+   * 
+   * Return the first row index of a non-zero element if the column is not trivial, and return -1 otherwise. hint is an optional starting index; if given, the procedure checks only whether col[hint ...] is non-trivial, assuming that col[0...hint-1] is known to be 0.
+   */
+  int trivial_column(size_t idx, int hint) {
+    size_t start;
+    if(hint < 0) { start = 0; }
+    else { start = hint; }
+    for(size_t i=start; i<num_rows(); ++i) {
+      if(!G.trivial(mat_[i][idx])) { return i; }
+    }
+    return -1;
+  }
+
+private:
   //number of rows of the matrix
   size_t n_;
   //number of columns of the matrix

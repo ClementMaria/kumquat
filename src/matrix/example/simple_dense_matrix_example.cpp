@@ -46,6 +46,9 @@ int main() {
 	mat.plus_equal_column(0, 1, G.element(2));
 	std::cout << mat;
 
+	//copy the matrix
+	Dense_matrix< Z_mod_nZ > mat2(mat);
+
 	std::cout << "Put to row echelon form: \n";
 
 	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > row_ops;
@@ -58,5 +61,20 @@ int main() {
 	}
 
 	std::cout << "dimension of kernel = " << mat.dim_kernel() << "  and dimension of image = " << mat.dim_image() << "\n";
+
+	std::cout << "Put to column echelon form: \n";
+
+	std::vector< std::tuple<size_t,size_t,Z_mod_nZ::Element> > col_ops;
+	mat2.col_echelon_form(col_ops);
+	std::cout << mat2;
+
+	std::cout << "with operations: \n";
+	for(auto op : col_ops) {
+		std::cout << " col_" << std::get<0>(op) << " <- col_" << std::get<0>(op) << " + (" << std::get<2>(op) << ") * col_" << std::get<1>(op) << "\n";
+	}
+
+	std::cout << "dimension of kernel = " << mat2.dim_kernel() << "  and dimension of image = " << mat2.dim_image() << "\n";
+
+
 
 }

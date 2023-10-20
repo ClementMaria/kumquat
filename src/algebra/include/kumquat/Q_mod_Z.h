@@ -145,7 +145,7 @@ public:
  * \f$\mathbb{Q}/\mathbb{Z}\f$.
  * */
   Integer p() { return p_; }
-/** \brief Return ture iff the input a is euqal to the additive identity 0.*/
+/** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Element a) { return a.first == 0; }
 
 private:
