@@ -82,7 +82,9 @@ public:
 /** Check whether an element is trivial.*/
   bool trivial(Element a) { return a == 0; }
 
-/** \brief Return the absolute value of an integer. */
+/** \brief Return the absolute value of an integer. 
+ * 
+ * Plays the role of the Euclidean function for the structure of the PID. See functions division and remainder*/
   Element abs(Element a) { 
     if(a < 0) { times_equal(a,-1); }
     return a;

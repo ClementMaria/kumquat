@@ -104,7 +104,7 @@ public:
     }    
   }
 /** \brief Exchange the columns of index i and j.*/
-  void exchange_col(size_t i, size_t j) {
+  void exchange_column(size_t i, size_t j) {
     if(i==j) { return; }
     for(size_t k=0; k<n_; ++k) {
       std::swap(mat_[k][i],mat_[k][j]);
@@ -270,20 +270,54 @@ public:
   }
 
 public:
-  enum Operation_type {
-    col_plus_eq,//(i,j,z)     col_i <- col_i + z*col_j 
-    row_plus_eq,//(i,j,z)     row_i <- row_i + z*row_j
-    col_exch,//(i,j,1)        col_i <-> col_j 
-    row_exch,//(i,j,1)        row_i <-> row_j 
-    col_times_eq,//(i,i,z)    col_i <- z*col_i 
-    row_times_eq };//(i,i,z)  row_i <- z*row_i
+  enum Operation_type {// ? means undefined
+    plus_equal_column_t,//(i,j,z)  col_i <- col_i + z*col_j 
+    plus_equal_row_t,//(i,j,z)     row_i <- row_i + z*row_j
+    exchange_column_t,//(i,j,?)    col_i <-> col_j 
+    exchange_row_t,//(i,j,?)       row_i <-> row_j 
+    times_equal_column_t,//(i,?,z) col_i <- z*col_i 
+    times_equal_row_t };//(i,?,z)  row_i <- z*row_i
+
+    struct Elementary_matrix_operation {
+    public:
+      Elementary_matrix_operation(size_t i, size_t j, Coefficient z, Operation_type op) : i_(i), j_(j), z_(z), op_(op) {}
+
+      size_t lhs() { return i_; }
+      size_t rhs() { return j_; }
+      Coefficient coefficient() { return z_; }
+      Operation_type type() { return op_;}
+      
+      std::string to_string() {
+        switch(type()) {
+          case plus_equal_column_t: 
+            return "col_" + std::to_string(lhs()) + " <- col_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * " + "col_" + std::to_string(rhs());
+          case plus_equal_row_t: 
+            return "row_" + std::to_string(lhs()) + " <- row_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(rhs());
+            break;
+          case exchange_column_t:
+            return "col_" + std::to_string(lhs()) + " <-> col_" + std::to_string(rhs());
+          case exchange_row_t:
+            return "row_" + std::to_string(lhs()) + " <-> row_" + std::to_string(rhs());
+          case times_equal_column_t:
+            return "col_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * col_" + std::to_string(lhs());
+          case times_equal_row_t:
+            return "row_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(lhs());
+          default: return "unknown";     
+        }
+      }
+
+    private:
+      size_t i_;
+      size_t j_;
+      Coefficient z_;
+      Operation_type op_;
+    };
 /** \brief Computes the Smith normal form of a matrix with coefficients in a PID.
  * 
- * After computai
+ * The coefficients of the matrix must be part of a PID (i.e., Coeff_struct 
+ * implements PrincipalIdealDomain).
  * */
-  void smith_normal_form() {
-  // % std::vector< std::tuple<size_t,size_t,Coefficient,Operation_type> > & ops
-                          // {
+  void smith_normal_form(std::vector< Elementary_matrix_operation > & ops) {
     for(size_t i=0; i < num_columns(); ++i) {
   //at this stage, the top left corner up to i-1 is diagonal
       int c_idx = -1;//idx for a non-trivial column, 0 if not found
@@ -310,7 +344,9 @@ public:
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
   //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
             times_equal_row(r_idx, std::get<0>(u_v_gcd));
+            ops.emplace_back(r_idx, r_idx, std::get<0>(u_v_gcd), times_equal_row_t);
             plus_equal_row(r_idx, k, std::get<1>(u_v_gcd));
+            ops.emplace_back(r_idx,k,std::get<1>(u_v_gcd),plus_equal_row_t);
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
@@ -325,7 +361,9 @@ public:
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
   //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
             times_equal_column(c_idx, std::get<0>(u_v_gcd));
+            ops.emplace_back(c_idx,c_idx,std::get<0>(u_v_gcd),times_equal_column_t);
             plus_equal_column(c_idx, k, std::get<1>(u_v_gcd));
+            ops.emplace_back(c_idx, k, std::get<1>(u_v_gcd),plus_equal_column_t);
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
@@ -334,16 +372,24 @@ public:
   //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
         if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
   //perform row_k <- y/x * row_{r_idx}
-          plus_equal_row(k, r_idx, G_.times(G_.division(mat_[k][c_idx],mat_[r_idx][c_idx]),-1));
+          auto z = G_.times(G_.division(mat_[k][c_idx],mat_[r_idx][c_idx]),-1);
+          plus_equal_row(k, r_idx, z);
+          ops.emplace_back(k, r_idx, z, plus_equal_row_t);
         }
       }
   //we can directly trivialize the row r_idx now
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
-        mat_[r_idx][k] = G_.additive_identity();
+        if(!G_.trivial(mat_[r_idx][k])) {//record the operation
+          auto z = G_.times(G_.division(mat_[r_idx][k],mat_[r_idx][c_idx]),-1);
+          ops.emplace_back(k, c_idx, z, plus_equal_column_t);
+          mat_[r_idx][k] = G_.additive_identity();//set directly to 0
+        }
       }
   //put the new divisor on the diagonal
       exchange_row(r_idx,i);
-      exchange_col(r_idx,i);
+      ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_row_t);
+      exchange_column(r_idx,i);
+      ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_column_t);
     }
   }
 private:
@@ -387,6 +433,38 @@ std::ostream & operator<<(std::ostream & os, Dense_matrix<CoefficientStructure> 
   }
   return os;
 }
+
+
+
+
+// /** \brief Write the an elementary matrix operation in os.*/
+// template<class DenseMatrix >
+// std::ostream & operator<<(std::ostream & os, 
+//                           typename DenseMatrix::Elementary_matrix_operation & op)
+// {
+//   switch(op.type()) {
+//   case DenseMatrix::Operation_type::plus_equal_column_t : 
+//     os << "col_" << op.lhs() << " <- " << "col_" << op.lhs() << " + " << op.coefficient() << " * " << "col_" << op.rhs();
+//     break;
+//   case DenseMatrix::Operation_type::plus_equal_row_t :
+//     os << "row_" << op.lhs() << " <- " << "row_" << op.lhs() << " + " << op.coefficient() << " * " << "row_" << op.rhs();
+//     break;
+//   case DenseMatrix::Operation_type::exchange_column_t :
+//     os << "col_" << op.lhs() << " <-> " << "col_" << op.rhs();
+//     break;
+//   case DenseMatrix::Operation_type::exchange_row_t :
+//     os << "row_" << op.lhs() << " <-> " << "row_" << op.rhs();
+//     break;
+//   case DenseMatrix::Operation_type::times_equal_column_t :
+//     os << "col_" << op.lhs() << " <- " << op.coefficient() << " * " << "col_" << op.lhs();
+//     break;
+//   case DenseMatrix::Operation_type::times_equal_row_t :
+//     os << "row_" << op.lhs() << " <- " << op.coefficient() << " * " << "row_" << op.lhs();
+//     break;
+//   default: os << "unknown operation type.\n";     
+//   }
+
+
 
 }  //namespace kumquat
 

@@ -31,10 +31,11 @@ int main() {
   mat.fill(product_plus_one);
   std::cout << mat << "\n\n\n";
 
-
-
-  mat.smith_normal_form();
+  std::vector< Dense_matrix<Z>::Elementary_matrix_operation > ops;
+  mat.smith_normal_form(ops);
 
   std::cout << mat;
 
+  std::cout << "Performing operations: \n";
+  for(auto & op : ops) { std::cout << op.to_string() << "\n"; }
 }

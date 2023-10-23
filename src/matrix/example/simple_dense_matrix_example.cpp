@@ -31,7 +31,7 @@ int main() {
 	std::cout << mat;
 
 	std::cout << "- Exchange column 2 with column 6.\n";
-	mat.exchange_col(2,6);
+	mat.exchange_column(2,6);
 	std::cout << mat;
 
 	std::cout << "- Exchange row 0 with row 1.\n";
