@@ -68,7 +68,7 @@ public:
     }
   }
 /** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
-  void times_equal_col(size_t i, Coefficient z) {
+  void times_equal_column(size_t i, Coefficient z) {
     for(size_t k=0; k<n_; ++k) {
       G_.times_equal(mat_[k][i],z);
     }
@@ -309,7 +309,7 @@ public:
   //if x does not divide y, i.e., |gcd| < |x|
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
   //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
-            times_row(r_idx, std::get<0>(u_v_gcd));
+            times_equal_row(r_idx, std::get<0>(u_v_gcd));
             plus_equal_row(r_idx, k, std::get<1>(u_v_gcd));
           }//now x <- gcd(x,y) and new_x divides y
         }
@@ -324,8 +324,8 @@ public:
   //if x does not divide y, i.e., |gcd| < |x|
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
   //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
-            times_col(c_idx, std::get<0>(u_v_gcd));
-            plus_equal_col(c_idx, k, std::get<1>(u_v_gcd));
+            times_equal_column(c_idx, std::get<0>(u_v_gcd));
+            plus_equal_column(c_idx, k, std::get<1>(u_v_gcd));
           }//now x <- gcd(x,y) and new_x divides y
         }
       }

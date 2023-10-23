@@ -130,8 +130,10 @@ public:
   Integer rank() { return -1; } 
 
 /** \brief Converts an Integer into an element of the group.
+ * 
+ * This input integer is unused as all integers are converted to 0.
  */
-  Element element(Integer z = 0) { return Element(0,1); }
+  Element element([[maybe_unused]] Integer z) { return Element(0,1); }
 
 /** \brief Construct the Element \f$x/y \mod \mathbb{Z}\f$ from two integers 
  * /f$x/f$ and /f$y/f$.

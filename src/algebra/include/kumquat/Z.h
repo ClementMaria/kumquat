@@ -15,7 +15,8 @@
 
 #include <vector>
 #include <numeric>
-#include <boost/multiprecision/gmp.hpp>
+#include <boost/multiprecision/gmp.hpp>//boost multiprecision wrap over gmp
+#include <boost/integer/extended_euclidean.hpp>//boost extended gcd
 
 namespace kumquat {
 
@@ -86,6 +87,20 @@ public:
     if(a < 0) { times_equal(a,-1); }
     return a;
   }
+/** \brief Compute the extended greatest common divisor of two elements of 
+ * the ring. 
+ * 
+ * Return a triple (u,v,gcd) opf ring elements such that gcd is the greatest 
+ * common divisor of x and y, and (u,v) satiosfies the Bezout identity:
+ * u*x + v*y = gcd, for + the ring addition and * the ring multiplication. 
+ * */ 
+  std::tuple<Element,Element,Element> extended_gcd(Element x, Element y) {
+    auto res_boost = boost::integer::extended_euclidean(x, y);
+    std::tuple<Element,Element,Element> res(res_boost.x, res_boost.y, 
+                                            res_boost.gcd); 
+    return res;
+  }
+
 };
 
 }  //namespace kumquat
