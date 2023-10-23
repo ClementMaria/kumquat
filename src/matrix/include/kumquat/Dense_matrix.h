@@ -260,14 +260,6 @@ private:
     }
     return -1;
   }
-public:
-/** \brief Diagonalize the Gram matrix of a bilinear form.
- * 
- * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
- * */
-  void diagonalize_gram_matrix() {
-    //check Matrix_reduction
-  }
 
 public:
   enum Operation_type {// ? means undefined
@@ -406,6 +398,90 @@ private:
     }
     return -1;
   }
+
+public:
+/** \brief Diagonalize the Gram matrix of a bilinear form.
+ * 
+ * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
+ * */
+  void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
+    auto n = mat_.num_rows();
+    auto m = mat_.num_columns();
+    if(num_rows() != num_columns()) { 
+      std::cerr << "Gram matrix is not square.\n"; return; 
+    }
+    auto p = G_.p();
+
+    if((p % 2) == 0) { std::cerr << "No support for even p.\n"; return; }
+
+    //after x iterations, the columns and rows 0 ... x-1 are block diagonal
+    for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
+      //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
+      Integer min_order = std::numeric_limits<Integer>::infinity();
+      int pivot_i, pivot_j = -1;//find element of minimal order
+      for(size_t i = num_iteration; i<n; ++i) {//try to find a pivot in the diagonal
+        for(size_t j = num_iteration; j<n; ++j) {
+          if(!G_.trivial(mat_[i][j])) {//!= 0
+            auto ord = G_.order(mat_[i][j]);
+            if(ord < min_order) { min_order = ord; pivot_i = i; pivot_j = j; }
+            else{//prioritize diagonal element of min order
+              if((ord == min_order) && (i==j) ) { pivot_i = i; pivot_j = j; }
+            }
+          }
+        }
+      }
+      if(pivot_i == -1) { return; }//the remaining matrix is trivial
+      
+      //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
+      if(pivot_i == pivot_j) {//put on top left corner
+          exchange_row(num_iteration,pivot_i);
+          exchange_column(num_iteration,pivot_i);
+      }
+      else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly smaller order than B[i][i] and B[j][j]
+        mat_.plus_equal_row(pivot_i,pivot_j);  
+        mat_.plus_equal_col(pivot_i,pivot_j);
+        //now, if p odd, B[i][i] has order the minimal order, and is in the diagonal
+        mat_.exchange_row(num_iteration,pivot_i);
+        mat_.exchange_col(num_iteration,pivot_i);
+      }
+      //now, top left element B[num_iteration][num_iteration] has minimal order
+      //top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
+      Element top_left = mat_[num_iteration][num_iteration];
+      G_.p_normalize(top_left);//now presented as (a,p^k) for fraction a/p^k
+      //now, enforce top left corner B[num_iteration][num_iteration]== eps/p^k, for 
+      //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
+      Element eps, eps_inv;
+      //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
+      if(G_.quadratic_residue(top_left.first,p)) {//compute a solution x
+        auto x = G_.solve_quadratic_residue(top_left.first,p);
+        //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
+        auto s = inverse(x,top_left.second);
+        //set row_num_iteration <- s*row_num_iteration and col_num_iteration <- s*col_num_iteration such that B[num_iteration][num_iteration] = 1/p^r mod Z
+        times_equal_row(num_iteration,s);
+        eps = 1; eps_inv = 1;
+      }
+      else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
+        eps = top_left.first;
+        eps_inv = G_.inverse(eps,top_left.second);
+      }
+      //we do have B[num_iteration][num_iteration]== eps/p^k, for eps = 1 or 
+      //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
+      for(size_t i=num_iteration+1; i<n; ++i) {
+        //compute beta such that B[num_iteration][i]== beta * b / p^r with beta > 1
+        G_.p_normalize(mat_[num_iteration][i]);
+        Coefficient beta = 
+                       G_.division(top_left.second, mat_[num_iteration][i].second);
+        //do row_i <- row_i - beta * eps^-1 * row_num_iteration and
+        //   col_i <- col_i - beta * eps^-1 * col_num_iteration
+        auto z = G_.times(G_.times( beta, eps_inv ), -1);
+        plus_equal_row(i,num_iteration,z);
+        plus_equal_column(i,num_iteration,z);
+      }
+    }    
+  }
+
+
+
 
 private:
   //number of rows of the matrix

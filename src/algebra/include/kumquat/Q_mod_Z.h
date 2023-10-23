@@ -150,6 +150,13 @@ public:
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Element a) { return a.first == 0; }
 
+  void p_normalize(Element & a) {
+    normalize_element(a);
+    Element gcd = boost::integer::gcd(a.first,a.second);
+    a.first /= gcd;
+    a.second /= gcd;
+  }
+
 private:
   /** Normalize the element a modulo \f$\mathbb{Z}\f$. 
    * 

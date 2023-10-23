@@ -71,7 +71,13 @@ NumberType solve_quadratic_residue(NumberType x, NumberType p) {
   while( ((res*res) % p) != x_mod_p) { ++res; }
   return res;
 }
-
+/** \brief Return the inverse of x mod m if it exists, 0 otherwise.*/
+template<typename NumberType>
+NumberType inverse(NumberType x, NumberType m) {
+  auto bezout = boost::integer::extended_euclidean(x, m);
+  if(bezout.gcd != 1) { return 0; }
+  return (bezout.x % m);
+}
 
 } //namespace kumquat
 
