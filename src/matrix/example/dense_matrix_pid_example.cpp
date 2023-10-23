@@ -29,7 +29,9 @@ int main() {
   };
 
   mat.fill(product_plus_one);
-  std::cout << mat;
+  std::cout << mat << "\n\n\n";
+
+
 
   mat.smith_normal_form();
 

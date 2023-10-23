@@ -100,6 +100,19 @@ public:
                                             res_boost.gcd); 
     return res;
   }
+/** \brief Compute the division x/y in the PID.
+ * 
+ * Return the value q such that x = q*y + r, with 0 \leq r < |y|.*/ 
+  Element division(Element x, Element y) {
+    return x/y;
+  }
+/** \brief Compute the remainder of the division x/y in the PID.
+ * 
+ * Return the value r such that x = q*y + r, with 0 \leq r < |y|.
+ * */ 
+  Element remainder(Element x, Element y) {
+    return x%y;
+  }
 
 };
 

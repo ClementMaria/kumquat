@@ -281,9 +281,9 @@ public:
  * 
  * After computai
  * */
-  void smith_normal_form()
+  void smith_normal_form() {
   // % std::vector< std::tuple<size_t,size_t,Coefficient,Operation_type> > & ops
-                          {
+                          // {
     for(size_t i=0; i < num_columns(); ++i) {
   //at this stage, the top left corner up to i-1 is diagonal
       int c_idx = -1;//idx for a non-trivial column, 0 if not found
@@ -299,7 +299,7 @@ public:
       if(c_idx == -1) { return; }
   //o.w., col_i to col_{c_idx-1} are trivial, and col_{c_idx}[0...r_idx-1] is trivial
   //enforce col_{c_idx}[r_idx] divides all other non-trivial elements of its column and its row
-  //first the rows
+  //first the column
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
   //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
         if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
@@ -314,7 +314,7 @@ public:
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
-  //then the columns
+  //then the row
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
   //call x=mat_[r_idx][c_idx] and y=mat_[r_idx][k]
         if(!G_.trivial(mat_[r_idx][k])) {//if y!=0
@@ -329,12 +329,12 @@ public:
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
-  //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancle the column then the row
+  //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancel the column then the row
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
   //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
         if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
   //perform row_k <- y/x * row_{r_idx}
-          plus_equal_row(k, r_idx, mat_[k][c_idx] / mat_[r_idx][c_idx]);
+          plus_equal_row(k, r_idx, G_.times(G_.division(mat_[k][c_idx],mat_[r_idx][c_idx]),-1));
         }
       }
   //we can directly trivialize the row r_idx now
