@@ -15,7 +15,7 @@
 
 using namespace kumquat;
 
-int main(int argc, char * argv[]) {
+int main() {
   Q_mod_Z qmz;
 
   Q_mod_Z::Element x = qmz.element(150,65);

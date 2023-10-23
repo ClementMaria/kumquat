@@ -131,7 +131,7 @@ public:
 
 /** \brief Converts an Integer into an element of the group.
  */
-  Element element(Integer z) { return Element(0,1); }
+  Element element(Integer z = 0) { return Element(0,1); }
 
 /** \brief Construct the Element \f$x/y \mod \mathbb{Z}\f$ from two integers 
  * /f$x/f$ and /f$y/f$.

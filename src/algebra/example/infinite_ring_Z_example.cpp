@@ -15,7 +15,7 @@
 
 using namespace kumquat;
 
-int main(int argc, char * argv[]) {
+int main() {
   Z intZ;
 
   for(int i=0; i<10; ++i) {

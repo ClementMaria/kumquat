@@ -18,7 +18,7 @@ using namespace kumquat;
 
 typedef boost::multiprecision::mpz_int Int_mp;
 
-int main(int argc, char * argv[]) {
+int main() {
   Int_mp x(5); 
   Int_mp y,z;
 

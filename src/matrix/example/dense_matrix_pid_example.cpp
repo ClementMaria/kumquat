@@ -17,17 +17,22 @@
 using namespace kumquat;
 
 int main() {
-  Z PID();
-  Dense_matrix< Z > mat(5,7,PID);
+  Z pid_Z;
+  Dense_matrix< Z > mat(5,7,pid_Z);
+
+  std::cout << "- The matrix is " << mat.num_rows() << " by " 
+                                  << mat.num_columns() << "\n";
 
   std::cout << "- Fill the matrix with mat[i][j] == i*j+1.\n";
   auto product_plus_one = [&](size_t i, size_t j) -> Z::Element { 
-    return PID.element(i * j + 1); 
+    return pid_Z.element(i * j + 1); 
   };
 
   mat.fill(product_plus_one);
   std::cout << mat;
 
-  mat.smith_normal_form()
+  mat.smith_normal_form();
+
+  std::cout << mat;
 
 }

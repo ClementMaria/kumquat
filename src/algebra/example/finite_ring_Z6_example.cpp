@@ -15,7 +15,7 @@
 
 using namespace kumquat;
 
-int main(int argc, char * argv[]) {
+int main() {
   Z_mod_nZ Z6(6);
 
   for(int i=0; i<10; ++i) {

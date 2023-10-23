@@ -281,65 +281,67 @@ public:
  * 
  * After computai
  * */
-  void smith_normal_form( std::vector< std::tuple<size_t,size_t,Coefficient,Operation_type> > & ops) {
+  void smith_normal_form()
+  // % std::vector< std::tuple<size_t,size_t,Coefficient,Operation_type> > & ops
+                          {
     for(size_t i=0; i < num_columns(); ++i) {
-      //at this stage, the top left corner up to i-1 is diagonal
+  //at this stage, the top left corner up to i-1 is diagonal
       int c_idx = -1;//idx for a non-trivial column, 0 if not found
       int r_idx = -1;//idx of any non-trivial elem of col_{c_idx}
       for(size_t j=i; j<num_columns(); ++j) {
-        //check whether col_j is non-trivial
+  //check whether col_j is non-trivial
         r_idx = trivial_column(j);
         if( r_idx != -1 ) { //found a non-trivial column
           c_idx = j; break;
         }
       }
-      //if no non-trivial column has been found, we are done
+  //if no non-trivial column has been found, we are done
       if(c_idx == -1) { return; }
-      //o.w., col_i to col_{c_idx-1} are trivial, and col_{c_idx}[0...r_idx-1] is trivial
-      //enforce col_{c_idx}[r_idx] divides all other non-trivial elements of its column and its row
-      //first the rows
+  //o.w., col_i to col_{c_idx-1} are trivial, and col_{c_idx}[0...r_idx-1] is trivial
+  //enforce col_{c_idx}[r_idx] divides all other non-trivial elements of its column and its row
+  //first the rows
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
-        //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
+  //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
         if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
-          //write u*x + v*y = gcd(x,y), with gcd > 0
+  //write u*x + v*y = gcd(x,y), with gcd > 0
           auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
                                          mat_[k][c_idx]   );
-          //if x does not divide y, i.e., |gcd| < |x|
+  //if x does not divide y, i.e., |gcd| < |x|
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
-            //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
+  //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
             times_row(r_idx, std::get<0>(u_v_gcd));
             plus_equal_row(r_idx, k, std::get<1>(u_v_gcd));
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
-      //then the columns
+  //then the columns
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
-        //call x=mat_[r_idx][c_idx] and y=mat_[r_idx][k]
+  //call x=mat_[r_idx][c_idx] and y=mat_[r_idx][k]
         if(!G_.trivial(mat_[r_idx][k])) {//if y!=0
-          //write u*x + v*y = gcd(x,y), with gcd > 0
+  //write u*x + v*y = gcd(x,y), with gcd > 0
           auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
                                          mat_[r_idx][k]   );
-          //if x does not divide y, i.e., |gcd| < |x|
+  //if x does not divide y, i.e., |gcd| < |x|
           if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
-            //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
+  //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
             times_col(c_idx, std::get<0>(u_v_gcd));
             plus_equal_col(c_idx, k, std::get<1>(u_v_gcd));
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
-      //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancle the column then the row
+  //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancle the column then the row
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
-        //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
+  //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
         if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
-          //perform row_k <- y/x * row_{r_idx}
+  //perform row_k <- y/x * row_{r_idx}
           plus_equal_row(k, r_idx, mat_[k][c_idx] / mat_[r_idx][c_idx]);
         }
       }
-      //we can directly trivialize the row r_idx now
+  //we can directly trivialize the row r_idx now
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
         mat_[r_idx][k] = G_.additive_identity();
       }
-      //put the new divisor on the diagonal
+  //put the new divisor on the diagonal
       exchange_row(r_idx,i);
       exchange_col(r_idx,i);
     }
@@ -349,7 +351,7 @@ private:
    * 
    * Return the first row index of a non-zero element if the column is not trivial, and return -1 otherwise. hint is an optional starting index; if given, the procedure checks only whether col[hint ...] is non-trivial, assuming that col[0...hint-1] is known to be 0.
    */
-  int trivial_column(size_t idx, int hint) {
+  int trivial_column(size_t idx, int hint = -1) {
     size_t start;
     if(hint < 0) { start = 0; }
     else { start = hint; }
@@ -377,8 +379,8 @@ private:
 /** \brief Write the dense matrix in os.*/
 template<class CoefficientStructure >
 std::ostream & operator<<(std::ostream & os, Dense_matrix<CoefficientStructure> & mat) {
-  for (int i = 0; i < mat.num_rows(); i++) {
-    for(int j = 0; j < mat.num_columns(); ++j) {
+  for (size_t i = 0; i < mat.num_rows(); i++) {
+    for(size_t j = 0; j < mat.num_columns(); ++j) {
       os << std::setw(7) << std::left << mat[i][j] << " ";
     }
     os << "\n";
