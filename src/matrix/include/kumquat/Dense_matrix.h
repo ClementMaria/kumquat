@@ -469,14 +469,13 @@ public:
         exchange_column(num_iteration,pivot_i);
       }
 
-      std::cout << "      result where top left element " << num_iteration << "," << num_iteration << " is of minimal order \n";
+      std::cout << "       result where top left element " << num_iteration << "," << num_iteration << " is of minimal order \n";
 
       std::cout << *this << "\n\n\n";
 
       //now, top left element B[num_iteration][num_iteration] has minimal order
-      //top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
+      // and is written as top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
       Coefficient top_left = mat_[num_iteration][num_iteration];
-      G_.p_normalize(top_left);//now presented as (a,p^k) for fraction a/p^k
       //now, enforce top left corner B[num_iteration][num_iteration]== eps/p^k, for 
       //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
       Integer eps, eps_inv;
@@ -497,7 +496,7 @@ public:
       //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
       for(size_t i=num_iteration+1; i<n; ++i) {
         //compute beta such that B[num_iteration][i]== beta * b / p^r with beta > 1
-        G_.p_normalize(mat_[num_iteration][i]);
+        // G_.p_normalize(mat_[num_iteration][i]);
         Integer beta = division(top_left.second, mat_[num_iteration][i].second);
                                                               //in number_theory.h
         //do row_i <- row_i - beta * eps^-1 * row_num_iteration and

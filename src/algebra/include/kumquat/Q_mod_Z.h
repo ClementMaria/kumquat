@@ -24,10 +24,10 @@ namespace kumquat {
   * \brief Abelian group \f$\mathbb{Q}/\mathbb{Z}\f$, or its subgroup 
   * \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$ for a prime p.
   *
-  * The structure is an abelian group for +.
+  * The structure is an Abelian group for +.
   * 
   * Elements are represented by pairs of multiprecision non-negative integers (x,y), 
-  * repesenting fractions \f$x/y\f$, with \f$0 \geq x < y\f$.
+  * repesenting fractions \f$x/y\f$, with \f$0 \geq x < y\f$ and gcd(x,y) = 1.
   *
   * \implements AbelianGroup
   */
@@ -42,8 +42,7 @@ public:
   * group \f$\mathbb{Q}/\mathbb{Z}\f$.
   * 
   * p_ must be a prime number. Elements are all of the form \f$u / p^k\f$, 
-  * \f$ k>0 \f$ and \f$ 0 \leq u < p^k \f$, but may be represented by an 
-  * unnormalized fraction \f$x/y\f$ with \f$\gcd(x,y) \neq 1\f$.
+  * \f$ k>0 \f$ and \f$ 0 \leq u < p^k \f$ and gcd(u,p) = 1.
   * */
   Q_mod_Z(int p) : p_(p) {}
 /** \brief A (multiprecision) signed integer type, notably for the outer product 
@@ -55,9 +54,8 @@ public:
   typedef boost::multiprecision::mpz_int Integer;
 /** \brief The type of elements of the group.
   * 
-  * Elements are epresented by a pair of multiprecision integers \f$(x,y)\f$, 
-  * representing the fraction \f$x/y\f$, with \f$0 \leq x < y\f$. We do not 
-  * however enforce that \f$gcd(x,y) = 1\f$. 
+  * Elements are represented by a pair of multiprecision integers \f$(x,y)\f$, 
+  * representing the fraction \f$x/y\f$, with \f$0 \leq x < y\f$ and \f$gcd(x,y) = 1\f$. 
   * 
   * Must be copiable. 
   * */
@@ -73,12 +71,12 @@ public:
   void plus_equal(Element & a, Element b) { 
     a.first = a.first*b.second + a.second*b.first;
     a.second *= b.second;  
-    normalize_element(a);
+    normalize(a);
   }
 /** \brief Return \f$a+b\f$.*/
   Element plus(Element a, Element b) { 
     Element a_plus_b(a.first*b.second + a.second*b.first, a.second * b.second);
-    normalize_element(a_plus_b);
+    normalize(a_plus_b);
     return a_plus_b; 
   }
 /** \brief Set \f$a \leftarrow z \times a\f$, using the \f$Z\f$-module structure of 
@@ -90,7 +88,7 @@ public:
       a = additive_inverse(a);//inverse
     }
     a.first *= z; 
-    normalize_element(a); 
+    normalize(a); 
   }
 /** \brief Return \f$ z \times a\f$, using the \f$Z\f$-module structure of the 
  * group.
@@ -101,7 +99,7 @@ public:
       a = additive_inverse(a);//inverse
     }
     a.first *= z; 
-    normalize_element(a); 
+    normalize(a); 
     return a;
   }
 /** \brief Return the additive inverse (-a) of an element a. */
@@ -129,7 +127,7 @@ public:
  * */
   Integer order(Element a) { 
     if(a.first == 0) { return 0; }
-    auto order_mp = kumquat::gcd_complement(a.second, a.first);//division(a.second, boost::multiprecision::gcd(a.first,a.second));
+    auto order_mp = kumquat::gcd_complement(a.second, a.first);
     return order_mp; 
   }
 /** \brief Return the rank of the group, i.e., the minimal number of generators. 
@@ -169,7 +167,7 @@ public:
   }
 
 private:
-  /** Normalize the element a modulo \f$\mathbb{Z}\f$. 
+  /* Normalize the element a modulo \f$\mathbb{Z}\f$. 
    * 
    * Note that we do not enforce that \f$\gcd(a.first,a.second) == 1\f$.
    */
@@ -177,6 +175,8 @@ private:
     
     if(a.first >= a.second) { a.first = (a.first) % (a.second); }
   }
+  /* Normalize the fraction such that gcd(numerator,denominator) = 1. 
+   */
   void normalize_fraction(Element & a) {
     auto gcd = kumquat::gcd(a.first,a.second);
     if(gcd != 1) {
