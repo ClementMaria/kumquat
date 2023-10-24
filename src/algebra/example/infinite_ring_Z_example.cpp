@@ -16,7 +16,7 @@
 using namespace kumquat;
 
 int main() {
-  Z intZ;
+  Z_int intZ;
 
   for(int i=0; i<10; ++i) {
     auto a = intZ.element(i);

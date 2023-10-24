@@ -49,6 +49,11 @@ struct AbelianGroup {
 	// bool is_additive_identity(Element a);
 /** Return true iff a and b represent the same element of the group.*/
   bool equal(Element a, Element b);
+/** Convert an integer to an element of the group, equal to z*1.*/
+  Element element(Integer z);
+/** Check whether an element is trivial.*/
+  bool trivial(Element a);
+
 };
 
 } //namespace kumquat

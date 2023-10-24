@@ -152,7 +152,7 @@ public:
 
   void p_normalize(Element & a) {
     normalize_element(a);
-    Element gcd = boost::integer::gcd(a.first,a.second);
+    Integer gcd = boost::integer::gcd(a.first,a.second);
     a.first /= gcd;
     a.second /= gcd;
   }
@@ -178,7 +178,7 @@ private:
  * x / y.
  * */
 std::ostream & operator<<(std::ostream & os, Q_mod_Z::Element & a) {
-      os << a.first << " / " << a.second;
+      os << a.first << "/" << a.second;
   return os;
 }
 

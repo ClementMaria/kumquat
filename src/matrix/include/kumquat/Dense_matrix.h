@@ -16,6 +16,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <kumquat/number_theory.h>
 
 namespace kumquat {
 
@@ -67,14 +68,26 @@ public:
       }
     }
   }
+// /** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
+//   void times_equal_column(size_t i, Coefficient z) {
+//     for(size_t k=0; k<n_; ++k) {
+//       G_.times_equal(mat_[k][i],z);
+//     }
+//   }
+// /** \brief Set row_i <- z * row_i. */
+//   void times_equal_row(size_t i, Coefficient z) {
+//     for(size_t k=0; k<m_; ++k) {
+//       G_.times_equal(mat_[i][k],z);
+//     }
+//   }
 /** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
-  void times_equal_column(size_t i, Coefficient z) {
+  void times_equal_column(size_t i, Integer z) {
     for(size_t k=0; k<n_; ++k) {
       G_.times_equal(mat_[k][i],z);
     }
   }
 /** \brief Set row_i <- z * row_i. */
-  void times_equal_row(size_t i, Coefficient z) {
+  void times_equal_row(size_t i, Integer z) {
     for(size_t k=0; k<m_; ++k) {
       G_.times_equal(mat_[i][k],z);
     }
@@ -86,7 +99,7 @@ public:
     }
   }
 /** \brief Set col_i <- col_i + z * col_j. */
-  void plus_equal_column(size_t i, size_t j, Coefficient z) {
+  void plus_equal_column(size_t i, size_t j, Integer z) {
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
     }    
@@ -98,7 +111,7 @@ public:
     }
   }
 /** \brief Set row_i <- row_i + z * row_j. */
-  void plus_equal_row(size_t i, size_t j, Coefficient z) {
+  void plus_equal_row(size_t i, size_t j, Integer z) {
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k], G_.times(mat_[j][k],z) );
     }    
@@ -186,8 +199,6 @@ public:
     for(size_t i=0; i<num_rows(); ++i) {
       int curr_low = low_row(i);//rightmost non-trivial index for row_i
       
-      std::cout << " low_row = " << curr_low << "\n";
-
       auto it_conflict = low_to_row_idx.find(curr_low);//is it already taken?
       while(it_conflict != low_to_row_idx.end()) {
         //found a row with index < i and with same rightmost index
@@ -208,7 +219,6 @@ public:
         low_to_row_idx[curr_low] = i;//low_to_col_idx does not contain -1
         ++dim_im_;
       }
-      // else { ++dim_ker_; }
     }
     dim_ker_ = num_columns() - dim_im_; 
   }
@@ -250,12 +260,10 @@ private:
  * */  
   int low_row(size_t i, size_t hint 
                          = std::numeric_limits<size_t>::max()) {
-    std::cout << "   *** low_row_" << i << "   hint=" << hint << "\n";
     if(hint < 1) { return -1; }
     size_t start = num_columns();
     if(hint < start) { start = hint; }
     for(int j = start-1 ; j >= 0; --j) {
-      std::cout << "   " << j << "\n";
       if(!G_.trivial(mat_[i][j])) { return j; }
     }
     return -1;
@@ -378,11 +386,13 @@ public:
         }
       }
   //put the new divisor on the diagonal
-      exchange_row(r_idx,i);
-      ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_row_t);
-      exchange_column(r_idx,i);
-      ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_column_t);
-    }
+      if(r_idx != (int)i) {
+        exchange_row(r_idx,i);
+        ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_row_t);
+        exchange_column(r_idx,i);
+        ops.emplace_back(r_idx, i, G_.additive_identity(), exchange_column_t);
+      }
+    } 
   }
 private:
   /** \brief Check whether a column is trivial.*
@@ -405,9 +415,9 @@ public:
  * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
  * */
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
-    auto n = mat_.num_rows();
-    auto m = mat_.num_columns();
-    if(num_rows() != num_columns()) { 
+    auto n = num_rows();
+    auto m = num_columns();
+    if(n != m) { 
       std::cerr << "Gram matrix is not square.\n"; return; 
     }
     auto p = G_.p();
@@ -416,9 +426,10 @@ public:
 
     //after x iterations, the columns and rows 0 ... x-1 are block diagonal
     for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
+      std::cout << " ### iteration " << num_iteration << "\n";
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
       Integer min_order = std::numeric_limits<Integer>::infinity();
-      int pivot_i, pivot_j = -1;//find element of minimal order
+      int pivot_i = -1; int pivot_j = -1;//find element of minimal order
       for(size_t i = num_iteration; i<n; ++i) {//try to find a pivot in the diagonal
         for(size_t j = num_iteration; j<n; ++j) {
           if(!G_.trivial(mat_[i][j])) {//!= 0
@@ -432,28 +443,35 @@ public:
       }
       if(pivot_i == -1) { return; }//the remaining matrix is trivial
       
+      std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ")\n";
+
       //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
       if(pivot_i == pivot_j) {//put on top left corner
           exchange_row(num_iteration,pivot_i);
           exchange_column(num_iteration,pivot_i);
+
+          std::cout << "     pivot in diagonal\n";
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly smaller order than B[i][i] and B[j][j]
-        mat_.plus_equal_row(pivot_i,pivot_j);  
-        mat_.plus_equal_col(pivot_i,pivot_j);
+        plus_equal_row(pivot_i,pivot_j);  
+        plus_equal_column(pivot_i,pivot_j);
         //now, if p odd, B[i][i] has order the minimal order, and is in the diagonal
-        mat_.exchange_row(num_iteration,pivot_i);
-        mat_.exchange_col(num_iteration,pivot_i);
+        exchange_row(num_iteration,pivot_i);
+        exchange_column(num_iteration,pivot_i);
       }
+
+      std::cout << *this << "\n";
+
       //now, top left element B[num_iteration][num_iteration] has minimal order
       //top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
-      Element top_left = mat_[num_iteration][num_iteration];
+      Coefficient top_left = mat_[num_iteration][num_iteration];
       G_.p_normalize(top_left);//now presented as (a,p^k) for fraction a/p^k
       //now, enforce top left corner B[num_iteration][num_iteration]== eps/p^k, for 
       //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
-      Element eps, eps_inv;
+      Integer eps, eps_inv;
       //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
-      if(G_.quadratic_residue(top_left.first,p)) {//compute a solution x
-        auto x = G_.solve_quadratic_residue(top_left.first,p);
+      if(quadratic_residue(top_left.first,p)) {//compute a solution x
+        auto x = solve_quadratic_residue(top_left.first,p);
         //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
         auto s = inverse(x,top_left.second);
         //set row_num_iteration <- s*row_num_iteration and col_num_iteration <- s*col_num_iteration such that B[num_iteration][num_iteration] = 1/p^r mod Z
@@ -462,18 +480,18 @@ public:
       }
       else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
         eps = top_left.first;
-        eps_inv = G_.inverse(eps,top_left.second);
+        eps_inv = inverse(eps,top_left.second);//in number_theory.h
       }
       //we do have B[num_iteration][num_iteration]== eps/p^k, for eps = 1 or 
       //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
       for(size_t i=num_iteration+1; i<n; ++i) {
         //compute beta such that B[num_iteration][i]== beta * b / p^r with beta > 1
         G_.p_normalize(mat_[num_iteration][i]);
-        Coefficient beta = 
-                       G_.division(top_left.second, mat_[num_iteration][i].second);
+        Integer beta = division(top_left.second, mat_[num_iteration][i].second);
+                                                              //in number_theory.h
         //do row_i <- row_i - beta * eps^-1 * row_num_iteration and
         //   col_i <- col_i - beta * eps^-1 * col_num_iteration
-        auto z = G_.times(G_.times( beta, eps_inv ), -1);
+        auto z = kumquat::times(kumquat::times( beta, eps_inv ), (Integer(-1)));
         plus_equal_row(i,num_iteration,z);
         plus_equal_column(i,num_iteration,z);
       }
@@ -503,7 +521,7 @@ template<class CoefficientStructure >
 std::ostream & operator<<(std::ostream & os, Dense_matrix<CoefficientStructure> & mat) {
   for (size_t i = 0; i < mat.num_rows(); i++) {
     for(size_t j = 0; j < mat.num_columns(); ++j) {
-      os << std::setw(7) << std::left << mat[i][j] << " ";
+      os << std::setw(1) << std::left << mat[i][j] << " ";
     }
     os << "\n";
   }

@@ -17,6 +17,10 @@ namespace kumquat {
  * As ring with extra structure, the concept PrincipalIdealDomain inherits all 
  * types and methods from the concept Ring. */
 struct PrincipalIdealDomain : public Ring {
+/** \brief Return the absolute value of an element (if ring of integers), or 
+ * more generally a Euclidean function for Euclidean algorithm.
+ */
+  Integer abs(Element a); 
 /** \brief Compute the extended greatest common divisor of two elements of 
  * the ring. 
  * 

@@ -14,6 +14,9 @@
 #ifndef KUMQUAT_NUMBER_THEORY_H_ 
 #define KUMQUAT_NUMBER_THEORY_H_
 
+#include <boost/integer/extended_euclidean.hpp>//boost extended gcd
+#include <boost/integer/common_factor.hpp>
+
 namespace kumquat {
 
 /** \brief Fast exponentiation of the represenetd integer x, modulo p.
@@ -36,7 +39,7 @@ NumberType pow(NumberType base, NumberType exp, NumberType mod = 0) {
   else {
     while (exp > 0) {
       if (exp & 1) { res = (res * base); }
-      base = (base * base) % mod;
+      base = (base * base);
       exp >>= 1;
     }
   }
@@ -77,6 +80,53 @@ NumberType inverse(NumberType x, NumberType m) {
   auto bezout = boost::integer::extended_euclidean(x, m);
   if(bezout.gcd != 1) { return 0; }
   return (bezout.x % m);
+}
+
+/** \brief Compute the division x/y in the PID.
+ * 
+ * Return the value q such that x = q*y + r, with 0 \leq r < |y|.*/ 
+template<typename NumberType>
+NumberType division(NumberType x, NumberType y) {
+  return x/y;
+}
+/** \brief Compute the remainder of the division x/y in the PID.
+ * 
+ * Return the value r such that x = q*y + r, with 0 \leq r < |y|.
+ * */ 
+template<typename NumberType>
+NumberType remainder(NumberType x, NumberType y) {
+  return x%y;
+}
+
+template<typename NumberType>
+NumberType times(NumberType x, NumberType y) {
+  return x*y;
+}
+
+/** Return the gcd of x and y.*/
+template<typename NumberType>
+NumberType gcd(NumberType x, NumberType y) {
+  return boost::integer::gcd(x, y);
+}
+/** Return x/gcd(x,y).*/
+template<typename NumberType>
+NumberType gcd_complement(NumberType x, NumberType y) {
+  return (x/gcd(x,y));
+}
+/** \brief Compute the extended greatest common divisor of two elements of 
+ * the ring. 
+ * 
+ * Return a triple (u,v,gcd) opf ring elements such that gcd is the greatest 
+ * common divisor of x and y, and (u,v) satiosfies the Bezout identity:
+ * u*x + v*y = gcd, for + the ring addition and * the ring multiplication. 
+ * */ 
+template<typename NumberType>
+std::tuple<NumberType,NumberType,NumberType> extended_gcd(NumberType x, 
+                                                          NumberType y) {
+  auto res_boost = boost::integer::extended_euclidean(x, y);
+  std::tuple<NumberType,NumberType,NumberType> res(res_boost.x, res_boost.y, 
+                                                   res_boost.gcd); 
+  return res;
 }
 
 } //namespace kumquat
