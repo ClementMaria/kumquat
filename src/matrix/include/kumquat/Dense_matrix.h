@@ -113,7 +113,7 @@ public:
 /** \brief Set row_i <- row_i + z * row_j. */
   void plus_equal_row(size_t i, size_t j, Integer z) {
     for(size_t k=0; k<m_; ++k) {
-      G_.plus_equal(mat_[i][k], G_.times(mat_[j][k],z) );
+      G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
     }    
   }
 /** \brief Exchange the columns of index i and j.*/
@@ -428,12 +428,16 @@ public:
     for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
       std::cout << " ### iteration " << num_iteration << "\n";
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
-      Integer min_order = std::numeric_limits<Integer>::infinity();
+      Integer min_order = (Integer)std::numeric_limits<signed long long>::max();
       int pivot_i = -1; int pivot_j = -1;//find element of minimal order
       for(size_t i = num_iteration; i<n; ++i) {//try to find a pivot in the diagonal
         for(size_t j = num_iteration; j<n; ++j) {
           if(!G_.trivial(mat_[i][j])) {//!= 0
+            
             auto ord = G_.order(mat_[i][j]);
+
+            std::cout << "      min_order = " << min_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
+
             if(ord < min_order) { min_order = ord; pivot_i = i; pivot_j = j; }
             else{//prioritize diagonal element of min order
               if((ord == min_order) && (i==j) ) { pivot_i = i; pivot_j = j; }
@@ -453,6 +457,11 @@ public:
           std::cout << "     pivot in diagonal\n";
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly smaller order than B[i][i] and B[j][j]
+
+        std::cout << "     pivot NOT in diagonal\n";
+        std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
+        std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
+
         plus_equal_row(pivot_i,pivot_j);  
         plus_equal_column(pivot_i,pivot_j);
         //now, if p odd, B[i][i] has order the minimal order, and is in the diagonal
@@ -460,7 +469,9 @@ public:
         exchange_column(num_iteration,pivot_i);
       }
 
-      std::cout << *this << "\n";
+      std::cout << "      result where top left element " << num_iteration << "," << num_iteration << " is of minimal order \n";
+
+      std::cout << *this << "\n\n\n";
 
       //now, top left element B[num_iteration][num_iteration] has minimal order
       //top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
@@ -521,7 +532,8 @@ template<class CoefficientStructure >
 std::ostream & operator<<(std::ostream & os, Dense_matrix<CoefficientStructure> & mat) {
   for (size_t i = 0; i < mat.num_rows(); i++) {
     for(size_t j = 0; j < mat.num_columns(); ++j) {
-      os << std::setw(1) << std::left << mat[i][j] << " ";
+      // os << std::setw(1) << std::left << mat[i][j] << " ";
+      os << std::setw(7) << mat[i][j] ;// << " ";
     }
     os << "\n";
   }

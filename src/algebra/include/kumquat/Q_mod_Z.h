@@ -16,6 +16,7 @@
 #include <vector>
 #include <numeric>
 #include <boost/multiprecision/gmp.hpp>
+#include <kumquat/number_theory.h>
 
 namespace kumquat {
 
@@ -84,6 +85,10 @@ public:
  * the group.
  * */
   void times_equal(Element & a, Integer z) { 
+    if(z<0) {
+      z = -1 * z;
+      a = additive_inverse(a);//inverse
+    }
     a.first *= z; 
     normalize_element(a); 
   }
@@ -91,6 +96,10 @@ public:
  * group.
  * */
   Element times(Element a, Integer z) { 
+    if(z<0) {
+      z = -1 * z;
+      a = additive_inverse(a);//inverse
+    }
     a.first *= z; 
     normalize_element(a); 
     return a;
@@ -120,8 +129,8 @@ public:
  * */
   Integer order(Element a) { 
     if(a.first == 0) { return 0; }
-    auto order_mp = (a.second / boost::multiprecision::gcd(a.first,a.second));
-    return (Integer)order_mp; 
+    auto order_mp = kumquat::gcd_complement(a.second, a.first);//division(a.second, boost::multiprecision::gcd(a.first,a.second));
+    return order_mp; 
   }
 /** \brief Return the rank of the group, i.e., the minimal number of generators. 
  * 
@@ -138,7 +147,11 @@ public:
 /** \brief Construct the Element \f$x/y \mod \mathbb{Z}\f$ from two integers 
  * /f$x/f$ and /f$y/f$.
  * */ 
-  Element element(Integer x, Integer y) { return Element(x % y,y); }
+  Element element(Integer x, Integer y) { 
+    Element z(x,y);
+    normalize(z);
+    return z; 
+  }
 
 /** \brief Return the Integer p in case we represent the subgroup 
  * \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$ of \f$\mathbb{Q}/\mathbb{Z}\f$.
@@ -150,11 +163,9 @@ public:
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Element a) { return a.first == 0; }
 
-  void p_normalize(Element & a) {
-    normalize_element(a);
-    Integer gcd = boost::integer::gcd(a.first,a.second);
-    a.first /= gcd;
-    a.second /= gcd;
+  void normalize(Element & a) {
+    normalize_mod_Z(a);
+    normalize_fraction(a);
   }
 
 private:
@@ -162,9 +173,19 @@ private:
    * 
    * Note that we do not enforce that \f$\gcd(a.first,a.second) == 1\f$.
    */
-  void normalize_element(Element & a) {
+  void normalize_mod_Z(Element & a) {
+    
     if(a.first >= a.second) { a.first = (a.first) % (a.second); }
   }
+  void normalize_fraction(Element & a) {
+    auto gcd = kumquat::gcd(a.first,a.second);
+    if(gcd != 1) {
+      a.first /= gcd;
+      a.second /= gcd;
+    }
+  }
+
+
   /** A prime number p in case the structure represents the subgroup 
    * \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$ of \f$\mathbb{Q}/\mathbb{Z}\f$. 
    * 
