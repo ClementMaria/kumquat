@@ -74,12 +74,16 @@ NumberType solve_quadratic_residue(NumberType x, NumberType p) {
   while( ((res*res) % p) != x_mod_p) { ++res; }
   return res;
 }
-/** \brief Return the inverse of x mod m if it exists, 0 otherwise.*/
+/** \brief Return the inverse of x mod m if it exists, 0 otherwise.
+ * 
+ * Always returns a non-negative integer y, 0<= y <m*/
 template<typename NumberType>
 NumberType inverse(NumberType x, NumberType m) {
   auto bezout = boost::integer::extended_euclidean(x, m);
   if(bezout.gcd != 1) { return 0; }
-  return (bezout.x % m);
+  auto y = bezout.x % m;
+  if(y < 0) { return m+y; } 
+  return y;
 }
 
 /** \brief Compute the division x/y in the PID.

@@ -437,7 +437,7 @@ public:
             
             auto ord = G_.order(mat_[i][j]);
 
-            std::cout << "      max_order = " << max_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
+            // std::cout << "      max_order = " << max_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
 
             if(ord > max_order) { max_order = ord; pivot_i = i; pivot_j = j; }
             else{//prioritize diagonal element of min order
@@ -448,7 +448,7 @@ public:
       }
       if(pivot_i == -1) { return; }//the remaining matrix is trivial
       
-      std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ")\n";
+      std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ") of max_order = " << max_order << "\n";
 
       //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
       if(pivot_i == pivot_j) {//put on top left corner
@@ -470,7 +470,7 @@ public:
         exchange_column(num_iteration,pivot_i);
       }
 
-      std::cout << "       result where top left element " << num_iteration << "," << num_iteration << " is of minimal order \n";
+      std::cout << "       result where top left element " << num_iteration << "," << num_iteration << " is of maximal order \n";
 
       std::cout << *this << "\n\n\n";
 
@@ -486,7 +486,7 @@ public:
       //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
       if(quadratic_residue(top_left.first,p)) {//compute a solution x
         std::cout << " a = " << top_left.first << " is quad res mod p=" << p <<"\n";
-        auto x = solve_quadratic_residue(top_left.first,p);
+        auto x = solve_quadratic_residue(top_left.first,top_left.second);
        
         std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
 
@@ -501,6 +501,8 @@ public:
         times_equal_column(num_iteration,s);
         
         eps = 1; eps_inv = 1;
+
+        std::cout << " now top_left = 1/p^k  -> " << mat_[num_iteration][num_iteration] <<"\n";
       }
       else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
 
@@ -512,6 +514,9 @@ public:
         std::cout << "   eps=" << eps << "   and eps_inv = " << eps_inv << "(mod p^k=" << top_left.second << "\n";
 
       }
+
+      top_left = mat_[num_iteration][num_iteration];
+
       //we do have B[num_iteration][num_iteration]== eps/p^k, for eps = 1 or 
       //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
       for(size_t i=num_iteration+1; i<n; ++i) {
@@ -530,8 +535,18 @@ public:
                                      mat_[num_iteration][i].first ) 
                      , eps_inv )
                    , (Integer(-1)));
+
+        std::cout << "  set row_" << i << " += " << z << " * row_" << num_iteration << "\n";
+        std::cout << "  set col_" << i << " += " << z << " * col_" << num_iteration << "\n";
+
+        std::cout << "   cancel with: " << G_.times(mat_[num_iteration][num_iteration],z).first << "/" << G_.times(mat_[num_iteration][num_iteration],z).second << "\n";
+
         plus_equal_row(i,num_iteration,z);
         plus_equal_column(i,num_iteration,z);
+      
+        std::cout << "   result:\n";
+        std::cout << *this << "\n";
+
       }
     }    
   }

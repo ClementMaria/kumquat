@@ -19,7 +19,7 @@
 using namespace kumquat;
 
 int main() {
-  size_t n = 7;
+  size_t n = 10;
   int p = 5;
   int max_pow = 5;
   Q_mod_Z::Integer p_mp = p;
