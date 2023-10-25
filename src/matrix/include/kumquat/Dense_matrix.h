@@ -414,7 +414,7 @@ public:
  * 
  * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
  * */
-  void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
+  void diagonalize_gram_matrix_Qp_mod_Z() {
     auto n = num_rows();
     auto m = num_columns();
     if(n != m) { 
@@ -422,47 +422,37 @@ public:
     }
     auto p = G_.p();
 
-    if((p % 2) == 0) { std::cerr << "No support for even p.\n"; return; }
+    if((p % 2) == 0) { diagonalize_gram_matrix_Qp_mod_Z_p_even(); }
+    else { diagonalize_gram_matrix_Qp_mod_Z_p_odd(); }
 
-    //after x iterations, the columns and rows 0 ... x-1 are block diagonal
+  }
+
+  void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
+    auto p = G_.p(); auto n = num_rows();
+    //after q iterations, M[0..q][0..q] is block diagonal
     for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
       std::cout << " ### iteration " << num_iteration << "\n";
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
-      // Integer max_order = (Integer)std::numeric_limits<signed long long>::max();
-      Integer max_order = 0;
-      int pivot_i = -1; int pivot_j = -1;//find element of minimal order
-      for(size_t i = num_iteration; i<n; ++i) {//try to find a pivot in the diagonal
-        for(size_t j = num_iteration; j<n; ++j) {
-          if(!G_.trivial(mat_[i][j])) {//!= 0
-            
-            auto ord = G_.order(mat_[i][j]);
 
-            // std::cout << "      max_order = " << max_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
+      int pivot_i, pivot_j;//find element of maximal order
 
-            if(ord > max_order) { max_order = ord; pivot_i = i; pivot_j = j; }
-            else{//prioritize diagonal element of min order
-              if((ord == max_order) && (i==j) ) { pivot_i = i; pivot_j = j; }
-            }
-          }
-        }
-      }
+      find_pivot_Qp_mod_Z(pivot_i,pivot_j,num_iteration);
+
       if(pivot_i == -1) { return; }//the remaining matrix is trivial
       
-      std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ") of max_order = " << max_order << "\n";
+      // std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ") of max_order = " << max_order << "\n";
 
       //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
       if(pivot_i == pivot_j) {//put on top left corner
           exchange_row(num_iteration,pivot_i);
           exchange_column(num_iteration,pivot_i);
-
           std::cout << "     pivot in diagonal\n";
       }
-      else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly smaller order than B[i][i] and B[j][j]
-
+      else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
         std::cout << "     pivot NOT in diagonal\n";
         std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
         std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
-
+        //put element b_ii + b_jj +2*b_ij in B[i][i]
         plus_equal_row(pivot_i,pivot_j);  
         plus_equal_column(pivot_i,pivot_j);
         //now, if p odd, B[i][i] has order the minimal order, and is in the diagonal
@@ -470,89 +460,174 @@ public:
         exchange_column(num_iteration,pivot_i);
       }
 
-      std::cout << "       result where top left element " << num_iteration << "," << num_iteration << " is of maximal order \n";
-
-      std::cout << *this << "\n\n\n";
-
-      //now, top left element B[num_iteration][num_iteration] has minimal order
-      // and is written as top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
-      Coefficient top_left = mat_[num_iteration][num_iteration];
-      //now, enforce top left corner B[num_iteration][num_iteration]== eps/p^k, for 
-      //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
-      Integer eps, eps_inv;
-      
-      std::cout << "now, enforce top left corner == eps/p^k\n";
-
-      //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
-      if(quadratic_residue(top_left.first,p)) {//compute a solution x
-        std::cout << " a = " << top_left.first << " is quad res mod p=" << p <<"\n";
-        auto x = solve_quadratic_residue(top_left.first,top_left.second);
-       
-        std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
-
-        //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
-        auto s = inverse(x,top_left.second);
-
-        std::cout << "   s=" << s << "   s.t. s=x^{-1} mod p^k (=" << top_left.second << "\n";
-
-        //set row_num_iteration <- s*row_num_iteration and col_num_iteration <- s*col_num_iteration such that B[num_iteration][num_iteration] = 1/p^r mod Z
-        times_equal_row(num_iteration,s);
-        
-        times_equal_column(num_iteration,s);
-        
-        eps = 1; eps_inv = 1;
-
-        std::cout << " now top_left = 1/p^k  -> " << mat_[num_iteration][num_iteration] <<"\n";
-      }
-      else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
-
-        std::cout << " a = " << top_left.first << " is quad NON - res mod p=" << p <<"\n";
-
-        eps = top_left.first;
-        eps_inv = kumquat::inverse(eps, top_left.second);//in number_theory.h
-
-        std::cout << "   eps=" << eps << "   and eps_inv = " << eps_inv << "(mod p^k=" << top_left.second << "\n";
-
-      }
-
-      top_left = mat_[num_iteration][num_iteration];
-
-      //we do have B[num_iteration][num_iteration]== eps/p^k, for eps = 1 or 
-      //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
-      for(size_t i=num_iteration+1; i<n; ++i) {
-        //compute beta such that B[num_iteration][i]== beta * b / p^r with beta > 1
-        // G_.p_normalize(mat_[num_iteration][i]);
-        Integer beta = division(top_left.second, mat_[num_iteration][i].second);
-                                                              //in number_theory.h
-        
-        std::cout << " at B_" << num_iteration <<","<<i<<"   beta=" << beta << "  s.t. " << mat_[num_iteration][i] << "== beta * b / p^r " << "\n";
-
-        //do row_i <- row_i - beta * b * eps^-1 * row_num_iteration and
-        //   col_i <- col_i - beta * eps^-1 * col_num_iteration
-        auto z = kumquat::times(
-                   kumquat::times( 
-                     kumquat::times( beta, 
-                                     mat_[num_iteration][i].first ) 
-                     , eps_inv )
-                   , (Integer(-1)));
-
-        std::cout << "  set row_" << i << " += " << z << " * row_" << num_iteration << "\n";
-        std::cout << "  set col_" << i << " += " << z << " * col_" << num_iteration << "\n";
-
-        std::cout << "   cancel with: " << G_.times(mat_[num_iteration][num_iteration],z).first << "/" << G_.times(mat_[num_iteration][num_iteration],z).second << "\n";
-
-        plus_equal_row(i,num_iteration,z);
-        plus_equal_column(i,num_iteration,z);
-      
-        std::cout << "   result:\n";
-        std::cout << *this << "\n";
-
-      }
-    }    
+      cancel_row_column_Qp_mod_Z(num_iteration);
+    }
   }
 
 
 
+
+  void diagonalize_gram_matrix_Qp_mod_Z_p_even() {
+    auto p = G_.p(); auto n = num_rows();
+    //after q iterations, M[0..q][0..q] is block diagonal
+    for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
+      std::cout << " ### iteration " << num_iteration << "\n";
+      //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
+      int pivot_i, pivot_j;
+      find_pivot_Qp_mod_Z(pivot_i, pivot_j, num_iteration);
+
+      if(pivot_i == -1) { return; }//the remaining matrix is trivial
+      
+      //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
+      if(pivot_i == pivot_j) {//put on top left corner
+        exchange_row(num_iteration,pivot_i);
+        exchange_column(num_iteration,pivot_i);
+        std::cout << "     pivot in diagonal\n";
+
+        cancel_row_column_Qp_mod_Z(num_iteration);
+      }
+      else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
+        std::cout << "     pivot NOT in diagonal\n";
+        std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
+        std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
+      
+      
+        //put the future block in top left corner
+        exchange_row(num_iteration,pivot_i);
+        exchange_column(num_iteration,pivot_i);
+        exchange_row(num_iteration+1,pivot_j);
+        exchange_column(num_iteration+1,pivot_j);
+//todo
+        cancel_2_2_block_Q2_mod_Z(num_iteration);
+      }
+    }
+  }
+
+private:
+/* Find the element in the submatrix M[idx...n][idx...n] with maximal order in Qp_mod_Z.
+If such element is in the diagonal, always return a diagonal element. If the matrix is uniformly 0, the pivot indices are returned as -1.
+*/
+  void find_pivot_Qp_mod_Z(int & pivot_i, int & pivot_j, int idx=0) {
+    Integer max_order = 0;
+    pivot_i = -1; pivot_j = -1;//find element of minimal order
+    for(size_t i = idx; i < num_rows(); ++i) {//try to find a pivot in the diagonal
+      for(size_t j = idx; j < num_columns(); ++j) {
+        if(!G_.trivial(mat_[i][j])) {//!= 0
+          auto ord = G_.order(mat_[i][j]);
+          if(ord > max_order) { 
+            max_order = ord; pivot_i = i; pivot_j = j; 
+          }
+          else{//prioritize diagonal element of min order
+            if((ord == max_order) && (i==j) ) { 
+              pivot_i = i; pivot_j = j; 
+            }
+          }
+        }
+      }
+    }
+  }
+  /* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other eleemnts in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
+  void cancel_row_column_Qp_mod_Z(size_t idx) {
+        auto p = G_.p(); auto n = num_rows();
+    //top left element M[idx][idx] has minimal order
+    // and is written as top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
+    Coefficient top_left = mat_[idx][idx];
+    //now, enforce top left corner B[idx][idx]== eps/p^k, for 
+    //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
+    Integer eps, eps_inv;
+    
+    std::cout << "now, enforce top left corner == eps/p^k\n";
+
+    //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
+    if(quadratic_residue(top_left.first,p)) {//compute a solution x
+      std::cout << " a = " << top_left.first << " is quad res mod p=" << p <<"\n";
+
+      auto x = solve_quadratic_residue(top_left.first,top_left.second);
+     
+      std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
+
+      //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
+      auto s = inverse(x,top_left.second);
+
+      std::cout << "   s=" << s << "   s.t. s=x^{-1} mod p^k (=" << top_left.second << "\n";
+
+      //set row_idx <- s*row_idx and col_idx <- s*col_idx such that B[idx][idx] = 1/p^r mod Z
+      times_equal_row(idx,s);
+      times_equal_column(idx,s);
+      eps = 1; eps_inv = 1;
+
+      std::cout << " now top_left = 1/p^k  -> " << mat_[idx][idx] <<"\n";
+    }
+    else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
+
+      std::cout << " a = " << top_left.first << " is quad NON - res mod p=" << p <<"\n";
+
+      eps = top_left.first;
+      eps_inv = kumquat::inverse(eps, top_left.second);//in number_theory.h
+
+      std::cout << "   eps=" << eps << "   and eps_inv = " << eps_inv << "(mod p^k=" << top_left.second << "\n";
+    }
+
+    top_left = mat_[idx][idx];
+//we do have M[idx][idx]== eps/p^k, for eps = 1 or 
+//eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
+    for(size_t i=idx+1; i<n; ++i) {
+//compute beta such that B[idx][i]== beta * b / p^r with beta > 1
+// G_.p_normalize(mat_[idx][i]);
+      Integer beta = kumquat::division(top_left.second, mat_[idx][i].second);//in number_theory.h
+                              
+      std::cout << " at B_" << idx <<","<<i<<"   beta=" << beta << "  s.t. " << mat_[idx][i] << "== beta * b / p^r " << "\n";
+
+      //do row_i <- row_i - beta * b * eps^-1 * row_idx and
+      //   col_i <- col_i - beta * eps^-1 * col_idx
+      auto z = kumquat::times(
+                 kumquat::times( 
+                   kumquat::times( beta, 
+                                   mat_[idx][i].first ) 
+                   , eps_inv )
+                 , (Integer(-1)));
+
+      std::cout << "  set row_" << i << " += " << z << " * row_" << idx << "\n";
+      std::cout << "  set col_" << i << " += " << z << " * col_" << idx << "\n";
+
+      std::cout << "   cancel with: " << G_.times(mat_[idx][idx],z).first << "/" << G_.times(mat_[idx][idx],z).second << "\n";
+
+      plus_equal_row(i,idx,z);
+      plus_equal_column(i,idx,z);
+    
+      std::cout << "   result:\n";
+      std::cout << *this << "\n";
+    }
+  }    
+
+
+/* Subroutine of the diagonalization of the Gram matrix with coefficients in Q_2 / Z, where the block B[idx,idx+1][idx,idx+1] is of the form:
+*  |2a/2^m   b/2^m |   where b is odd and a,c are arbitary
+*  |               |
+*  |b/2^m    2c/2^m|
+*/
+  void cancel_2_2_block_Q2_mod_Z(size_t idx) {
+    //extract integres a,b,c and 2^m
+    auto two_to_m = mat_[idx][idx+1].second;
+    auto a = mat_[idx][idx].first * (two_to_m / (2*mat_[idx][idx].second)) ;
+    auto b = mat_[idx][idx+1].first;
+    auto c = mat_[idx+1][idx+1].first * (two_to_m / (2*mat_[idx+1][idx+1].second));
+  
+    //d is the inverse of 4ac-b^2 modulo 2^m
+    auto d = kumquat::inverse(4 * a * c - b * b, two_to_m);
+
+    //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
+    for(size_t i=idx+2; i<num_rows(); ++i) {
+      auto u = mat_[i][idx]; auto v = mat_[i][idx+1];
+      auto r1 = -1* d*(2*c*u - b*v);
+      auto r2 = -1* d*(2*a*v - b*u);
+    
+      plus_equal_row(i,idx,r1);
+      plus_equal_column(i,idx,r1);
+      plus_equal_row(i,idx+1,r2);
+      plus_equal_column(i,idx+1,r2);
+    }
+  }
 
 private:
   //number of rows of the matrix
