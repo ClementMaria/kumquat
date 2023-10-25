@@ -428,7 +428,8 @@ public:
     for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
       std::cout << " ### iteration " << num_iteration << "\n";
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
-      Integer min_order = (Integer)std::numeric_limits<signed long long>::max();
+      // Integer max_order = (Integer)std::numeric_limits<signed long long>::max();
+      Integer max_order = 0;
       int pivot_i = -1; int pivot_j = -1;//find element of minimal order
       for(size_t i = num_iteration; i<n; ++i) {//try to find a pivot in the diagonal
         for(size_t j = num_iteration; j<n; ++j) {
@@ -436,11 +437,11 @@ public:
             
             auto ord = G_.order(mat_[i][j]);
 
-            std::cout << "      min_order = " << min_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
+            std::cout << "      max_order = " << max_order << "    order(" << mat_[i][j] << ") == " << ord << "\n";
 
-            if(ord < min_order) { min_order = ord; pivot_i = i; pivot_j = j; }
+            if(ord > max_order) { max_order = ord; pivot_i = i; pivot_j = j; }
             else{//prioritize diagonal element of min order
-              if((ord == min_order) && (i==j) ) { pivot_i = i; pivot_j = j; }
+              if((ord == max_order) && (i==j) ) { pivot_i = i; pivot_j = j; }
             }
           }
         }
@@ -479,18 +480,37 @@ public:
       //now, enforce top left corner B[num_iteration][num_iteration]== eps/p^k, for 
       //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
       Integer eps, eps_inv;
+      
+      std::cout << "now, enforce top left corner == eps/p^k\n";
+
       //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
       if(quadratic_residue(top_left.first,p)) {//compute a solution x
+        std::cout << " a = " << top_left.first << " is quad res mod p=" << p <<"\n";
         auto x = solve_quadratic_residue(top_left.first,p);
+       
+        std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
+
         //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
         auto s = inverse(x,top_left.second);
+
+        std::cout << "   s=" << s << "   s.t. s=x^{-1} mod p^k (=" << top_left.second << "\n";
+
         //set row_num_iteration <- s*row_num_iteration and col_num_iteration <- s*col_num_iteration such that B[num_iteration][num_iteration] = 1/p^r mod Z
         times_equal_row(num_iteration,s);
+        
+        times_equal_column(num_iteration,s);
+        
         eps = 1; eps_inv = 1;
       }
       else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
+
+        std::cout << " a = " << top_left.first << " is quad NON - res mod p=" << p <<"\n";
+
         eps = top_left.first;
-        eps_inv = inverse(eps,top_left.second);//in number_theory.h
+        eps_inv = kumquat::inverse(eps, top_left.second);//in number_theory.h
+
+        std::cout << "   eps=" << eps << "   and eps_inv = " << eps_inv << "(mod p^k=" << top_left.second << "\n";
+
       }
       //we do have B[num_iteration][num_iteration]== eps/p^k, for eps = 1 or 
       //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
@@ -499,9 +519,17 @@ public:
         // G_.p_normalize(mat_[num_iteration][i]);
         Integer beta = division(top_left.second, mat_[num_iteration][i].second);
                                                               //in number_theory.h
-        //do row_i <- row_i - beta * eps^-1 * row_num_iteration and
+        
+        std::cout << " at B_" << num_iteration <<","<<i<<"   beta=" << beta << "  s.t. " << mat_[num_iteration][i] << "== beta * b / p^r " << "\n";
+
+        //do row_i <- row_i - beta * b * eps^-1 * row_num_iteration and
         //   col_i <- col_i - beta * eps^-1 * col_num_iteration
-        auto z = kumquat::times(kumquat::times( beta, eps_inv ), (Integer(-1)));
+        auto z = kumquat::times(
+                   kumquat::times( 
+                     kumquat::times( beta, 
+                                     mat_[num_iteration][i].first ) 
+                     , eps_inv )
+                   , (Integer(-1)));
         plus_equal_row(i,num_iteration,z);
         plus_equal_column(i,num_iteration,z);
       }

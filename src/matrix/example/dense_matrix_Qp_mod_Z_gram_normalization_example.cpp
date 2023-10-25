@@ -21,19 +21,25 @@ using namespace kumquat;
 int main() {
   size_t n = 7;
   int p = 5;
+  int max_pow = 5;
   Q_mod_Z::Integer p_mp = p;
-  Q_mod_Z::Integer max_pow = 3;
+  Q_mod_Z::Integer max_pow_mp = max_pow;
   Q_mod_Z qmodz(p);//group Q_5/Z of fractions a/5^k, 0 <= a < 5^k, k>0
   Dense_matrix< Q_mod_Z > mat(n,n,qmodz);
 
   std::cout << "- The matrix is " << mat.num_rows() << " by " 
                                   << mat.num_columns() << "\n";
 
-  std::random_device rd;  // a seed source for the random number engine
+  // std::random_device rd;  // a seed source for the random number engine
   std::mt19937 gen(314); // mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<Q_mod_Z::Integer> distrib_power(1, max_pow);
-  std::uniform_int_distribution<Q_mod_Z::Integer> distrib_nomi(0, 
-                                                    kumquat::pow(p_mp, max_pow)-1);
+  // std::uniform_int_distribution<Q_mod_Z::Integer> distrib_power(1, max_pow);
+  // std::uniform_int_distribution<Q_mod_Z::Integer> distrib_nomi(0, 
+  //                                                   kumquat::pow(p_mp, max_pow)-1);
+
+  std::uniform_int_distribution<int> distrib_power(1, max_pow);
+  std::uniform_int_distribution<int> distrib_nomi(0, 
+                                                    std::pow(p, max_pow)-1);
+
 
   std::cout << "- Fill the matrix with mat[i][j] = mat[j][i] = random number.\n";
   auto random_qmodz = [&]([[maybe_unused]] size_t i, [[maybe_unused]] size_t j) -> Q_mod_Z::Element { 
