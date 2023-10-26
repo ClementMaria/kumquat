@@ -27,12 +27,14 @@ namespace kumquat {
  * 
  * Elements of the ring Z are represented by integers (multiprecision gmp).
  *
- * NumberType must be a signed integer type (such as int and 
+ * IntegerNumber must be a signed integer type (such as int and 
  * boost::multiprecision::mpz_int) and implement =,-,*,/,% etc.
+ * template IntegerNumber implements concept IntegerNumber
  * 
  * \implements Ring
+ * 
  */
-template<typename NumberType>
+template<typename IntegerNumber>
 class Z {
 public:
   Z() {}
@@ -40,9 +42,9 @@ public:
  * @{ */
 
 /** \brief An integer type, in particular for the Z-module structure.*/
-  typedef NumberType Integer;
+  typedef IntegerNumber Integer;
 /** \brief The type of elements of the ring. Must be copiable. */
-  typedef NumberType Element;
+  typedef IntegerNumber Element;
 /** \brief Return the additive identity 0.*/
   Element additive_identity() { return 0; }
 /** \brief Set a <- (a+b). */  

@@ -14,19 +14,11 @@ namespace kumquat {
 
 /** Concept for a ring (algebra). 
  * 
- * As a group with multiplication, the concept Ring inherits all types and 
- * methods from the concept AbelianGroup. */
-struct Ring : public AbelianGroup {
+ * As a pseudo ring with unit, the concept Ring inherits all types and 
+ * methods from the concept PseudoRing. */
+struct Ring : public PseudoRing {
 /** Return the multiplicative identity 1.*/
     Element multiplicative_identity();
-/** Set a <- (a*b). */
-    void times_equal(Element & a, Element b);
-/** Return a*b.*/
-    Element times(Element a, Element b);
-/** Set a <- a^p. */
-    void pow_equal(Element & a, Integer p);
-/** Return a <- a^p for a positive integer p. */
-    Element pow(Element a, Integer p);
 /** Return the multiplicative inverse of a Element a if it exists, and return the additive identity 0 otherwise.*/
     Element multiplicative_inverse(Element a);
 };  
