@@ -30,10 +30,12 @@ namespace kumquat {
  */
 class Z_mod_nZ {
 public:
-/** An integer type, in particular for the Z-module structure of the underlying abelian group.*/
-  typedef int Integer;
-/** The type of elements of the algebraic structure (group/ring/field). */
-  typedef int Element;
+  static const bool abelian_group = true;
+  static const bool pseudo_ring = true;
+  static const bool ring = true;
+  static const bool principal_ideal_domain = true;
+  static const bool field = false;
+
 /** \brief Create the ring Z/nZ. */
   Z_mod_nZ(int N) : N_(N) {//brute force computation of the inverses (if they exist)
     if(N <= 0) { std::cerr << "Instanciation of Z/nZ for n <= 0.\n"; return; }
@@ -46,6 +48,11 @@ public:
       }
     }
   }
+
+/** An integer type, in particular for the Z-module structure of the underlying abelian group.*/
+  typedef int Integer;
+/** The type of elements of the algebraic structure (group/ring/field). */
+  typedef int Element;
 /** \brief Convert an integer to an element of the field.*/
   Element element(int z) {
     return (z % N_);

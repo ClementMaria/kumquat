@@ -13,6 +13,7 @@
 #ifndef KUMQUAT_Q_MOD_Z_H_ 
 #define KUMQUAT_Q_MOD_Z_H_
 
+#include <string>
 #include <vector>
 #include <numeric>
 #include <boost/multiprecision/gmp.hpp>
@@ -36,6 +37,12 @@ namespace kumquat {
 template<typename IntegerNumber>
 class Q_mod_Z {
 public:
+  static const bool abelian_group = true;
+  static const bool pseudo_ring = true;
+  static const bool ring = false;
+  static const bool principal_ideal_domain = false;
+  static const bool field = false;
+
 /** \brief Initialisation of the entire group \f$\mathbb{Q}/\mathbb{Z}\f$.
   * 
   * p_ set to -1 indicates that we construct the entire group.
@@ -240,8 +247,16 @@ private:
 /** \brief Write an Element of Q_mod_Z into a stream, as an unnormalized fraction 
  * x / y.
  * */
-std::ostream & operator<<(std::ostream & os, Q_mod_Z::Element & a) {
-      os << a.first << "/" << a.second;
+// template<typename IntegerNumber>
+// std::ostream & operator<<( std::ostream & os, 
+//                            typename Q_mod_Z<IntegerNumber>::Element & a) {
+//       os << a.first << "/" << a.second;
+//   return os;
+// }
+template<typename IntegerNumber>
+std::ostream & operator<<( std::ostream & os, 
+                           std::pair<IntegerNumber,IntegerNumber> & a) {
+  os << a.first << "/" << a.second;
   return os;
 }
 

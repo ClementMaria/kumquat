@@ -37,10 +37,15 @@ namespace kumquat {
 template<typename IntegerNumber>
 class Z {
 public:
+  static const bool abelian_group = true;
+  static const bool pseudo_ring = true;
+  static const bool ring = true;
+  static const bool principal_ideal_domain = true;
+  static const bool field = false;
+
   Z() {}
 /** \name Methods for Abelian groups. Implements AbelianGroup.
  * @{ */
-
 /** \brief An integer type, in particular for the Z-module structure.*/
   typedef IntegerNumber Integer;
 /** \brief The type of elements of the ring. Must be copiable. */

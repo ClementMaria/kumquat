@@ -16,13 +16,13 @@
 using namespace kumquat;
 
 int main() {
-  Q_mod_Z qmz;
+  Q_mod_Z_mp qmz;
 
-  Q_mod_Z::Element x = qmz.element(150,65);
-  Q_mod_Z::Element y = qmz.element(12,22);
+  Q_mod_Z_mp::Element x = qmz.element(150,65);
+  Q_mod_Z_mp::Element y = qmz.element(12,22);
 
   auto zero = qmz.additive_identity();
-  std::cout << "Additive identity = " << zero << "\n";
+  std::cout << "Additive identity = " << zero.first << "/" << zero.second << "\n";
   auto x_plus_y = qmz.plus(x,y);
   std::cout << "150/65 + 12/22 = " << x_plus_y << "\n";
   std::cout << "150/65 = " << x << "\n";

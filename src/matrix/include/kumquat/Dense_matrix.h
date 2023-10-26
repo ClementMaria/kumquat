@@ -99,10 +99,21 @@ public:
     }
   }
 /** \brief Set col_i <- col_i + z * col_j. */
-  void plus_equal_column(size_t i, size_t j, Integer z) {
+  template<typename WeightType>
+  std::enable_if_t<std::is_integral_v<WeightType> > plus_equal_column(size_t i, size_t j, WeightType z) {
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
     }    
+  }
+/** \brief Set col_i <- col_i + z * col_j, where z is an element. Coefficient structure must be a pseudo ring. */
+ template<typename WeightType>
+  std::enable_if_t<!std::is_integral_v<WeightType> > plus_equal_column(size_t i, size_t j, WeightType z) {
+    // if constexpr (Coeff_struct::pseudo_ring) {
+      for(size_t k=0; k<n_; ++k) {
+        G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
+      }
+    // }
+    // else { std::cerr << "The coefficient structure does not have a ring multiplication.\n"; }
   }
 /** \brief Set row_i <- row_i + row_j. */
   void plus_equal_row(size_t i, size_t j) {
@@ -111,10 +122,23 @@ public:
     }
   }
 /** \brief Set row_i <- row_i + z * row_j. */
-  void plus_equal_row(size_t i, size_t j, Integer z) {
+  template<typename WeightType>
+  std::enable_if_t<std::is_integral_v<WeightType> > 
+  plus_equal_row(size_t i, size_t j, WeightType z) {
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
     }    
+  }
+/** \brief Set row_i <- row_i + z * row_j, where z is an element. Coefficient structure must be a pseudo ring. */
+  template<typename WeightType>
+  std::enable_if_t<!std::is_integral_v<WeightType> > 
+  plus_equal_row(size_t i, size_t j, WeightType z) {
+    // if constexpr (Coeff_struct::pseudo_ring) {
+      for(size_t k=0; k<m_; ++k) {
+        G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
+      }    
+    // }
+    // else { std::cerr << "The coefficient structure does not have a ring multiplication.\n"; }
   }
 /** \brief Exchange the columns of index i and j.*/
   void exchange_column(size_t i, size_t j) {
@@ -608,19 +632,27 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 */
   void cancel_2_2_block_Q2_mod_Z(size_t idx) {
     //extract integres a,b,c and 2^m
-    auto two_to_m = mat_[idx][idx+1].second;
-    auto a = mat_[idx][idx].first * (two_to_m / (2*mat_[idx][idx].second)) ;
-    auto b = mat_[idx][idx+1].first;
-    auto c = mat_[idx+1][idx+1].first * (two_to_m / (2*mat_[idx+1][idx+1].second));
-  
+    Integer two_to_m = mat_[idx][idx+1].second;
+    Integer a = mat_[idx][idx].first * (two_to_m / (2*mat_[idx][idx].second)) ;
+    Integer b = mat_[idx][idx+1].first;
+    Integer c = mat_[idx+1][idx+1].first * 
+                              (two_to_m / ((Integer)(2)*mat_[idx+1][idx+1].second));
     //d is the inverse of 4ac-b^2 modulo 2^m
-    auto d = kumquat::inverse(4 * a * c - b * b, two_to_m);
+    Integer d = kumquat::inverse((Integer)4 * a * c - b * b, two_to_m);
 
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
-      auto u = mat_[i][idx]; auto v = mat_[i][idx+1];
-      auto r1 = -1* d*(2*c*u - b*v);
-      auto r2 = -1* d*(2*a*v - b*u);
+      Coefficient u = mat_[i][idx]; Coefficient v = mat_[i][idx+1];
+
+      //prepare r1 = -d(2cu-bv) = -2*d*c * (u)   +    d*b * (v)
+      //minus_d2c = -2*d*c;
+      Integer minus_d2c = (Integer)(-2)*d*c;    
+      //db = +d*b
+      Integer db = (d*b);
+      Coefficient r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
+      //prepare r2 = -d(2av-bu) = -2*d*a * (v)   +    d*b * (u)
+      Integer minus_d2a = (Integer)(-2)*d*a;
+      Coefficient r2 = G_.plus( G_.times(v,minus_d2a), G_.times(v,db)  );
     
       plus_equal_row(i,idx,r1);
       plus_equal_column(i,idx,r1);
