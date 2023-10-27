@@ -489,8 +489,8 @@ private:
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
         std::cout << "     pivot NOT in diagonal " << pivot_i << " " << pivot_j << "\n";
-        std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
-        std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
+        // std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
+        // std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
       
       
         //put the future block in top left corner
@@ -499,6 +499,7 @@ private:
         exchange_row(num_iteration+1,pivot_j);
         exchange_column(num_iteration+1,pivot_j);
 
+        std::cout << "put block on top left\n";
         std::cout << "\n--------------\n" << *this << "\n--------------\n";
 
         cancel_2_2_block_Q2_mod_Z(num_iteration);
@@ -528,6 +529,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
         }
       }
     }
+    if(max_order == 0) { pivot_i = -1; pivot_j = -1; }//matrix is 0
   }
   /* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other eleemnts in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
   void cancel_row_column_Qp_mod_Z(size_t idx) {
@@ -630,25 +632,54 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 
     Integer d = kumquat::inverse(d_inv, two_to_m);
 
+    std::cout << "    d = " << d << "\n";
+
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
+    
       Coefficient u = mat_[i][idx]; Coefficient v = mat_[i][idx+1];
 
+      std::cout << "++++++++++++++++++ i=" << i << "   (u,v)=" << u << "," << v << "\n";
       //prepare r1 = -d(2cu-bv) = -2*d*c * (u)   +    d*b * (v)
       //minus_d2c = -2*d*c;
-      Integer minus_d2c = (Integer)(-2)*d*c;    
+      Integer minus_d2c = (Integer)(-2)*d*c;  
+
+      std::cout << "   -2dc = " << minus_d2c <<"\n";  
       //db = +d*b
       Integer db = (d*b);
+      std::cout << "   db = " << db <<"\n";
+      auto xxx = G_.times(u,minus_d2c);
+      auto yyy = G_.times(v,db);
+      auto zzz = G_.plus(xxx,yyy);
+      std::cout << "   -2dcu = " << xxx <<"\n";
+      std::cout << "   dbv   = " << yyy << "\n";
+      std::cout << "   -2dcu+dbv = " << zzz << "\n";
+
       Coefficient r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
       //prepare r2 = -d(2av-bu) = -2*d*a * (v)   +    d*b * (u)
       Integer minus_d2a = (Integer)(-2)*d*a;
       Coefficient r2 = G_.plus( G_.times(v,minus_d2a), G_.times(v,db)  );
     
+
+      std::cout << "    r1=-d(2cu-bv) = " << r1 << "     r2=-d(2av-bu) = " << r2 << "\n";
+
+      auto aaa = G_.times(r1,mat_[idx][idx]);
+      auto bbb = G_.plus(u, aaa);
+      auto ccc = G_.times(r2,mat_[idx][idx+1]);
+      auto ddd = G_.plus( bbb, ccc );
+      std::cout << "=== " << ddd << "\n";
+
       plus_equal_row(i,idx,r1);
       plus_equal_column(i,idx,r1);
       plus_equal_row(i,idx+1,r2);
       plus_equal_column(i,idx+1,r2);
+
+      std::cout << *this << "\n\n";
+
     }
+
+
+
   }
 
 private:
@@ -672,7 +703,7 @@ std::ostream & operator<<(std::ostream & os, Dense_matrix<CoefficientStructure> 
   for (size_t i = 0; i < mat.num_rows(); i++) {
     for(size_t j = 0; j < mat.num_columns(); ++j) {
       // os << std::setw(1) << std::left << mat[i][j] << " ";
-      os << std::setw(7) << mat[i][j] ;// << " ";
+      os << std::setw(14) << mat[i][j] ;// << " ";
     }
     os << "\n";
   }

@@ -18,6 +18,7 @@
 #include <numeric>
 #include <boost/multiprecision/gmp.hpp>
 #include <kumquat/number_theory.h>
+#include <sstream>
 
 namespace kumquat {
 
@@ -256,7 +257,10 @@ private:
 template<typename IntegerNumber>
 std::ostream & operator<<( std::ostream & os, 
                            std::pair<IntegerNumber,IntegerNumber> & a) {
-  os << a.first << "/" << a.second;
+  
+  std::stringstream ss;//for alignment purpose
+  ss << a.first << "/" << a.second;  
+  os << ss.str();
   return os;
 }
 
