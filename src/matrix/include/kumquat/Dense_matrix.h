@@ -542,10 +542,10 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     std::cout << "now, enforce top left corner == eps/p^k\n";
 
     //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
-    if(quadratic_residue(top_left.first,p)) {//compute a solution x
-      std::cout << " a = " << top_left.first << " is quadquad res mod p=" << p <<"\n";
+    if(quadratic_residue(top_left.first,top_left.second,p)) {//compute a solution x
+      std::cout << " a = " << top_left.first << " is quadquad res mod p^k=" << top_left.second <<"\n";
 
-      auto x = solve_quadratic_residue(top_left.first,top_left.second);
+      auto x = solve_quadratic_residue(top_left.first,top_left.second,p);
      
       std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
 

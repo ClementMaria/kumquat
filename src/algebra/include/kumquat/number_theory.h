@@ -31,7 +31,6 @@ NumberType inverse(NumberType x, NumberType m) {
   if(y < 0) { return m+y; } 
   return y;
 }
-
 /** \brief Compute the division x/y in the PID.
  * 
  * Return the value q such that x = q*y + r, with 0 \leq r < |y|.*/ 
@@ -114,11 +113,12 @@ template<typename NumberType>
 NumberType legendre_symbol(NumberType x, NumberType p) {
   return kumquat::pow<NumberType>(x%p,(p-1)/2,p);
 }
+
 /** \brief Test whether x is a quadratic residue modulo a prime power p^k (including case x=0), assuming gcd(x,p) = 1 (if x not 0), and 0 <= x < p^k.
  * 
  * p must be a prime number, even or odd.*/
 template<typename NumberType>
-bool quadratic_residue(NumberType x, NumberType p, NumberType k=1) {
+bool quadratic_residue_subroutine(NumberType x, NumberType p, NumberType k) {
   if(x == 0) { return true; }
   //now x != 0
   if(p == 2) { //x is odd to ensure gcd(x,2)=1
@@ -134,26 +134,34 @@ bool quadratic_residue(NumberType x, NumberType p, NumberType k=1) {
   if( x % p == 0) return true;//case trivial
   return legendre_symbol(x,p) == 1;
 }
+/** \brief Test whether x is a quadratic residue modulo a prime power p^k (including case x=0), assuming gcd(x,p) = 1 (if x not 0), and 0 <= x < p^k.
+ * 
+ * p must be a prime number, p_pow_k a power of p, (p even or odd).*/
+template<typename NumberType>
+bool quadratic_residue(NumberType x, NumberType p_pow_k, NumberType p) {
+  NumberType k=0;
+  while(p_pow_k != 1) { p_pow_k /= p; ++k; }//compute k such that p_pow_k = p^k
+  return quadratic_residue_subroutine(x,p,k);
+}
 /** \brief Compute a solution y to y^2 = x mod p, for an odd prime p, gcd(x,p) = 1, and 0<x<p. The integer x must be a quadratic residue mod p.
  * 
  * Implements the Tonelli-Shanks algorithm for square root modulo an odd prime.
  * */
-
 template<typename NumberType>
 NumberType tonelli_shanks(NumberType x, NumberType p) {
   //find q such that (p-1) = q * 2^s with q odd
-  NumberType q=p-1;
-  NumberType s=0;
+  NumberType q = p-1;
+  NumberType s = 0;
   while((q % 2) == 0) { q /= 2; ++s; }
   //find a z, 0<z<p, such that z is a quadratic residue mod p
   //expected number of tries = 2;
   std::random_device rd;  // a seed source for the random number engine
   std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<NumberType> distrib_mod_p(1, p-1);
+  std::uniform_int_distribution<int> distrib_mod_p((int)1, (int)(p-1));
   NumberType z;
   while(true) {
-    z = distrib_mod_p(gen);
-    if(quadratic_residue(z,p)) { break; }
+    z = (NumberType)(distrib_mod_p(gen));
+    if(!quadratic_residue(z,p,p)) { break; }
   }
   //z is a quadratic residue mod p, and p = q*2^s, q odd
   NumberType m = s;
@@ -180,13 +188,12 @@ NumberType tonelli_shanks(NumberType x, NumberType p) {
 }
 /** \brief Find a solution y to y^2 = x mod p^k. x must be a quadratic residue mod p^k, which can be checked with quadratic_residue.
  * 
- * p must be a prime number, x must be a quadratic residue modulo p^k
+ * p must be a prime number, x must be a quadratic residue modulo p^k, and k >= 1.
  * 
  * A number is a quadratic residue modulo an odd prime power p^k iff it is a quadratic resiude mod p iff its Legendre symbol is 1 (excluding the case 0)
  * */
 template<typename NumberType>
-NumberType solve_quadratic_residue(NumberType x, NumberType p, NumberType k = 1) {
-  std::cout << "solve quad res for " << x << " mod " << p << "^" << k << "\n";
+NumberType solve_quadratic_residue_subroutine(NumberType x, NumberType p, NumberType k) {
   //we assume 0<= x < p^k and x is a quadratic resiude modulo p^k
   if(x == 0) { return 0; } //0^2 = 0 mod p^k
   if(x == 1) { return 1; }
@@ -199,10 +206,10 @@ NumberType solve_quadratic_residue(NumberType x, NumberType p, NumberType k = 1)
     for(int j=4 ; j <= k; ++j) {//after it j, res*res = x mod 2^j
       //pow_two == 2^{j-1}
       NumberType lambda = (res*res - x) / pow_two; //
-      if( (lambda % 2) == 1 ) { res += pow_two/2; }
+      if( (lambda % 2) != 0 ) { res += (pow_two/2); }
       //else res = res 
       pow_two *= 2;
-    }
+   }
     return res;
   }
   //now p is odd, x!=0,1
@@ -228,6 +235,17 @@ NumberType solve_quadratic_residue(NumberType x, NumberType p, NumberType k = 1)
     if(res_p < 0) { res_p += pow_p; }
   }
   return res_p;
+}
+/** \brief Find a solution y to y^2 = x mod p^k, where p^k is given as a single number p_pow_k. x must be a quadratic residue mod p^k, which can be checked with quadratic_residue.
+ * 
+ * p_pow_k must be a power of a prime number p (odd or even), x must be a quadratic residue modulo p^k
+ * 
+ * */
+template<typename NumberType>
+NumberType solve_quadratic_residue(NumberType x, NumberType p_pow_k, NumberType p) {
+  NumberType k=0;
+  while(p_pow_k != 1) { p_pow_k /= p; ++k; }//compute k such that p_pow_k = p^k
+  return solve_quadratic_residue_subroutine(x,p,k);
 }
 
 } //namespace kumquat
