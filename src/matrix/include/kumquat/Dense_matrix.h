@@ -438,31 +438,23 @@ public:
 
   }
 
+private:
+//diagonalize the gram matrix in Qp_mod_Z with p odd 
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
     auto p = G_.p(); auto n = num_rows();
     //after q iterations, M[0..q][0..q] is block diagonal
     for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
-      std::cout << " ### iteration " << num_iteration << "\n";
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
-
       int pivot_i, pivot_j;//find element of maximal order
-
       find_pivot_Qp_mod_Z(pivot_i,pivot_j,num_iteration);
 
       if(pivot_i == -1) { return; }//the remaining matrix is trivial
-      
-      // std::cout << "     found pivot (" << pivot_i << "," << pivot_j << ") of max_order = " << max_order << "\n";
-
       //now, the matrix is non trivial, element B[i][j] has minimal order, and if there is a diagonal coefficient of minimal order, then i==j
       if(pivot_i == pivot_j) {//put on top left corner
           exchange_row(num_iteration,pivot_i);
           exchange_column(num_iteration,pivot_i);
-          std::cout << "     pivot in diagonal\n";
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
-        std::cout << "     pivot NOT in diagonal\n";
-        std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
-        std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
         //put element b_ii + b_jj +2*b_ij in B[i][i]
         plus_equal_row(pivot_i,pivot_j);  
         plus_equal_column(pivot_i,pivot_j);
@@ -470,14 +462,12 @@ public:
         exchange_row(num_iteration,pivot_i);
         exchange_column(num_iteration,pivot_i);
       }
-
+      //use the pivot to cancel row[num_iteration...m] and col[num_iteration...n] 
       cancel_row_column_Qp_mod_Z(num_iteration);
     }
   }
 
-
-
-
+//diagonalize the gram matrix in Qp_mod_Z with p == 2 
   void diagonalize_gram_matrix_Qp_mod_Z_p_even() {
     auto p = G_.p(); auto n = num_rows();
     //after q iterations, M[0..q][0..q] is block diagonal
@@ -493,12 +483,12 @@ public:
       if(pivot_i == pivot_j) {//put on top left corner
         exchange_row(num_iteration,pivot_i);
         exchange_column(num_iteration,pivot_i);
-        std::cout << "     pivot in diagonal\n";
-
+        std::cout << "     pivot in diagonal " << pivot_i << " " << pivot_j << "\n";
+        //use the pivot to cancel row[num_iteration...m] and col[num_iteration...n] 
         cancel_row_column_Qp_mod_Z(num_iteration);
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
-        std::cout << "     pivot NOT in diagonal\n";
+        std::cout << "     pivot NOT in diagonal " << pivot_i << " " << pivot_j << "\n";
         std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
         std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
       
@@ -508,7 +498,9 @@ public:
         exchange_column(num_iteration,pivot_i);
         exchange_row(num_iteration+1,pivot_j);
         exchange_column(num_iteration+1,pivot_j);
-//todo
+
+        std::cout << "\n--------------\n" << *this << "\n--------------\n";
+
         cancel_2_2_block_Q2_mod_Z(num_iteration);
       }
     }
@@ -551,7 +543,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 
     //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
     if(quadratic_residue(top_left.first,p)) {//compute a solution x
-      std::cout << " a = " << top_left.first << " is quad res mod p=" << p <<"\n";
+      std::cout << " a = " << top_left.first << " is quadquad res mod p=" << p <<"\n";
 
       auto x = solve_quadratic_residue(top_left.first,top_left.second);
      
@@ -624,8 +616,19 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     Integer b = mat_[idx][idx+1].first;
     Integer c = mat_[idx+1][idx+1].first * 
                               (two_to_m / ((Integer)(2)*mat_[idx+1][idx+1].second));
+    
+    std::cout << "  alpha = " << a << "\n";
+    std::cout << "  beta  = " << b << "\n";
+    std::cout << "  gamma = " << c << "\n";
+    std::cout << "  2^m   = " << two_to_m << "\n";
+
     //d is the inverse of 4ac-b^2 modulo 2^m
-    Integer d = kumquat::inverse((Integer)4 * a * c - b * b, two_to_m);
+    Integer d_inv = ( (Integer)4 * a * c - b * b ) % two_to_m;
+    if(d_inv < 0) { d_inv += two_to_m; }
+
+    std::cout << "   d^-1    = " << d_inv << "\n";
+
+    Integer d = kumquat::inverse(d_inv, two_to_m);
 
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
