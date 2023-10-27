@@ -68,26 +68,26 @@ public:
       }
     }
   }
-// /** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
-//   void times_equal_column(size_t i, Coefficient z) {
-//     for(size_t k=0; k<n_; ++k) {
-//       G_.times_equal(mat_[k][i],z);
-//     }
-//   }
-// /** \brief Set row_i <- z * row_i. */
-//   void times_equal_row(size_t i, Coefficient z) {
-//     for(size_t k=0; k<m_; ++k) {
-//       G_.times_equal(mat_[i][k],z);
-//     }
-//   }
-/** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. */
-  void times_equal_column(size_t i, Integer z) {
+/** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. 
+ * 
+ * If CoefficientStructure implements AbelianGroup, WeightType can be of type CoefficientStructure::Integer.
+ * 
+ * If CoefficientStructure also implements PseudoRing, WeightType can also be of type CoefficientStructure::Element (i.e., Coefficient).
+ * */
+  template<typename WeightType>
+  void times_equal_column(size_t i, WeightType z) {
     for(size_t k=0; k<n_; ++k) {
       G_.times_equal(mat_[k][i],z);
     }
   }
-/** \brief Set row_i <- z * row_i. */
-  void times_equal_row(size_t i, Integer z) {
+/** \brief Set row_i <- z * row_i. 
+ * 
+ * If CoefficientStructure implements AbelianGroup, WeightType can be of type CoefficientStructure::Integer.
+ * 
+ * If CoefficientStructure also implements PseudoRing, WeightType can also be of type CoefficientStructure::Element (i.e., Coefficient).
+ * */
+  template<typename WeightType>
+  void times_equal_row(size_t i, WeightType z) {
     for(size_t k=0; k<m_; ++k) {
       G_.times_equal(mat_[i][k],z);
     }
@@ -98,22 +98,17 @@ public:
       G_.plus_equal(mat_[k][i],mat_[k][j]);
     }
   }
-/** \brief Set col_i <- col_i + z * col_j. */
+/** \brief Set col_i <- col_i + z * col_j. 
+ * 
+ * If CoefficientStructure implements AbelianGroup, WeightType can be of type CoefficientStructure::Integer.
+ * 
+ * If CoefficientStructure also implements PseudoRing, WeightType can also be of type CoefficientStructure::Element (i.e., Coefficient).
+ * */
   template<typename WeightType>
-  std::enable_if_t<std::is_integral_v<WeightType> > plus_equal_column(size_t i, size_t j, WeightType z) {
+  void plus_equal_column(size_t i, size_t j, WeightType z) {
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
     }    
-  }
-/** \brief Set col_i <- col_i + z * col_j, where z is an element. Coefficient structure must be a pseudo ring. */
- template<typename WeightType>
-  std::enable_if_t<!std::is_integral_v<WeightType> > plus_equal_column(size_t i, size_t j, WeightType z) {
-    // if constexpr (Coeff_struct::pseudo_ring) {
-      for(size_t k=0; k<n_; ++k) {
-        G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
-      }
-    // }
-    // else { std::cerr << "The coefficient structure does not have a ring multiplication.\n"; }
   }
 /** \brief Set row_i <- row_i + row_j. */
   void plus_equal_row(size_t i, size_t j) {
@@ -121,24 +116,17 @@ public:
       G_.plus_equal(mat_[i][k],mat_[j][k]);
     }
   }
-/** \brief Set row_i <- row_i + z * row_j. */
+/** \brief Set row_i <- row_i + z * row_j. 
+ * 
+ * If CoefficientStructure implements AbelianGroup, WeightType can be of type CoefficientStructure::Integer.
+ * 
+ * If CoefficientStructure also implements PseudoRing, WeightType can also be of type CoefficientStructure::Element (i.e., Coefficient).
+ * */
   template<typename WeightType>
-  std::enable_if_t<std::is_integral_v<WeightType> > 
-  plus_equal_row(size_t i, size_t j, WeightType z) {
+  void plus_equal_row(size_t i, size_t j, WeightType z) {
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
     }    
-  }
-/** \brief Set row_i <- row_i + z * row_j, where z is an element. Coefficient structure must be a pseudo ring. */
-  template<typename WeightType>
-  std::enable_if_t<!std::is_integral_v<WeightType> > 
-  plus_equal_row(size_t i, size_t j, WeightType z) {
-    // if constexpr (Coeff_struct::pseudo_ring) {
-      for(size_t k=0; k<m_; ++k) {
-        G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
-      }    
-    // }
-    // else { std::cerr << "The coefficient structure does not have a ring multiplication.\n"; }
   }
 /** \brief Exchange the columns of index i and j.*/
   void exchange_column(size_t i, size_t j) {
@@ -154,7 +142,6 @@ public:
       std::swap(mat_[i][k],mat_[j][k]);
     }
   }
-
 /** \brief Return the total number of rows in the matrix.*/
   size_t num_rows() const { return n_; }
 /** \brief Return the total number of columns in the matrix.*/
@@ -164,7 +151,7 @@ public:
   Coeff_struct & coefficient_structure() { return G_; }
 /** \brief Reduce the matrix to column echelon form.
  * 
- * Keep trakc of the sequence of operation as a vector of 
+ * Keep track of the sequence of operation as a vector of 
  * tuple (i,j,z), meaning operation col_i <- col_i + z * col_j, 
  * pushed into the input col_ops.
  * 
