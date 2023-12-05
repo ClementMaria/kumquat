@@ -203,7 +203,7 @@ NumberType solve_quadratic_residue_subroutine(NumberType x, NumberType p, Number
     //hence k>2 and x = 1 mod 8 
     NumberType res=1; //solution to res^2 = x mod 8
     NumberType pow_two = 8;
-    for(int j=4 ; j <= k; ++j) {//after it j, res*res = x mod 2^j
+    for(int j=4 ; j <= k; ++j) {//after iteration j, res*res = x mod 2^j
       //pow_two == 2^{j-1}
       NumberType lambda = (res*res - x) / pow_two; //
       if( (lambda % 2) != 0 ) { res += (pow_two/2); }

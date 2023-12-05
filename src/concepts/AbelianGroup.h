@@ -53,7 +53,8 @@ struct AbelianGroup {
   Element element(Integer z);
 /** Check whether an element is trivial.*/
   bool trivial(Element a);
-
+/** Check whether an integer is trivial.*/
+  bool trivial(Integer a);
 };
 
 } //namespace kumquat

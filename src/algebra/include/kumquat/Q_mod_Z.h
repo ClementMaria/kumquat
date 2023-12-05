@@ -156,7 +156,7 @@ public:
   Element element([[maybe_unused]] Integer z) { return Element(0,1); }
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Element a) { return a.first == 0; }
-
+  bool trivial(Integer z) { return z == 0; }
 /* @} */  // end AbelianGroup methods
 /** \name Methods for pseudo rings. Implements PseudoRing.
  * @{ */

@@ -106,6 +106,7 @@ public:
  * */
   template<typename WeightType>
   void plus_equal_column(size_t i, size_t j, WeightType z) {
+    if(G_.trivial(z)) return;
     for(size_t k=0; k<n_; ++k) {
       G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
     }    
@@ -124,6 +125,7 @@ public:
  * */
   template<typename WeightType>
   void plus_equal_row(size_t i, size_t j, WeightType z) {
+    if(G_.trivial(z)) return;
     for(size_t k=0; k<m_; ++k) {
       G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
     }    
@@ -488,10 +490,9 @@ private:
         cancel_row_column_Qp_mod_Z(num_iteration);
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
-        std::cout << "     pivot NOT in diagonal " << pivot_i << " " << pivot_j << "\n";
+        std::cout << "     pivot NOT in diagonal. Pivot = " << pivot_i << " " << pivot_j << "\n";
         // std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
         // std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
-      
       
         //put the future block in top left corner
         exchange_row(num_iteration,pivot_i);
@@ -648,31 +649,64 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       //db = +d*b
       Integer db = (d*b);
       std::cout << "   db = " << db <<"\n";
-      auto xxx = G_.times(u,minus_d2c);
-      auto yyy = G_.times(v,db);
-      auto zzz = G_.plus(xxx,yyy);
-      std::cout << "   -2dcu = " << xxx <<"\n";
-      std::cout << "   dbv   = " << yyy << "\n";
-      std::cout << "   -2dcu+dbv = " << zzz << "\n";
 
-      Coefficient r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
+      std::cout << "   v = " << v << "\n";
+
+
+
+      // std::cout << "   dbv = " << G_.times(v,db) << "\n";
+
+
+
+
+      // auto xxx = G_.times(u,minus_d2c);
+      // auto yyy = G_.times(v,db);
+      // auto zzz = G_.plus(xxx,yyy);
+      // std::cout << "   -2dcu = " << xxx <<"\n";
+      // std::cout << "   dbv   = " << yyy << "\n";
+      // std::cout << "   -2dcu+dbv = " << zzz << "\n";
+
+
+
+
+      Coefficient minus_r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
       //prepare r2 = -d(2av-bu) = -2*d*a * (v)   +    d*b * (u)
       Integer minus_d2a = (Integer)(-2)*d*a;
-      Coefficient r2 = G_.plus( G_.times(v,minus_d2a), G_.times(v,db)  );
+      Coefficient minus_r2 = G_.plus( G_.times(v,minus_d2a), G_.times(u,db)  );
     
 
-      std::cout << "    r1=-d(2cu-bv) = " << r1 << "     r2=-d(2av-bu) = " << r2 << "\n";
+      std::cout << "    r1=-d(2cu-bv) = " << minus_r1 << "     r2=-d(2av-bu) = " << minus_r2 << "\n";
 
-      auto aaa = G_.times(r1,mat_[idx][idx]);
-      auto bbb = G_.plus(u, aaa);
-      auto ccc = G_.times(r2,mat_[idx][idx+1]);
-      auto ddd = G_.plus( bbb, ccc );
-      std::cout << "=== " << ddd << "\n";
 
-      plus_equal_row(i,idx,r1);
-      plus_equal_column(i,idx,r1);
-      plus_equal_row(i,idx+1,r2);
-      plus_equal_column(i,idx+1,r2);
+
+
+      // auto aaa = G_.times(r1,mat_[idx][idx]);
+      // auto bbb = G_.plus(u, aaa);
+      // auto ccc = G_.times(r2,mat_[idx][idx+1]);
+      // auto ddd = G_.plus( bbb, ccc );
+
+      // std::cout << "=== " << ddd << "\n";
+
+      std::cout << "row_" << i << " <- row_" << i << " + (" << minus_r1 << ")*row_" << idx << "\n";
+      plus_equal_row(i,idx,minus_r1);
+
+
+      std::cout << "col_" << i << " <- col_" << i << " + (" << minus_r1 << ")*col_" << idx << "\n";
+
+      plus_equal_column(i,idx,minus_r1);
+
+
+      std::cout << *this << "\n\n";
+
+
+
+
+      std::cout << "row_" << i << " <- row_" << i << " + (" << minus_r2 << ")*row_" << idx+1 << "\n";
+      plus_equal_row(i,idx+1,minus_r2);
+
+      std::cout << "col_" << i << " <- col_" << i << " + (" << minus_r2 << ")*col_" << idx+1 << "\n";
+
+      plus_equal_column(i,idx+1,minus_r2);
 
       std::cout << *this << "\n\n";
 
