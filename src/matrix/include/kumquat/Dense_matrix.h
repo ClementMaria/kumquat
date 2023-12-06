@@ -440,6 +440,17 @@ public:
 
   }
 
+  // Coefficient gauss_sum_Qp_mod_Z() {
+  //   diagonalize_gram_matrix_Qp_mod_Z();
+  //   // Coefficient gauss_sum = 1;
+  //   if((p % 2) == 0) { 
+      
+  //   }
+  //   else {
+
+  //   }
+  // }
+
 private:
 //diagonalize the gram matrix in Qp_mod_Z with p odd 
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
@@ -473,8 +484,7 @@ private:
   void diagonalize_gram_matrix_Qp_mod_Z_p_even() {
     auto p = G_.p(); auto n = num_rows();
     //after q iterations, M[0..q][0..q] is block diagonal
-    for(size_t num_iteration = 0; num_iteration < n; ++num_iteration) {
-      std::cout << " ### iteration " << num_iteration << "\n";
+    for(size_t num_iteration = 0; num_iteration < n; ) {
       //check if the bottom right block B is uniformly 0, and if not compute the minimum r such that p^r B = 0;
       int pivot_i, pivot_j;
       find_pivot_Qp_mod_Z(pivot_i, pivot_j, num_iteration);
@@ -485,25 +495,19 @@ private:
       if(pivot_i == pivot_j) {//put on top left corner
         exchange_row(num_iteration,pivot_i);
         exchange_column(num_iteration,pivot_i);
-        std::cout << "     pivot in diagonal " << pivot_i << " " << pivot_j << "\n";
         //use the pivot to cancel row[num_iteration...m] and col[num_iteration...n] 
         cancel_row_column_Qp_mod_Z(num_iteration);
+        ++num_iteration;
       }
       else {//pivot_i != pivot_j and B[i][j]==B[j][i] has strictly larger order than B[i][i] and B[j][j]
-        std::cout << "     pivot NOT in diagonal. Pivot = " << pivot_i << " " << pivot_j << "\n";
-        // std::cout << "       row_" << pivot_i << " += row_" << pivot_j << "\n"; 
-        // std::cout << "       col_" << pivot_i << " += col_" << pivot_j << "\n"; 
-      
         //put the future block in top left corner
         exchange_row(num_iteration,pivot_i);
         exchange_column(num_iteration,pivot_i);
         exchange_row(num_iteration+1,pivot_j);
         exchange_column(num_iteration+1,pivot_j);
 
-        std::cout << "put block on top left\n";
-        std::cout << "\n--------------\n" << *this << "\n--------------\n";
-
         cancel_2_2_block_Q2_mod_Z(num_iteration);
+        num_iteration += 2;
       }
     }
   }
@@ -541,37 +545,19 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     //now, enforce top left corner B[idx][idx]== eps/p^k, for 
     //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
     Integer eps, eps_inv;
-    
-    std::cout << "now, enforce top left corner == eps/p^k\n";
-
     //if a quadratic residue mod p, i.e., a = x^2 mod p -> set eps = 1
     if(quadratic_residue(top_left.first,top_left.second,p)) {//compute a solution x
-      std::cout << " a = " << top_left.first << " is quadquad res mod p^k=" << top_left.second <<"\n";
-
       auto x = solve_quadratic_residue(top_left.first,top_left.second,p);
-     
-      std::cout << "   x=" << x << "  s.t. x*x cong a mod p\n";
-
       //compute s = x^{-1} mod p^k, which exists because gcd(a,p)=1 => gcd(x,p)=1
       auto s = inverse(x,top_left.second);
-
-      std::cout << "   s=" << s << "   s.t. s=x^{-1} mod p^k (=" << top_left.second << "\n";
-
       //set row_idx <- s*row_idx and col_idx <- s*col_idx such that B[idx][idx] = 1/p^r mod Z
       times_equal_row(idx,s);
       times_equal_column(idx,s);
       eps = 1; eps_inv = 1;
-
-      std::cout << " now top_left = 1/p^k  -> " << mat_[idx][idx] <<"\n";
     }
     else {//else quadratic non-residue -> top_left is already a/p^k, set eps=a
-
-      std::cout << " a = " << top_left.first << " is quad NON - res mod p=" << p <<"\n";
-
       eps = top_left.first;
       eps_inv = kumquat::inverse(eps, top_left.second);//in number_theory.h
-
-      std::cout << "   eps=" << eps << "   and eps_inv = " << eps_inv << "(mod p^k=" << top_left.second << "\n";
     }
 
     top_left = mat_[idx][idx];
@@ -581,9 +567,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 //compute beta such that B[idx][i]== beta * b / p^r with beta > 1
 // G_.p_normalize(mat_[idx][i]);
       Integer beta = kumquat::division(top_left.second, mat_[idx][i].second);//in number_theory.h
-                              
-      std::cout << " at B_" << idx <<","<<i<<"   beta=" << beta << "  s.t. " << mat_[idx][i] << "== beta * b / p^r " << "\n";
-
       //do row_i <- row_i - beta * b * eps^-1 * row_idx and
       //   col_i <- col_i - beta * eps^-1 * col_idx
       auto z = kumquat::times(
@@ -593,16 +576,8 @@ If such element is in the diagonal, always return a diagonal element. If the mat
                    , eps_inv )
                  , (Integer(-1)));
 
-      std::cout << "  set row_" << i << " += " << z << " * row_" << idx << "\n";
-      std::cout << "  set col_" << i << " += " << z << " * col_" << idx << "\n";
-
-      std::cout << "   cancel with: " << G_.times(mat_[idx][idx],z).first << "/" << G_.times(mat_[idx][idx],z).second << "\n";
-
       plus_equal_row(i,idx,z);
       plus_equal_column(i,idx,z);
-    
-      std::cout << "   result:\n";
-      std::cout << *this << "\n";
     }
   }    
 
@@ -611,6 +586,9 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 *  |2a/2^m   b/2^m |   where b is odd and a,c are arbitary
 *  |               |
 *  |b/2^m    2c/2^m|
+*
+*  in row/col i>idx+1, we have the first elements equal to 
+*  |u/2^m    v/2^m | for cancellation 
 */
   void cancel_2_2_block_Q2_mod_Z(size_t idx) {
     //extract integres a,b,c and 2^m
@@ -619,12 +597,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     Integer b = mat_[idx][idx+1].first;
     Integer c = mat_[idx+1][idx+1].first * 
                               (two_to_m / ((Integer)(2)*mat_[idx+1][idx+1].second));
-    
-    std::cout << "  alpha = " << a << "\n";
-    std::cout << "  beta  = " << b << "\n";
-    std::cout << "  gamma = " << c << "\n";
-    std::cout << "  2^m   = " << two_to_m << "\n";
-
     //d is the inverse of 4ac-b^2 modulo 2^m
     Integer d_inv = ( (Integer)4 * a * c - b * b ) % two_to_m;
     if(d_inv < 0) { d_inv += two_to_m; }
@@ -637,47 +609,30 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
-    
-      Coefficient u = mat_[i][idx]; Coefficient v = mat_[i][idx+1];
+      // find u s.t. mat_[i][idx] == u / 2^m and v s.t. mat_[i][idx+1] == v / 2^m
+      Integer u = (mat_[i][idx]).first * (two_to_m / mat_[i][idx].second); 
+      Integer v = (mat_[i][idx+1]).first * (two_to_m / mat_[i][idx+1].second);
 
       std::cout << "++++++++++++++++++ i=" << i << "   (u,v)=" << u << "," << v << "\n";
       //prepare r1 = -d(2cu-bv) = -2*d*c * (u)   +    d*b * (v)
       //minus_d2c = -2*d*c;
-      Integer minus_d2c = (Integer)(-2)*d*c;  
+      // Integer minus_d2c = (Integer)(-2)*d*c;  
 
-      std::cout << "   -2dc = " << minus_d2c <<"\n";  
-      //db = +d*b
-      Integer db = (d*b);
-      std::cout << "   db = " << db <<"\n";
+      // std::cout << "   -2dc = " << minus_d2c <<"\n";  
+      // //db = +d*b
+      // Integer db = (d*b);
+      // std::cout << "   db = " << db <<"\n";
 
-      std::cout << "   v = " << v << "\n";
+      // std::cout << "   v = " << v << "\n";
 
-
-
-      // std::cout << "   dbv = " << G_.times(v,db) << "\n";
-
-
-
-
-      // auto xxx = G_.times(u,minus_d2c);
-      // auto yyy = G_.times(v,db);
-      // auto zzz = G_.plus(xxx,yyy);
-      // std::cout << "   -2dcu = " << xxx <<"\n";
-      // std::cout << "   dbv   = " << yyy << "\n";
-      // std::cout << "   -2dcu+dbv = " << zzz << "\n";
-
-
-
-
-      Coefficient minus_r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
+      Integer minus_r1 = (-1) * d * ( 2 * c * u - b * v);
+      Integer minus_r2 = (-1) * d * ( 2 * a * v - b * u);
+      // Coefficient minus_r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
       //prepare r2 = -d(2av-bu) = -2*d*a * (v)   +    d*b * (u)
-      Integer minus_d2a = (Integer)(-2)*d*a;
-      Coefficient minus_r2 = G_.plus( G_.times(v,minus_d2a), G_.times(u,db)  );
+      // Integer minus_d2a = (Integer)(-2)*d*a;
+      // Coefficient minus_r2 = G_.plus( G_.times(v,minus_d2a), G_.times(u,db)  );
     
-
       std::cout << "    r1=-d(2cu-bv) = " << minus_r1 << "     r2=-d(2av-bu) = " << minus_r2 << "\n";
-
-
 
 
       // auto aaa = G_.times(r1,mat_[idx][idx]);
@@ -697,8 +652,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 
 
       std::cout << *this << "\n\n";
-
-
 
 
       std::cout << "row_" << i << " <- row_" << i << " + (" << minus_r2 << ")*row_" << idx+1 << "\n";

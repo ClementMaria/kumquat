@@ -39,7 +39,7 @@ template<typename IntegerNumber>
 class Q_mod_Z {
 public:
   static const bool abelian_group = true;
-  static const bool pseudo_ring = true;
+  static const bool pseudo_ring = false;//multiplication undefined a/b*c/d != a/b*(c+d)/d
   static const bool ring = false;
   static const bool principal_ideal_domain = false;
   static const bool field = false;
@@ -162,18 +162,18 @@ public:
  * @{ */
 
 /** Set a <- (a*b). */
-    void times_equal(Element & a, Element b) {
-      a.first = a.first * b.first;
-      a.second = a.second * b.second;
-      normalize(a);
-    }
+    // void times_equal(Element & a, Element b) {
+    //   a.first = a.first * b.first;
+    //   a.second = a.second * b.second;
+    //   normalize(a);
+    // }
 /** Return a*b.*/
-    Element times(Element a, Element b) {
-      a.first = a.first * b.first;
-      a.second = a.second * b.second;
-      normalize(a);
-      return a;
-    }
+    // Element times(Element a, Element b) {
+    //   a.first = a.first * b.first;
+    //   a.second = a.second * b.second;
+    //   normalize(a);
+    //   return a;
+    // }
 /** Set a <- a^p. */
     void pow_equal(Element & a, Integer p) {
       a.first = kumquat::pow(a.first,p);
@@ -216,6 +216,11 @@ public:
   }
 /* @} */  // end methods specific to Q / Z
 
+// /** \brief Write a fraction a/b, with gcd(a,b)=1, as a product a * 1/b, with a and Integer and 1/b an Element.*/
+//   std::pair<Integer,Element> externalize(Element & a) {
+//     normalize(a);
+//     return std::make_pair(a.first, Element((Integer)1, a.second));
+//   }
 
 
 private:
