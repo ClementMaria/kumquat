@@ -201,7 +201,12 @@ public:
   void normalize(Element & a) {
     normalize_fraction(a);
   }
-/* @} */  // end methods specific to Q / Z
+
+/** \brief Return the numerator of a fraction.*/
+  Integer numerator(Element a) { return a.first; }
+/** \brief Return the denominator of a fraction.*/
+  Integer denominator(Element a) { return a.second; }
+/* @} */  // end methods specific to Q.
 
 private:
   /* Normalize the fraction such that gcd(numerator,denominator) = 1. 

@@ -214,6 +214,11 @@ public:
     normalize_mod_Z(a);
     normalize_fraction(a);
   }
+/** \brief Return the numerator of a fraction.*/
+  Integer numerator(Element a) { return a.first; }
+/** \brief Return the denominator of a fraction.*/
+  Integer denominator(Element a) { return a.second; }
+  
 /* @} */  // end methods specific to Q / Z
 
 // /** \brief Write a fraction a/b, with gcd(a,b)=1, as a product a * 1/b, with a and Integer and 1/b an Element.*/

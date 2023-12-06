@@ -513,7 +513,7 @@ private:
   }
 
 private:
-/* Find the element in the submatrix M[idx...n][idx...n] with maximal order in Qp_mod_Z.
+/* Find the element in the sub-matrix M[idx...n][idx...n] with maximal order in Qp_mod_Z.
 If such element is in the diagonal, always return a diagonal element. If the matrix is uniformly 0, the pivot indices are returned as -1.
 */
   void find_pivot_Qp_mod_Z(int & pivot_i, int & pivot_j, int idx=0) {
@@ -536,7 +536,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     }
     if(max_order == 0) { pivot_i = -1; pivot_j = -1; }//matrix is 0
   }
-  /* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other eleemnts in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
+  /* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other elements in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
   void cancel_row_column_Qp_mod_Z(size_t idx) {
         auto p = G_.p(); auto n = num_rows();
     //top left element M[idx][idx] has minimal order
@@ -600,12 +600,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     //d is the inverse of 4ac-b^2 modulo 2^m
     Integer d_inv = ( (Integer)4 * a * c - b * b ) % two_to_m;
     if(d_inv < 0) { d_inv += two_to_m; }
-
-    std::cout << "   d^-1    = " << d_inv << "\n";
-
     Integer d = kumquat::inverse(d_inv, two_to_m);
-
-    std::cout << "    d = " << d << "\n";
 
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
@@ -613,60 +608,14 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       Integer u = (mat_[i][idx]).first * (two_to_m / mat_[i][idx].second); 
       Integer v = (mat_[i][idx+1]).first * (two_to_m / mat_[i][idx+1].second);
 
-      std::cout << "++++++++++++++++++ i=" << i << "   (u,v)=" << u << "," << v << "\n";
-      //prepare r1 = -d(2cu-bv) = -2*d*c * (u)   +    d*b * (v)
-      //minus_d2c = -2*d*c;
-      // Integer minus_d2c = (Integer)(-2)*d*c;  
-
-      // std::cout << "   -2dc = " << minus_d2c <<"\n";  
-      // //db = +d*b
-      // Integer db = (d*b);
-      // std::cout << "   db = " << db <<"\n";
-
-      // std::cout << "   v = " << v << "\n";
-
       Integer minus_r1 = (-1) * d * ( 2 * c * u - b * v);
       Integer minus_r2 = (-1) * d * ( 2 * a * v - b * u);
-      // Coefficient minus_r1 = G_.plus( G_.times(u,minus_d2c), G_.times(v,db)  );
-      //prepare r2 = -d(2av-bu) = -2*d*a * (v)   +    d*b * (u)
-      // Integer minus_d2a = (Integer)(-2)*d*a;
-      // Coefficient minus_r2 = G_.plus( G_.times(v,minus_d2a), G_.times(u,db)  );
-    
-      std::cout << "    r1=-d(2cu-bv) = " << minus_r1 << "     r2=-d(2av-bu) = " << minus_r2 << "\n";
 
-
-      // auto aaa = G_.times(r1,mat_[idx][idx]);
-      // auto bbb = G_.plus(u, aaa);
-      // auto ccc = G_.times(r2,mat_[idx][idx+1]);
-      // auto ddd = G_.plus( bbb, ccc );
-
-      // std::cout << "=== " << ddd << "\n";
-
-      std::cout << "row_" << i << " <- row_" << i << " + (" << minus_r1 << ")*row_" << idx << "\n";
       plus_equal_row(i,idx,minus_r1);
-
-
-      std::cout << "col_" << i << " <- col_" << i << " + (" << minus_r1 << ")*col_" << idx << "\n";
-
       plus_equal_column(i,idx,minus_r1);
-
-
-      std::cout << *this << "\n\n";
-
-
-      std::cout << "row_" << i << " <- row_" << i << " + (" << minus_r2 << ")*row_" << idx+1 << "\n";
       plus_equal_row(i,idx+1,minus_r2);
-
-      std::cout << "col_" << i << " <- col_" << i << " + (" << minus_r2 << ")*col_" << idx+1 << "\n";
-
       plus_equal_column(i,idx+1,minus_r2);
-
-      std::cout << *this << "\n\n";
-
     }
-
-
-
   }
 
 private:
