@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <kumquat/number_theory.h>
+#include <kumquat/Q_U1.h>
 
 namespace kumquat {
 
@@ -440,16 +441,17 @@ public:
 
   }
 
-  // Coefficient gauss_sum_Qp_mod_Z() {
-  //   diagonalize_gram_matrix_Qp_mod_Z();
-  //   // Coefficient gauss_sum = 1;
-  //   if((p % 2) == 0) { 
+  Q_U1<Integer>::Element gauss_sum_Qp_mod_Z() {
+    Q_U1<Integer> q_u1;
+    diagonalize_gram_matrix_Qp_mod_Z();
+    auto gauss_sum = q_u1.additive_identity();
+    if((p % 2) == 0) { 
       
-  //   }
-  //   else {
+    }
+    else {
 
-  //   }
-  // }
+    }
+  }
 
 private:
 //diagonalize the gram matrix in Qp_mod_Z with p odd 
@@ -579,11 +581,10 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       plus_equal_row(i,idx,z);
       plus_equal_column(i,idx,z);
     }
-  }    
-
+  } 
 
 /* Subroutine of the diagonalization of the Gram matrix with coefficients in Q_2 / Z, where the block B[idx,idx+1][idx,idx+1] is of the form:
-*  |2a/2^m   b/2^m |   where b is odd and a,c are arbitary
+*  |2a/2^m   b/2^m |   where b is odd and a,c are arbitrary
 *  |               |
 *  |b/2^m    2c/2^m|
 *
@@ -591,7 +592,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 *  |u/2^m    v/2^m | for cancellation 
 */
   void cancel_2_2_block_Q2_mod_Z(size_t idx) {
-    //extract integres a,b,c and 2^m
+    //extract integers a,b,c and 2^m
     Integer two_to_m = mat_[idx][idx+1].second;
     Integer a = mat_[idx][idx].first * (two_to_m / (2*mat_[idx][idx].second)) ;
     Integer b = mat_[idx][idx+1].first;
