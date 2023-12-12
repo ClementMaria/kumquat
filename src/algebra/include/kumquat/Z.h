@@ -145,6 +145,11 @@ public:
     return kumquat::remainder(x,y);//defined in number_theory.h
   }
 
+/** \brief Return a string encoding the element.*/
+  std::string to_string(Element x) {
+    return std::to_string(x);
+  }  
+
 };
 
 typedef Z<int> Z_int;

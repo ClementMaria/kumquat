@@ -208,6 +208,11 @@ public:
   Integer denominator(Element a) { return a.second; }
 /* @} */  // end methods specific to Q.
 
+/** \brief Return a string encoding the fraction.*/
+  std::string to_string(Element x) {
+    return std::to_string(x.first) + "/" + std::to_string(x.second);
+  }
+
 private:
   /* Normalize the fraction such that gcd(numerator,denominator) = 1. 
    */
@@ -231,15 +236,15 @@ private:
 //       os << a.first << "/" << a.second;
 //   return os;
 // }
-template<typename IntegerNumber>
-std::ostream & operator<<( std::ostream & os, 
-                           std::pair<IntegerNumber,IntegerNumber> & a) {
+// template<typename IntegerNumber>
+// std::ostream & operator<<( std::ostream & os, 
+//                            std::pair<IntegerNumber,IntegerNumber> & a) {
   
-  std::stringstream ss;//for alignment purpose
-  ss << a.first << "/" << a.second;  
-  os << ss.str();
-  return os;
-}
+//   std::stringstream ss;//for alignment purpose
+//   ss << a.first << "/" << a.second;  
+//   os << ss.str();
+//   return os;
+// }
 
 typedef Q<boost::multiprecision::mpz_int> Q_mp;
 

@@ -19,6 +19,8 @@
 #include <boost/multiprecision/gmp.hpp>
 #include <kumquat/number_theory.h>
 #include <sstream>
+#include <kumquat/Q.h> 
+#include <kumquat/Q_mod_Z.h> 
 
 namespace kumquat {
 
@@ -56,8 +58,8 @@ public:
   * */
   typedef IntegerNumber Integer;  
 
-  typedef Q<Integer>::Element       Rational;
-  typedef Q_mod_Z<Integer>::Element Rational_mod_Z;
+  typedef typename Q<Integer>::Element       Rational;
+  typedef typename Q_mod_Z<Integer>::Element Rational_mod_Z;
 
 /** \brief The type of elements of the group.
   * 
@@ -84,12 +86,12 @@ public:
 /** Set a <- (a*b), the group law. */  
   void plus_equal(Element & a, Element b) {
     Q_.times_equal(a.first,b.first);
-    Q_mod_Z.plus_equal(a.second,b.second);
+    Q_mod_Z_.plus_equal(a.second,b.second);
   }
 /** Return (a*b), the group law. */  
   void plus(Element a, Element b) {
     Q_.times_equal(a.first,b.first);
-    Q_mod_Z.plus_equal(a.second,b.second);
+    Q_mod_Z_.plus_equal(a.second,b.second);
     return a;
   }
 /** Set a<- z*a using the Z-module structure of the group.*/
@@ -104,7 +106,7 @@ public:
 /** Return the additive inverse (-a) of element a. */
   Element additive_inverse(Element a) {
    return std::make_pair( Q_.multiplicative_inverse(a.first), 
-                          Q_mod_Z.additive_inverse(a.second) );
+                          Q_mod_Z_.additive_inverse(a.second) );
   }
 /** Return the order of the group. It will return the number of element in a finite abelian group, or -1 in case the group is infinite. */
   Integer order() { return -1; }
@@ -112,7 +114,7 @@ public:
   Integer order(Element a) { 
     if(Q_.trivial(a.first)) { return 0; }    
     if(Q_.equal(a.first, Q_.multiplicative_identity())) {
-      return Q_mod_Z.denominator(a.second);
+      return Q_mod_Z_.denominator(a.second);
     }
     return -1;
   }
@@ -120,11 +122,11 @@ public:
   Integer rank() { return -1; } 
 /** Return true iff a and b represent the same element of the group.*/
   bool equal(Element a, Element b) {
-    return (Q_.equal(a.first,b.first)) && (Q_mod_Z.equal(a.second,b.second));
+    return (Q_.equal(a.first,b.first)) && (Q_mod_Z_.equal(a.second,b.second));
   }
 /** Convert an integer to an element of the group, equal to z*1.*/
   Element element(Integer z) {
-    return std::make_pair(Q_.element(z,1), Q_mod_Z.additive_identity());
+    return std::make_pair(Q_.element(z,1), Q_mod_Z_.additive_identity());
   }
 /** Check whether an element is trivial.*/
   bool trivial(Element a) {
@@ -134,6 +136,13 @@ public:
   bool trivial(Integer a) { return a == 0; } 
 /* @} */  // end AbelianGroup methods
 
+/** \brief Return a string encoding the element.
+ * 
+ * An element (x,y,r,s) representing the number (x/y)* exp(i 2 pi * (r/s) ) gives the string: x/ye(r/s)
+ * */
+  std::string to_string(Element x) {
+    return Q_.to_string(x.first) + "e(" + Q_mod_Z_.to_string(x.second) + ")";
+  }
 
 private:
   Q<Integer>       Q_;

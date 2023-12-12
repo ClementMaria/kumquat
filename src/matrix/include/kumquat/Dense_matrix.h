@@ -24,7 +24,7 @@ namespace kumquat {
 /** \class Dense_matrix Dense_matrix.h kumquat/Dense_matrix.h 
  * \brief A dense matrix type, suited for normalizing small matrices.
  * 
- * The template type represents the group of coefficients for the matrix entires, 
+ * The template type represents the group of coefficients for the matrix entries, 
  * and must be a model of the concept AbelianGroup. 
  * 
  * All the values of a same row are represented contiguously in memory ; hence 
@@ -33,7 +33,7 @@ namespace kumquat {
 template< class CoefficientStructure >
 class Dense_matrix {
 public:
-/** The algebraic structure containing the coefficients for the matrix entires.
+/** The algebraic structure containing the coefficients for the matrix entries.
  * 
  * Must be a model of AbelianGroup.*/
   typedef CoefficientStructure Coeff_struct;
@@ -149,7 +149,7 @@ public:
   size_t num_rows() const { return n_; }
 /** \brief Return the total number of columns in the matrix.*/
   size_t num_columns() const { return m_; }
-/** \brief Return a reference to the algebraic structure of the entires of 
+/** \brief Return a reference to the algebraic structure of the entries of 
  * the matrix.*/
   Coeff_struct & coefficient_structure() { return G_; }
 /** \brief Reduce the matrix to column echelon form.
@@ -440,19 +440,45 @@ public:
     else { diagonalize_gram_matrix_Qp_mod_Z_p_odd(); }
 
   }
-
-  Q_U1<Integer>::Element gauss_sum_Qp_mod_Z() {
+/** \brief Compute the Gauss sum associated to a general bilinear map on a p-group.
+ * */
+  typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z() {
     Q_U1<Integer> q_u1;
     diagonalize_gram_matrix_Qp_mod_Z();
     auto gauss_sum = q_u1.additive_identity();
+
+    auto n = num_rows();//square nxn matrix
+    auto p = G_.p();
     if((p % 2) == 0) { 
       
     }
-    else {
+    else {//p odd, the matrix is diagonal
+      for(size_t i=0; i<n; ++i) {
 
+      }
     }
   }
+/** \brief Compute the Gauss sum associated to an irreducible bilinear map on a p-group.
+ * */
+  typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x) {
 
+  }
+/**
+  *
+  * Case p=2 and we have a 2 x 2 block of the form:
+  * | x  y |
+  * | y  z |
+  *  
+  * 
+  * 
+  */
+
+  typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x, Coefficient y, Coefficient z) {
+    Q_U1<Integer> q_u1;
+    if(G_.trivial(x)) { return q_u1.additive_identity(); }
+    //compute r such that y = 1/2^r
+
+  }
 private:
 //diagonalize the gram matrix in Qp_mod_Z with p odd 
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
@@ -589,7 +615,12 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 *  |b/2^m    2c/2^m|
 *
 *  in row/col i>idx+1, we have the first elements equal to 
-*  |u/2^m    v/2^m | for cancellation 
+*  |u/2^m    v/2^m | for cancellation.
+*
+*  as a result, we get a canonical block of the form:
+*  | 0      1/2^r |          | 1/2^(r-1)   1/2^r     |
+*  |                   or    |                       |
+*  | 1/2^r  0     |          | 1/2^r       1/2^(r-1) |
 */
   void cancel_2_2_block_Q2_mod_Z(size_t idx) {
     //extract integers a,b,c and 2^m
@@ -617,6 +648,26 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       plus_equal_row(i,idx+1,minus_r2);
       plus_equal_column(i,idx+1,minus_r2);
     }
+    /* now, put the 2x2 block
+     *  |2a/2^m   b/2^m |   where b is odd and a,c are arbitrary
+     *  |               |
+     *  |b/2^m    2c/2^m|
+     * into canonical form.*/
+    //lemma 2.2 in https://arxiv.org/pdf/1405.7950.pdf
+    //if a or c = 0, b invertible mod 2^m so multiply by b^1 mod 2^m 
+    //if ac even then equivalent to:
+    /*  |0     1/2^m |   
+     *  |            |
+     *  |1/2^m      0|
+     */
+    //if ac odd, then equivalent to:
+    /*  |1/2^m-1  1/2^m  |   
+     *  |                |
+     *  |1/2^m    1/2^m-1|
+     */
+
+    to do...
+
   }
 
 private:

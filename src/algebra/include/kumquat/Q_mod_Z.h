@@ -29,7 +29,7 @@ namespace kumquat {
   * The structure is an Abelian group for +.
   * 
   * Elements are represented by pairs of multiprecision non-negative integers (x,y), 
-  * repesenting fractions \f$x/y\f$, with \f$0 \geq x < y\f$ and gcd(x,y) = 1.
+  * representing fractions \f$x/y\f$, with \f$0 \geq x < y\f$ and gcd(x,y) = 1.
   *
   * \implements AbelianGroup
   * 
@@ -226,6 +226,11 @@ public:
 //     normalize(a);
 //     return std::make_pair(a.first, Element((Integer)1, a.second));
 //   }
+
+/** \brief Return a string encoding the fraction.*/
+  std::string to_string(Element x) {
+    return std::to_string(x.first) + "/" + std::to_string(x.second);
+  }
 
 
 private:

@@ -122,6 +122,11 @@ public:
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Element a) { return a == 0; }
 
+/** \brief Return a string encoding the element.*/
+  std::string to_string(Element x) {
+    return std::to_string(x);
+  }  
+
 private:
   Integer N_;
   std::vector<Element> inverse_;
