@@ -426,7 +426,23 @@ private:
 public:
 /** \brief Diagonalize the Gram matrix of a bilinear form.
  * 
- * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a finite abelian group G = <x_1, ... x_n> to the abelian group \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In particular, the matrix is square symmetric.
+ * The matrix mat_ must contain the values b(x_i,x_j) of a bilinear form from a 
+ * finite abelian p-group G = <x_1, ... x_n> to the additive abelian group 
+ * \f$\mathbb{Q}_{(p)}/\mathbb{Z}\f$, for a prime number \f$p \geq 2\f$. In 
+ * particular, the matrix is square symmetric.
+ * 
+ * The result is:
+ * for p odd, a diagonal matrix with diagonal elements of the form \f$a/p^r\f$ with 
+ * \$f\gcd(a,p)=1\$f and \f$a\f$ is either 1 or a quadratic non-residue modulo p.
+ * 
+ * for p = 2, a block diagonal matrix with blocks of size 1 or 2. The 1-block are 
+ * of the form 
+ * \f$a/2^r\f$ with \$f\gcd(a,2)=1\$f and \f$a\f$ is either 1 or a quadratic 
+ * non-residue modulo 2^r. The 2-blocks are of the form:
+ * 
+ * | 0      1/2^r |          | 1/2^(r-1)   1/2^r     |
+ * |                   or    |                       |
+ * | 1/2^r  0     |          | 1/2^r       1/2^(r-1) |
  * */
   void diagonalize_gram_matrix_Qp_mod_Z() {
     auto n = num_rows();
@@ -445,7 +461,7 @@ public:
   typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z() {
     Q_U1<Integer> q_u1;
     diagonalize_gram_matrix_Qp_mod_Z();
-    auto gauss_sum = q_u1.additive_identity();
+    auto gauss_sum = q_u1.additive_identity();//1 Q_U! is a multiplicative group
 
     auto n = num_rows();//square nxn matrix
     auto p = G_.p();
@@ -654,7 +670,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
      *  |b/2^m    2c/2^m|
      * into canonical form.*/
     //lemma 2.2 in https://arxiv.org/pdf/1405.7950.pdf
-    //if a or c = 0, b invertible mod 2^m so multiply by b^1 mod 2^m 
     //if ac even then equivalent to:
     /*  |0     1/2^m |   
      *  |            |
@@ -666,8 +681,18 @@ If such element is in the diagonal, always return a diagonal element. If the mat
      *  |1/2^m    1/2^m-1|
      */
 
-    to do...
-
+    if((a*c) % 2 == 0) {
+      mat_[idx][idx] = G_.additive_identity();
+      mat_[idx+1][idx] = G_.element(1,two_to_m);
+      mat_[idx][idx+1] = G_.element(1,two_to_m);
+      mat_[idx+1][idx+1] = G_.additive_identity();
+    }
+    else {
+      mat_[idx+1][idx] = G_.element(2,two_to_m);
+      mat_[idx+1][idx] = G_.element(1,two_to_m);
+      mat_[idx][idx+1] = G_.element(1,two_to_m);
+      mat_[idx+1][idx] = G_.element(2,two_to_m);
+    }
   }
 
 private:
