@@ -103,6 +103,25 @@ NumberType pow(NumberType base, NumberType exp, NumberType mod = 0) {
   }
   return res;
 }
+
+
+/** \brief Naive p-logarithm of an integer x=p^r.
+ * 
+ * param[in] x = p^r a power of p.
+ * param[in] p A positive integer.
+ * @return the value r such that x = p^r.
+ * */
+template<typename NumberType>
+NumberType logp(NumberType x, NumberType p) {
+  NumberType res=0;
+  while(x != 1) { 
+    x /= p; ++res;
+  }
+  return res;
+}
+
+
+
 /** \brief Return the Legendre symbol of the represented integer x, w.r.t. a prime 
   * number p, with the explicit formula \f$x^{(p-1) / 2} \mod p\f$, using fast 
   * exponentiation. 

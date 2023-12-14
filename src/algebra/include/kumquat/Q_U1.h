@@ -128,6 +128,10 @@ public:
   Element element(Integer z) {
     return std::make_pair(Q_.element(z,1), Q_mod_Z_.additive_identity());
   }
+/** Construct  a/b*e(r/s).*/
+  Element element(Integer a, Integer b, Integer r, Integer s) {
+    return std::make_pair(Q_.element(a,b), Q_mod_Z_.element(r,s));
+  }
 /** Check whether an element is trivial.*/
   bool trivial(Element a) {
     return equal(a,additive_identity());

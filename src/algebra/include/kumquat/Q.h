@@ -210,7 +210,10 @@ public:
 
 /** \brief Return a string encoding the fraction.*/
   std::string to_string(Element x) {
-    return std::to_string(x.first) + "/" + std::to_string(x.second);
+    std::stringstream ss;
+    ss << x.first << "/" << x.second;
+    return ss.str();
+    // return std::to_string(x.first) + "/" + std::to_string(x.second);
   }
 
 private:

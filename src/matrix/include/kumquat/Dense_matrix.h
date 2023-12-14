@@ -466,35 +466,91 @@ public:
     auto n = num_rows();//square nxn matrix
     auto p = G_.p();
     if((p % 2) == 0) { 
-      
+      for(size_t i=0; i<n; ) {
+
+        if( (i != n-1) && !(G_.trivial(mat_[i][i+1]))) {//2 x 2 block of the form:
+        /*
+         * | 0      1/2^r |          | 1/2^(r-1)   1/2^r     |
+         * |              |    or    |                       |
+         * | 1/2^r  0     |          | 1/2^r       1/2^(r-1) |
+         */
+          if(!G_.trivial(mat_[i][i])) {//type 2, Gauss sum is (-1)^r
+            auto two_to_r = G_.denominator(mat_[i][i+1]);//2^r
+            Integer r = logp(two_to_r,2);
+            if(r % 2 == 1) {
+              q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,0,1));
+            }
+          }
+          // else type 1 and Gauss sum is 1, do nothing
+          i+=2;
+        }
+        else { //1 x 1 block of value a/2^r
+          auto a = G_.nominator(mat_[i][i]);
+          auto res_a = (a % 8);
+          auto res_a2 = res_a * res_a;// (a mod 8)^2
+     
+          if(res_a2 == 1) {//gauss_sum *= exp(i 2 pi a/8)
+            q_u1.plus_equal( gauss_sum, 
+                             q_u1.element(gauss_sum, q_u1.element(1,1,res_a,8)));
+          }
+          else {//res_a2 == 25, gauss_sum *= (-1)^{r*(res_a2-1)/8} exp(i 2 pi a/8)
+                //                        *= (-1)^r exp(i 2 pi a/8)  
+            auto two_to_r = G_.denominator(mat_[i][i]);//2^r
+            Integer r = logp(two_to_r,2);//r
+            if(r % 2 == 1) {
+              q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,res_a,8));
+            }
+            else {
+              q_u1.plus_equal(gauss_sum, q_u1.element(1,1,res_a,8));
+            }
+          }
+          ++i;
+        }
+      }
     }
     else {//p odd, the matrix is diagonal
       for(size_t i=0; i<n; ++i) {
+        auto p = G_.p();
+        auto a = G_.nominator(mat_[i][i]);
+        auto p_to_r = G_.denominator(mat_[i][i]);//p^r
 
+        auto legendre_2a_p = legendre_symbol(2*a, p);//in 0,1,-1
+        if(legendre_2a_p == -1) {
+          auto r = logp(p_to_r,p);
+          if(r%2 == 0) { legendre_2a_p = 1; }
+        }
+        //now legendre_2a_p == (legendre(2a,p))^r
+        if(p_to_r % 4 == 1) {
+          q_u1.plus_equal(gauss_sum, q_u1.element(legendre_2a_p,1,0,1));
+        }
+        else {
+          q_u1.plus_equal(gauss_sum, q_u1.element(legendre_2a_p,1,1,4));
+        }
       }
     }
+    return gauss_sum;
   }
-/** \brief Compute the Gauss sum associated to an irreducible bilinear map on a p-group.
- * */
-  typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x) {
+// /** \brief Compute the Gauss sum associated to an irreducible bilinear map on a p-group.
+//  * */
+//   typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x) {
 
-  }
-/**
-  *
-  * Case p=2 and we have a 2 x 2 block of the form:
-  * | x  y |
-  * | y  z |
-  *  
-  * 
-  * 
-  */
+//   }
+// /**
+//   *
+//   * Case p=2 and we have a 2 x 2 block of the form:
+//   * | x  y |
+//   * | y  z |
+//   *  
+//   * 
+//   * 
+//   */
 
-  typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x, Coefficient y, Coefficient z) {
-    Q_U1<Integer> q_u1;
-    if(G_.trivial(x)) { return q_u1.additive_identity(); }
-    //compute r such that y = 1/2^r
+//   typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x, Coefficient y, Coefficient z) {
+//     Q_U1<Integer> q_u1;
+//     if(G_.trivial(x)) { return q_u1.additive_identity(); }
+//     //compute r such that y = 1/2^r
 
-  }
+//   }
 private:
 //diagonalize the gram matrix in Qp_mod_Z with p odd 
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
