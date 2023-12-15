@@ -208,12 +208,16 @@ public:
   Integer denominator(Element a) { return a.second; }
 /* @} */  // end methods specific to Q.
 
-/** \brief Return a string encoding the fraction.*/
+/** \brief Return a string encoding the fraction.
+ * 
+ * The type Integer must define a valid operator<<.
+ * */
   std::string to_string(Element x) {
     std::stringstream ss;
-    ss << x.first << "/" << x.second;
+    if(trivial(x)) { return "0"; }
+    if(x.second == 1) { ss << x.first; }
+    else { ss << x.first << "/" << x.second; }
     return ss.str();
-    // return std::to_string(x.first) + "/" + std::to_string(x.second);
   }
 
 private:

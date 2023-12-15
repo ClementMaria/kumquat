@@ -145,7 +145,12 @@ public:
  * An element (x,y,r,s) representing the number (x/y)* exp(i 2 pi * (r/s) ) gives the string: x/ye(r/s)
  * */
   std::string to_string(Element x) {
-    return Q_.to_string(x.first) + "e(" + Q_mod_Z_.to_string(x.second) + ")";
+    auto str2 = Q_mod_Z_.to_string(x.second);
+    if(str2 == "0") { return Q_.to_string(x.first); }
+    if(str2 == "1/4") { return Q_.to_string(x.first) + ".i"; }
+    if(str2 == "1/2") { return Q_.to_string( Q_.times(x.first,-1) ); }
+    if(str2 == "3/4") { return Q_.to_string( Q_.times(x.first,-1) ) + ".i"; }
+    return Q_.to_string(x.first) + ".e(" + str2 + ")";
   }
 
 private:

@@ -476,7 +476,7 @@ public:
          */
           if(!G_.trivial(mat_[i][i])) {//type 2, Gauss sum is (-1)^r
             auto two_to_r = G_.denominator(mat_[i][i+1]);//2^r
-            Integer r = logp(two_to_r,2);
+            Integer r = logp(two_to_r,(Integer)2);
             if(r % 2 == 1) {
               q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,0,1));
             }
@@ -485,18 +485,17 @@ public:
           i+=2;
         }
         else { //1 x 1 block of value a/2^r
-          auto a = G_.nominator(mat_[i][i]);
+          auto a = G_.numerator(mat_[i][i]);
           auto res_a = (a % 8);
           auto res_a2 = res_a * res_a;// (a mod 8)^2
      
           if(res_a2 == 1) {//gauss_sum *= exp(i 2 pi a/8)
-            q_u1.plus_equal( gauss_sum, 
-                             q_u1.element(gauss_sum, q_u1.element(1,1,res_a,8)));
+            q_u1.plus_equal( gauss_sum, q_u1.element(1,1,res_a,8) );
           }
           else {//res_a2 == 25, gauss_sum *= (-1)^{r*(res_a2-1)/8} exp(i 2 pi a/8)
                 //                        *= (-1)^r exp(i 2 pi a/8)  
             auto two_to_r = G_.denominator(mat_[i][i]);//2^r
-            Integer r = logp(two_to_r,2);//r
+            Integer r = logp(two_to_r,(Integer)2);//r
             if(r % 2 == 1) {
               q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,res_a,8));
             }
@@ -511,10 +510,10 @@ public:
     else {//p odd, the matrix is diagonal
       for(size_t i=0; i<n; ++i) {
         auto p = G_.p();
-        auto a = G_.nominator(mat_[i][i]);
+        auto a = G_.numerator(mat_[i][i]);
         auto p_to_r = G_.denominator(mat_[i][i]);//p^r
 
-        auto legendre_2a_p = legendre_symbol(2*a, p);//in 0,1,-1
+        auto legendre_2a_p = legendre_symbol((Integer)(2)*a, p);//in 0,1,-1
         if(legendre_2a_p == -1) {
           auto r = logp(p_to_r,p);
           if(r%2 == 0) { legendre_2a_p = 1; }
@@ -744,10 +743,10 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       mat_[idx+1][idx+1] = G_.additive_identity();
     }
     else {
-      mat_[idx+1][idx] = G_.element(2,two_to_m);
+      mat_[idx][idx] = G_.element(2,two_to_m);
       mat_[idx+1][idx] = G_.element(1,two_to_m);
       mat_[idx][idx+1] = G_.element(1,two_to_m);
-      mat_[idx+1][idx] = G_.element(2,two_to_m);
+      mat_[idx+1][idx+1] = G_.element(2,two_to_m);
     }
   }
 
