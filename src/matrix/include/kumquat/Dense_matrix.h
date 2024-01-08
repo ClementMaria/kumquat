@@ -866,20 +866,13 @@ public:
     }
   }
 
-  /** \brief Return the tensor product \f$\operatorname{id}_m \otimes M \otimes \operatorname{id}_n\f$,
-   * where \f$\operatorname{id}_k\f$ is the k by k identity matrix.
-  **/
-  Dense_matrix tensor_id(int m, int n) {
-    Dense_matrix res();
-  }
-
   /** \brief Compute the tensor product on the right with the input matrix.
    * 
    * this <- this tensor rhs.
    **/
   Dense_matrix rtensor(Dense_matrix &rhs) {
     Dense_matrix res( num_rows()*rhs.num_rows()
-                    , num_columns()*rhs.num_columns());
+                    , num_columns()*rhs.num_columns(), G_);
     for(size_t i=0; i<num_rows(); ++i) {
       for(size_t j=0; j<num_columns(); ++j) {
         for(size_t k=0; k<rhs.num_rows(); ++k) {
@@ -890,14 +883,15 @@ public:
         }
       }
     }
+    return res;
   }
   /** \brief Compute the tensor product on the left with the input matrix.
    * 
    * this <- lhs tensor this.
    **/
-  void ltensor(Dense_matrix &lhs) {
+  Dense_matrix ltensor(Dense_matrix &lhs) {
     Dense_matrix res( num_rows()*lhs.num_rows()
-                    , num_columns()*lhs.num_columns());
+                    , num_columns()*lhs.num_columns(), G_);
     for(size_t i=0; i<lhs.num_rows(); ++i) {
       for(size_t j=0; j<lhs.num_columns(); ++j) {
         for(size_t k=0; k<num_rows(); ++k) {
@@ -908,7 +902,23 @@ public:
         }
       }
     } 
+    return res;
   }
+
+/** \brief Return the tensor product \f$\operatorname{id}_m \otimes M \otimes \operatorname{id}_n\f$,
+   * where \f$\operatorname{id}_k\f$ is the k by k identity matrix.
+  **/
+  Dense_matrix tensor_id(int m, int n) {
+    return (this->rtensor(identity_matrix(n))).ltensor(identity_matrix(m));
+  }
+
+/** \brief Return the n by n identity matrix.*/
+  Dense_matrix identity_matrix(int n) {
+    Dense_matrix id(n,n, G_);
+    for(size_t i=0; i<n; ++i) { id(i,i) = G_.multiplicative_identity(); }
+    return id;
+  }
+
 private:
   //number of rows of the matrix
   size_t n_;
