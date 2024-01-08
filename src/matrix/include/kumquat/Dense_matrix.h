@@ -50,6 +50,34 @@ public:
 /** \brief Copy constructor. */
   Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_) {}
 
+/** \brief User-defined move constructor relocates the whole matrix.*/
+  Dense_matrix(Dense_matrix && mat_source) {
+    move_from(mat_source);
+  }
+  /** \brief User-defined move assignment relocates the whole matrix.
+   */
+  Dense_matrix& operator=(Dense_matrix&& mat_source) {
+    if(&mat_source != this) {
+      clear_matrix();
+      move_from(mat_source);
+    }
+    return *this;
+  }
+private:
+  //move from mat_source to this"
+  void move_from(Dense_matrix &mat_source) {
+    n_ = std::move(mat_source.n_);
+    m_ = std::move(mat_source.m_);
+    mat_ = std::move(mat_source.mat_);
+    G_ = std::move(mat_source.G_);
+    dim_ker_ = std::move(mat_source.dim_ker_);
+    dim_im_ = std::move(mat_source.dim_im_);
+  }
+
+  void clear_matrix() {
+    mat_.swap(std::vector< std::vector< Coefficient > >());
+  }
+public:
 /** \brief Access the vector encoding the row at index idx.*/
   std::vector< Coefficient > & operator[](size_t idx) {
     return mat_[idx];
@@ -750,6 +778,93 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     }
   }
 
+public:
+  /* methods for jones polynomial on braids */
+  /**\brief Return the trace of a square matrix.*/
+  Coefficient trace() {
+    if(num_rows() != num_columns()) {
+      std::cout << "Error trace on non-square matrix.\n";
+      return 0;
+    }
+    Coefficient tr = G_.additive_identity(0);
+    for(size_t i=0; i<num_rows(); ++i) {
+      G_.plus_equal(tr,mat_[i][i]);
+    }
+    return tr;
+  }
+
+
+  /** \brief Matrix multiplication on the right. 
+   * 
+   * Naive cubic algorithm.
+   * this <- this * rhs
+   * */
+  void rtimes_equal(const Dense_matrix& rhs) {
+    assert( num_columns() == rhs.num_rows() );
+    
+    Dense_matrix prod_mat(num_rows(),rhs.num_columns(),G_); 
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < rhs.num_columns(); ++j) {
+        prod_mat(i,j) = G_.additive_identity();
+        for(size_t k = 0 ; k < num_columns() ; ++k) {
+          G_.plus_equal( prod_mat(i,j), 
+                         G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
+        }
+      }
+    }
+    *this = prod_mat; //move
+  }
+
+  /** \brief Matrix multiplication on the left. 
+   * 
+   * Naive cubic algorithm.
+   * this <- lhs * this
+   * */
+  void ltimes_equal(const Dense_matrix& lhs) {
+    assert( num_rows() == lhs.num_columns() );
+    
+    Dense_matrix prod_mat(lhs.num_rows(),num_columns(),G_); 
+    for(size_t i = 0; i < lhs.num_rows(); ++i) {
+      for(size_t j = 0; j < num_columns(); ++j) {
+        prod_mat(i,j) = G_.additive_identity();
+        for(size_t k = 0 ; k < lhs.num_columns() ; ++k) {
+          G_.plus_equal( prod_mat(i,j), 
+                         G_.times( lhs(i,k) , (*this)(k,j) ) ) ;  
+        }
+      }
+    }
+    *this = prod_mat; //move
+  }
+
+/** \brief Multiplication on the right. */
+  Dense_matrix& operator*=(const Dense_matrix& rhs) {
+    this->rtimes_equal(rhs);
+    return *this;
+  }
+  /** \brief Access the element in row i and column j in the matrix. */
+  Coefficient& operator()(size_t i, size_t j) {
+    return mat_[i][j];
+  }
+
+  /** \brief Set the matrix to 0. **/
+  void set_to_zero() {
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < rhs.num_columns(); ++j) {
+        prod_mat(i,j) = G_.additive_identity();
+      }
+    }
+  }
+  /** \brief Set the matrix to the identity (if square). **/
+  void set_to_identity() {
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < rhs.num_columns(); ++j) {
+        if(i==j) { prod_mat(i,j) = G_.multiplicative_identity(); }
+        else { 
+          prod_mat(i,j) = G_.additive_identity();
+        }
+      }
+    }
+  }
 private:
   //number of rows of the matrix
   size_t n_;
