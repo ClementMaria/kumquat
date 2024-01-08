@@ -19,6 +19,8 @@
 #include <boost/multiprecision/gmp.hpp>
 #include <kumquat/number_theory.h>
 #include <sstream>
+#include <cmath>
+// #include <boost/math/bindings/mpfr.hpp>
 
 namespace kumquat {
 
@@ -81,7 +83,7 @@ public:
  * the group.
  * */
   void times_equal(Element & a, Integer z) { 
-    a *= b;
+    a *= z;
   }
 /** \brief Return \f$ z \times a\f$, using the \f$Z\f$-module structure of the 
  * group.
@@ -92,7 +94,7 @@ public:
 /** \brief Return the additive inverse (-a) of an element a. */
   Element additive_inverse(Element a) { 
     if(a == 0) return additive_identity();
-    return times(a,-1);
+    return times(a,(Integer)(-1));
   }
 /** \brief Return the order of the group. 
  * 
@@ -106,7 +108,7 @@ public:
  * is infinite.
  * */
   Integer order(Element a) { 
-    if(a.first == 0) { return 0; }
+    if(a == 0) { return 0; }
     return -1;
   }
 /** \brief Return the rank of the group, i.e., the minimal number of generators. 
@@ -142,11 +144,11 @@ public:
   }
 /** Set a <- a^p. */
   void pow_equal(Element & a, Integer p) {
-    a = std::pow(a,p);
+    a = kumquat::powf(a,p);
   }
 /** Return a <- a^p for a positive integer p. */
   Element pow(Element a, Integer p) {
-    return std::pow(a,p);
+    return kumquat::powf(a,p);
   }
 /* @} */  // end pseudo ring methods
 /** \name Methods for rings. Implements Ring.
@@ -173,7 +175,8 @@ public:
     return ss.str();
   }
 
+}; 
 
-}  //namespace kumquat
+} //namespace kumquat
 
 #endif //KUMQUAT_Q_MOD_Z_H_

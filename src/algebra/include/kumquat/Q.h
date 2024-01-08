@@ -257,4 +257,4 @@ typedef Q<boost::multiprecision::mpz_int> Q_mp;
 
 }  //namespace kumquat
 
-#endif //KUMQUAT_Q_MOD_Z_H_
+#endif //KUMQUAT_Q_H_
