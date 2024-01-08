@@ -105,6 +105,49 @@ NumberType pow(NumberType base, NumberType exp, NumberType mod = 0) {
 }
 
 
+/** \brief Fast exponentiation of the represenetd integer x, modulo p.
+ * 
+ * param[in] base An arbitrary float number.
+ * param[in] exp A positive integer.
+ * @return the integer \f$base^{\operatorname{exp}}\f$.
+ * */
+template<typename FloatType, typename IntType>
+FloatType powf(FloatType base, IntType exp) {
+  FloatType res = 1;
+  while (exp > 0) {
+    if (exp & 1) { res = (res * base); }
+    base = (base * base);
+    exp >>= 1;
+  }
+  return res;
+}
+
+
+
+/** \brief Fast exponentiation of a matrix.
+ * 
+ * param[in] base An arbitrary square matrix.
+ * param[in] exp A positive integer.
+ * @return the matrix \f$base^{\operatorname{exp}}\f$.
+ * */
+template<typename MatrixType, typename IntType>
+MatrixType powm(MatrixType base, IntType exp) {
+  if(exp == 0) { 
+    MatrixType id_cp;
+    id_cp.set_to_identity();
+    return id_cp;
+  }
+  MatrixType res = base;
+  --exp;
+  while (exp > 0) {
+    if (exp & 1) { res *= base; }
+    base *= base;
+    exp >>= 1;
+  }
+  return res;
+}
+
+
 /** \brief Naive p-logarithm of an integer x=p^r.
  * 
  * param[in] x = p^r a power of p.
