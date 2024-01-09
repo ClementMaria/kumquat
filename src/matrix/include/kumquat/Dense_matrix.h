@@ -76,8 +76,8 @@ private:
     G_ = std::move(mat_source.G_);
     dim_ker_ = std::move(mat_source.dim_ker_);
     dim_im_ = std::move(mat_source.dim_im_);
-    row_idx_ = std::move_from(mat_source.row_idx_);
-    col_idx_ = std::move_from(mat_source.col_idx_);
+    row_idx_ = std::move(mat_source.row_idx_);
+    col_idx_ = std::move(mat_source.col_idx_);
   }
 
   void clear_matrix() {
@@ -860,18 +860,18 @@ public:
   /** \brief Set the matrix to 0. **/
   void set_to_zero() {
     for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < rhs.num_columns(); ++j) {
-        prod_mat(i,j) = G_.additive_identity();
+      for(size_t j = 0; j < num_columns(); ++j) {
+        (*this)(i,j) = G_.additive_identity();
       }
     }
   }
   /** \brief Set the matrix to the identity (if square). **/
   void set_to_identity() {
     for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < rhs.num_columns(); ++j) {
-        if(i==j) { prod_mat(i,j) = G_.multiplicative_identity(); }
+      for(size_t j = 0; j < num_columns(); ++j) {
+        if(i==j) { (*this)(i,j) = G_.multiplicative_identity(); }
         else { 
-          prod_mat(i,j) = G_.additive_identity();
+          (*this)(i,j) = G_.additive_identity();
         }
       }
     }
@@ -924,7 +924,7 @@ public:
   }
 
 /** \brief Return the n by n identity matrix.*/
-  Dense_matrix identity_matrix(int n) {
+  Dense_matrix identity_matrix(size_t n) {
     Dense_matrix id(n,n, G_);
     for(size_t i=0; i<n; ++i) { id(i,i) = G_.multiplicative_identity(); }
     return id;
