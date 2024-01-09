@@ -45,10 +45,14 @@ public:
   Dense_matrix(size_t n, size_t m, CoefficientStructure G) 
   : n_(n), m_(m), G_(G), dim_ker_(-1), dim_im_(-1) {
     mat_ = std::vector< std::vector< Coefficient > >
-                                  (n, std::vector< Coefficient >(m));
+                              (n, std::vector< Coefficient >(m));
+    row_idx_.reserve(n);
+    for(size_t i=0; i<n; ++i) { row_idx_.push_back(i); }
+    col_idx_.reserve(m);
+    for(size_t j=0; j<m; ++j) { col_idx_.push_back(j); }
   }
 /** \brief Copy constructor. */
-  Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_) {}
+  Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_), row_idx_(other.row_idx_), col_idx_(other.col_idx_) {}
 
 /** \brief User-defined move constructor relocates the whole matrix.*/
   Dense_matrix(Dense_matrix && mat_source) {
@@ -72,15 +76,19 @@ private:
     G_ = std::move(mat_source.G_);
     dim_ker_ = std::move(mat_source.dim_ker_);
     dim_im_ = std::move(mat_source.dim_im_);
+    row_idx_ = std::move_from(mat_source.row_idx_);
+    col_idx_ = std::move_from(mat_source.col_idx_);
   }
 
   void clear_matrix() {
     mat_.swap(std::vector< std::vector< Coefficient > >());
+    row_idx_.swap(std::vector<size_t>());
+    col_idx_.swap(std::vector<size_t>());
   }
 public:
 /** \brief Access the vector encoding the row at index idx.*/
   std::vector< Coefficient > & operator[](size_t idx) {
-    return mat_[idx];
+    return mat_[row_idx_[idx]];
   };
 /** \brief Fills up the matrix from the values of a bi-variate function f.
  *  
@@ -93,7 +101,7 @@ public:
   void fill(Function &f) {
     for(size_t i=0; i<n_; ++i) {
       for(size_t j=0; j<m_; ++j) {
-        mat_[i][j] = f(i,j);
+        (*this)(i,j) = f(i,j);
       }
     }
   }
@@ -106,7 +114,7 @@ public:
   template<typename WeightType>
   void times_equal_column(size_t i, WeightType z) {
     for(size_t k=0; k<n_; ++k) {
-      G_.times_equal(mat_[k][i],z);
+      G_.times_equal( (*this)(k,i) , z );
     }
   }
 /** \brief Set row_i <- z * row_i. 
@@ -118,13 +126,13 @@ public:
   template<typename WeightType>
   void times_equal_row(size_t i, WeightType z) {
     for(size_t k=0; k<m_; ++k) {
-      G_.times_equal(mat_[i][k],z);
+      G_.times_equal( (*this)(i,k),z);
     }
   }
 /** \brief Set col_i <- col_i + col_j. */
   void plus_equal_column(size_t i, size_t j) {
     for(size_t k=0; k<n_; ++k) {
-      G_.plus_equal(mat_[k][i],mat_[k][j]);
+      G_.plus_equal((*this)(k,i), (*this)(k,j));
     }
   }
 /** \brief Set col_i <- col_i + z * col_j. 
@@ -137,13 +145,13 @@ public:
   void plus_equal_column(size_t i, size_t j, WeightType z) {
     if(G_.trivial(z)) return;
     for(size_t k=0; k<n_; ++k) {
-      G_.plus_equal(mat_[k][i], G_.times(mat_[k][j],z) );
+      G_.plus_equal( (*this)(k,i), G_.times((*this)(k,j),z) );
     }    
   }
 /** \brief Set row_i <- row_i + row_j. */
   void plus_equal_row(size_t i, size_t j) {
     for(size_t k=0; k<m_; ++k) {
-      G_.plus_equal(mat_[i][k],mat_[j][k]);
+      G_.plus_equal((*this)(i,k),(*this)(j,k));
     }
   }
 /** \brief Set row_i <- row_i + z * row_j. 
@@ -156,22 +164,25 @@ public:
   void plus_equal_row(size_t i, size_t j, WeightType z) {
     if(G_.trivial(z)) return;
     for(size_t k=0; k<m_; ++k) {
-      G_.plus_equal(mat_[i][k], G_.times(mat_[j][k], z) );
+      G_.plus_equal((*this)(i,k), G_.times((*this)(j,k), z) );
     }    
   }
-/** \brief Exchange the columns of index i and j.*/
+/** \brief Exchange the columns of index i and j lazily.*/
   void exchange_column(size_t i, size_t j) {
     if(i==j) { return; }
-    for(size_t k=0; k<n_; ++k) {
-      std::swap(mat_[k][i],mat_[k][j]);
-    }
+    std::swap(col_idx_[i],col_idx_[j]);
+    // for(size_t k=0; k<n_; ++k) {
+    //   std::swap(mat_[k][i],mat_[k][j]);
+    // }
+
   }
-/** \brief Exchange the rows of index i and j.*/
+/** \brief Exchange the rows of index i and j lazily.*/
   void exchange_row(size_t i, size_t j) {
     if(i==j) { return; }
-    for(size_t k=0; k<m_; ++k) {
-      std::swap(mat_[i][k],mat_[j][k]);
-    }
+    std::swap(row_idx_[i],row_idx_[j]);
+    // for(size_t k=0; k<m_; ++k) {
+    //   std::swap((*this)(i,k),(*this)(j,k));
+    // }
   }
 /** \brief Return the total number of rows in the matrix.*/
   size_t num_rows() const { return n_; }
@@ -203,10 +214,10 @@ public:
         //found a column with index < i and with same lowest index
         // z = - col_i[low] / col_j[low]
         Coefficient z = G_.additive_inverse(
-                          G_.times(mat_[curr_low][i],
-                              G_.multiplicative_inverse(
-                                mat_[curr_low][it_conflict->second]
-                                                             )));
+                          G_.times((*this)(curr_low,i),
+                            G_.multiplicative_inverse(
+                              (*this)(curr_low,it_conflict->second)
+                                                                )));
         //col_i <_ col_i - z * col_j
         plus_equal_column(i,it_conflict->second,z);
         col_ops.emplace_back(i,it_conflict->second,z);//memorize operation
@@ -246,9 +257,9 @@ public:
         //found a row with index < i and with same rightmost index
         // z = - row_i[low] / row_j[low]
         Coefficient z = G_.additive_inverse(
-                          G_.times(mat_[i][curr_low],
-                              G_.multiplicative_inverse(
-                                mat_[it_conflict->second][curr_low]
+                          G_.times((*this)(i,curr_low),
+                             G_.multiplicative_inverse(
+                               (*this)(it_conflict->second,curr_low)
                                                              )));
         //row_i <_ row_i - z * row_j
         plus_equal_row(i,it_conflict->second,z);
@@ -291,7 +302,7 @@ private:
     size_t start = num_rows();
     if(hint < start) { start = hint; }
     for(int j = start-1 ; j >= 0; --j) {
-      if(!G_.trivial(mat_[j][i])) { return j; }
+      if(!G_.trivial((*this)(j,i))) { return j; }
     }
     return -1;
   }
@@ -306,7 +317,7 @@ private:
     size_t start = num_columns();
     if(hint < start) { start = hint; }
     for(int j = start-1 ; j >= 0; --j) {
-      if(!G_.trivial(mat_[i][j])) { return j; }
+      if(!G_.trivial((*this)(i,j))) { return j; }
     }
     return -1;
   }
@@ -377,13 +388,13 @@ public:
   //enforce col_{c_idx}[r_idx] divides all other non-trivial elements of its column and its row
   //first the column
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
-  //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
-        if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
+  //call x=(*this)(r_idx,c_idx) and y=(*this)(k,c_idx)
+        if(!G_.trivial((*this)(k,c_idx))) {//if y!=0
   //write u*x + v*y = gcd(x,y), with gcd > 0
-          auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
-                                         mat_[k][c_idx]   );
+          auto u_v_gcd = G_.extended_gcd((*this)(r_idx,c_idx), 
+                                         (*this)(k,c_idx));
   //if x does not divide y, i.e., |gcd| < |x|
-          if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
+          if( std::get<2>(u_v_gcd) < G_.abs((*this)(r_idx,c_idx))) {
   //perform row_{r_idx} <- u * row_{r_idx} + v * row_k
             times_equal_row(r_idx, std::get<0>(u_v_gcd));
             ops.emplace_back(r_idx, r_idx, std::get<0>(u_v_gcd), times_equal_row_t);
@@ -394,13 +405,13 @@ public:
       }
   //then the row
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
-  //call x=mat_[r_idx][c_idx] and y=mat_[r_idx][k]
-        if(!G_.trivial(mat_[r_idx][k])) {//if y!=0
+  //call x=(*this)(r_idx,c_idx) and y=(*this)(r_idx,k)
+        if(!G_.trivial((*this)(r_idx,k))) {//if y!=0
   //write u*x + v*y = gcd(x,y), with gcd > 0
-          auto u_v_gcd = G_.extended_gcd(mat_[r_idx][c_idx], 
-                                         mat_[r_idx][k]   );
+          auto u_v_gcd = G_.extended_gcd((*this)(r_idx,c_idx), 
+                                         (*this)(r_idx,k)   );
   //if x does not divide y, i.e., |gcd| < |x|
-          if( std::get<2>(u_v_gcd) < G_.abs(mat_[r_idx][c_idx]) ) {
+          if( std::get<2>(u_v_gcd) < G_.abs((*this)(r_idx,c_idx)) ) {
   //perform col_{c_idx} <- u * col_{c_idx} + v * col_k
             times_equal_column(c_idx, std::get<0>(u_v_gcd));
             ops.emplace_back(c_idx,c_idx,std::get<0>(u_v_gcd),times_equal_column_t);
@@ -409,22 +420,22 @@ public:
           }//now x <- gcd(x,y) and new_x divides y
         }
       }
-  //now mat_[r_idx][c_idx] divides all entries in its column and row -> cancel the column then the row
+  //now (*this)(r_idx,c_idx) divides all entries in its column and row -> cancel the column then the row
       for(size_t k = r_idx+1; k<num_rows(); ++k) {
-  //call x=mat_[r_idx][c_idx] and y=mat_[k][c_idx]
-        if(!G_.trivial(mat_[k][c_idx])) {//if y!=0
+  //call x=(*this)(r_idx,c_idx) and y=(*this)(k,c_idx)
+        if(!G_.trivial((*this)(k,c_idx))) {//if y!=0
   //perform row_k <- y/x * row_{r_idx}
-          auto z = G_.times(G_.division(mat_[k][c_idx],mat_[r_idx][c_idx]),-1);
+          auto z = G_.times(G_.division((*this)(k,c_idx),(*this)(r_idx,c_idx)),-1);
           plus_equal_row(k, r_idx, z);
           ops.emplace_back(k, r_idx, z, plus_equal_row_t);
         }
       }
   //we can directly trivialize the row r_idx now
       for(size_t k = c_idx+1; k<num_columns(); ++k) {
-        if(!G_.trivial(mat_[r_idx][k])) {//record the operation
-          auto z = G_.times(G_.division(mat_[r_idx][k],mat_[r_idx][c_idx]),-1);
+        if(!G_.trivial((*this)(r_idx,k))) {//record the operation
+          auto z = G_.times(G_.division((*this)(r_idx,k),(*this)(r_idx,c_idx)),-1);
           ops.emplace_back(k, c_idx, z, plus_equal_column_t);
-          mat_[r_idx][k] = G_.additive_identity();//set directly to 0
+          (*this)(r_idx,k) = G_.additive_identity();//set directly to 0
         }
       }
   //put the new divisor on the diagonal
@@ -446,7 +457,7 @@ private:
     if(hint < 0) { start = 0; }
     else { start = hint; }
     for(size_t i=start; i<num_rows(); ++i) {
-      if(!G_.trivial(mat_[i][idx])) { return i; }
+      if(!G_.trivial((*this)(i,idx))) { return i; }
     }
     return -1;
   }
@@ -496,14 +507,14 @@ public:
     if((p % 2) == 0) { 
       for(size_t i=0; i<n; ) {
 
-        if( (i != n-1) && !(G_.trivial(mat_[i][i+1]))) {//2 x 2 block of the form:
+        if( (i != n-1) && !(G_.trivial((*this)(i,i+1)))) {//2 x 2 block of the form:
         /*
          * | 0      1/2^r |          | 1/2^(r-1)   1/2^r     |
          * |              |    or    |                       |
          * | 1/2^r  0     |          | 1/2^r       1/2^(r-1) |
          */
-          if(!G_.trivial(mat_[i][i])) {//type 2, Gauss sum is (-1)^r
-            auto two_to_r = G_.denominator(mat_[i][i+1]);//2^r
+          if(!G_.trivial((*this)(i,i))) {//type 2, Gauss sum is (-1)^r
+            auto two_to_r = G_.denominator((*this)(i,i+1));//2^r
             Integer r = logp(two_to_r,(Integer)2);
             if(r % 2 == 1) {
               q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,0,1));
@@ -513,7 +524,7 @@ public:
           i+=2;
         }
         else { //1 x 1 block of value a/2^r
-          auto a = G_.numerator(mat_[i][i]);
+          auto a = G_.numerator((*this)(i,i));
           auto res_a = (a % 8);
           auto res_a2 = res_a * res_a;// (a mod 8)^2
      
@@ -522,7 +533,7 @@ public:
           }
           else {//res_a2 == 25, gauss_sum *= (-1)^{r*(res_a2-1)/8} exp(i 2 pi a/8)
                 //                        *= (-1)^r exp(i 2 pi a/8)  
-            auto two_to_r = G_.denominator(mat_[i][i]);//2^r
+            auto two_to_r = G_.denominator((*this)(i,i));//2^r
             Integer r = logp(two_to_r,(Integer)2);//r
             if(r % 2 == 1) {
               q_u1.plus_equal(gauss_sum, q_u1.element(-1,1,res_a,8));
@@ -538,8 +549,8 @@ public:
     else {//p odd, the matrix is diagonal
       for(size_t i=0; i<n; ++i) {
         auto p = G_.p();
-        auto a = G_.numerator(mat_[i][i]);
-        auto p_to_r = G_.denominator(mat_[i][i]);//p^r
+        auto a = G_.numerator((*this)(i,i));
+        auto p_to_r = G_.denominator((*this)(i,i));//p^r
 
         auto legendre_2a_p = legendre_symbol((Integer)(2)*a, p);//in 0,1,-1
         if(legendre_2a_p == -1) {
@@ -648,8 +659,8 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     pivot_i = -1; pivot_j = -1;//find element of minimal order
     for(size_t i = idx; i < num_rows(); ++i) {//try to find a pivot in the diagonal
       for(size_t j = idx; j < num_columns(); ++j) {
-        if(!G_.trivial(mat_[i][j])) {//!= 0
-          auto ord = G_.order(mat_[i][j]);
+        if(!G_.trivial((*this)(i,j))) {//!= 0
+          auto ord = G_.order((*this)(i,j));
           if(ord > max_order) { 
             max_order = ord; pivot_i = i; pivot_j = j; 
           }
@@ -668,7 +679,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
         auto p = G_.p(); auto n = num_rows();
     //top left element M[idx][idx] has minimal order
     // and is written as top_left == a p^{-r} with gcd(a,p)==1 and 0 < a < p
-    Coefficient top_left = mat_[idx][idx];
+    Coefficient top_left = (*this)(idx,idx);
     //now, enforce top left corner B[idx][idx]== eps/p^k, for 
     //eps = 1 or eps quadratic non-residue mod p. Compute also eps^{-1} mod p^r
     Integer eps, eps_inv;
@@ -687,19 +698,19 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       eps_inv = kumquat::inverse(eps, top_left.second);//in number_theory.h
     }
 
-    top_left = mat_[idx][idx];
+    top_left = (*this)(idx,idx);
 //we do have M[idx][idx]== eps/p^k, for eps = 1 or 
 //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
     for(size_t i=idx+1; i<n; ++i) {
 //compute beta such that B[idx][i]== beta * b / p^r with beta > 1
-// G_.p_normalize(mat_[idx][i]);
-      Integer beta = kumquat::division(top_left.second, mat_[idx][i].second);//in number_theory.h
+// G_.p_normalize((*this)(idx,i));
+      Integer beta = kumquat::division(top_left.second, (*this)(idx,i).second);//in number_theory.h
       //do row_i <- row_i - beta * b * eps^-1 * row_idx and
       //   col_i <- col_i - beta * eps^-1 * col_idx
       auto z = kumquat::times(
                  kumquat::times( 
                    kumquat::times( beta, 
-                                   mat_[idx][i].first ) 
+                                   (*this)(idx,i).first ) 
                    , eps_inv )
                  , (Integer(-1)));
 
@@ -723,11 +734,11 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 */
   void cancel_2_2_block_Q2_mod_Z(size_t idx) {
     //extract integers a,b,c and 2^m
-    Integer two_to_m = mat_[idx][idx+1].second;
-    Integer a = mat_[idx][idx].first * (two_to_m / (2*mat_[idx][idx].second)) ;
-    Integer b = mat_[idx][idx+1].first;
-    Integer c = mat_[idx+1][idx+1].first * 
-                              (two_to_m / ((Integer)(2)*mat_[idx+1][idx+1].second));
+    Integer two_to_m = (*this)(idx,idx+1).second;
+    Integer a = (*this)(idx,idx).first * (two_to_m / (2*(*this)(idx,idx).second)) ;
+    Integer b = (*this)(idx,idx+1).first;
+    Integer c = (*this)(idx+1,idx+1).first * 
+                              (two_to_m / ((Integer)(2)*(*this)(idx+1,idx+1).second));
     //d is the inverse of 4ac-b^2 modulo 2^m
     Integer d_inv = ( (Integer)4 * a * c - b * b ) % two_to_m;
     if(d_inv < 0) { d_inv += two_to_m; }
@@ -735,9 +746,9 @@ If such element is in the diagonal, always return a diagonal element. If the mat
 
     //for all i >idx+1, cancel M[i][idx,idx+1] and M[idx,idx+1][i]
     for(size_t i=idx+2; i<num_rows(); ++i) {
-      // find u s.t. mat_[i][idx] == u / 2^m and v s.t. mat_[i][idx+1] == v / 2^m
-      Integer u = (mat_[i][idx]).first * (two_to_m / mat_[i][idx].second); 
-      Integer v = (mat_[i][idx+1]).first * (two_to_m / mat_[i][idx+1].second);
+      // find u s.t. (*this)(i,idx) == u / 2^m and v s.t. (*this)(i,idx+1) == v / 2^m
+      Integer u = ((*this)(i,idx)).first * (two_to_m / (*this)(i,idx).second); 
+      Integer v = ((*this)(i,idx+1)).first * (two_to_m / (*this)(i,idx+1).second);
 
       Integer minus_r1 = (-1) * d * ( 2 * c * u - b * v);
       Integer minus_r2 = (-1) * d * ( 2 * a * v - b * u);
@@ -765,16 +776,16 @@ If such element is in the diagonal, always return a diagonal element. If the mat
      */
 
     if((a*c) % 2 == 0) {
-      mat_[idx][idx] = G_.additive_identity();
-      mat_[idx+1][idx] = G_.element(1,two_to_m);
-      mat_[idx][idx+1] = G_.element(1,two_to_m);
-      mat_[idx+1][idx+1] = G_.additive_identity();
+      (*this)(idx,idx) = G_.additive_identity();
+      (*this)(idx+1,idx) = G_.element(1,two_to_m);
+      (*this)(idx,idx+1) = G_.element(1,two_to_m);
+      (*this)(idx+1,idx+1) = G_.additive_identity();
     }
     else {
-      mat_[idx][idx] = G_.element(2,two_to_m);
-      mat_[idx+1][idx] = G_.element(1,two_to_m);
-      mat_[idx][idx+1] = G_.element(1,two_to_m);
-      mat_[idx+1][idx+1] = G_.element(2,two_to_m);
+      (*this)(idx,idx) = G_.element(2,two_to_m);
+      (*this)(idx+1,idx) = G_.element(1,two_to_m);
+      (*this)(idx,idx+1) = G_.element(1,two_to_m);
+      (*this)(idx+1,idx+1) = G_.element(2,two_to_m);
     }
   }
 
@@ -788,7 +799,7 @@ public:
     }
     Coefficient tr = G_.additive_identity(0);
     for(size_t i=0; i<num_rows(); ++i) {
-      G_.plus_equal(tr,mat_[i][i]);
+      G_.plus_equal(tr,(*this)(i,i));
     }
     return tr;
   }
@@ -843,7 +854,7 @@ public:
   }
   /** \brief Access the element in row i and column j in the matrix. */
   Coefficient& operator()(size_t i, size_t j) {
-    return mat_[i][j];
+    return mat_[row_idx_[i]][col_idx_[j]];
   }
 
   /** \brief Set the matrix to 0. **/
@@ -924,7 +935,7 @@ private:
   size_t n_;
   //number of columns of the matrix
   size_t m_;
-  //encoding of the matrix as a bi-dimensional array. The element at row i and col j is in mat_[i][j]
+  //encoding of the matrix as a bi-dimensional array. The element at row i and col j is in (*this)(i,j)
   std::vector< std::vector< Coefficient > > mat_;
   //the group to which the coefficients of the matrix belong.
   CoefficientStructure G_;
@@ -932,6 +943,11 @@ private:
   int dim_ker_;
   //dim of the image, -1 if not initialized
   int dim_im_;
+  //encodes a permutation of row indices, such that the row of index i is in position mat_[row_idx_[i]] in the data structure
+  std::vector<size_t> row_idx_;
+  //encodes a permutation of col indices, such that the col of index i is in position mat_[...][col_idx_[i]] in the data structure
+  std::vector<size_t> col_idx_;
+
 };
 
 /** \brief Write the dense matrix in os.*/
