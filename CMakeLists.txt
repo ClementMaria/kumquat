@@ -35,6 +35,7 @@ include(KUMQUAT_modules)
 add_kumquat_module(algebra)
 add_kumquat_module(matrix)
 add_kumquat_module(utils)
+add_kumquat_module(random_process)
 
 # Include module CMake subdirectories
 # KUMQUAT_SUB_DIRECTORIES is managed in CMAKE_MODULE_PATH/KUMQUAT_modules.cmake
