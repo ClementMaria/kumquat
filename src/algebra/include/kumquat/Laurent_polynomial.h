@@ -178,6 +178,14 @@ public:
     a.emplace_back(0,z);
     return a; 
   }
+
+/** \brief Construct an Laurent polynomial equal to a single monomial c*q^deg.
+ * **/
+  Element element(int deg, Ring_coeff c) {
+    Element a;
+    a.emplace_back(deg,c);
+    return a;
+  }
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Integer z) { return z == 0; }
 /* @} */  // end AbelianGroup methods
