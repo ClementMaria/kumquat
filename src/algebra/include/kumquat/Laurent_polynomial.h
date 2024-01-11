@@ -15,6 +15,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <numeric>
 #include <boost/multiprecision/gmp.hpp>
 #include <kumquat/number_theory.h>
@@ -28,6 +29,7 @@ namespace kumquat {
   * \implements Ring
   * 
   * template IntegerNumber implements IntegerNumber
+  * template RingCoefficientStructure implements Ring
   */
 template< typename IntegerNumber, 
           typename RingCoefficientStructure >
@@ -44,7 +46,7 @@ public:
 
 /** \brief Initialization of ring.
   **/
-  Laurent_polynomial(Ring_struct Rstruct) : Ring_(Rstruct) {}
+  Laurent_polynomial(Ring_struct rstruct) : ring_(rstruct) {}
 
 
 /** \name Methods for Abelian groups. Implements AbelianGroup.
@@ -88,10 +90,10 @@ public:
           ++itb;
         }
         else {//ita->first == itb.first
-          Ring_.plus_equal(ita->second,itb->second);
+          ring_.plus_equal(ita->second,itb->second);
           auto tmp_ita=ita;
           ++tmp_ita;
-          if(Ring_.trivial(ita->second)) { a.erase(ita); }
+          if(ring_.trivial(ita->second)) { a.erase(ita); }
           ita = tmp_ita;
           ++itb;
         }
@@ -120,7 +122,7 @@ public:
     if(z == 0) { a.clear(); }
     else {
       for(auto & monom : a) {
-        Ring_.times_equal(monom.second,z);
+        ring_.times_equal(monom.second,z);
       }
     }
   }
@@ -164,7 +166,7 @@ public:
     auto ita = a.begin();    auto itb = b.begin();
     while(ita != a.end() && itb != b.end()) {
       if( ita->first != itb->first 
-         || !Ring_.equal(ita->second,itb->second) ) { return false; }
+         || !ring_.equal(ita->second,itb->second) ) { return false; }
       else { ++ita; ++itb; }
     }
     return (itb == b.end());
@@ -186,6 +188,11 @@ public:
     a.emplace_back(deg,c);
     return a;
   }
+/** \brief Construct an Laurent polynomial equal to a single monomial monom.
+ * **/
+  Element element(Monomial monom) {
+    return element(monom.first, monom.second);
+  }  
 /** \brief Return true iff the input a is equal to the additive identity 0.*/
   bool trivial(Integer z) { return z == 0; }
 /* @} */  // end AbelianGroup methods
@@ -200,7 +207,7 @@ public:
     if(monom.second == 0) { a.clear(); return; }
     for(auto & mon : a) {
       mon.first += monom.first;
-      Ring_.times_equal(mon.second,monom.second);
+      ring_.times_equal(mon.second,monom.second);
     }
   }
 /** Set a <- (a*b). */
@@ -236,22 +243,30 @@ public:
       return element(1);
     }
 /** Return the multiplicative inverse of a Element a if it exists, and return the additive identity 0 otherwise.*/
-    Element multiplicative_inverse(Element a) {
-      return additive_identity();
-    }
+    // Element multiplicative_inverse(Element a) {
+    //   return additive_identity();
+    // }
 /* @} */  // end ring methods
 
 
-    Coeff_elem evaluate(Element a, Coeff_elem x) {
-      std::cout << "to do evaluate\n";
-      return x;
-    }
+    // Ring_coeff evaluate(Element a, Ring_coeff x) {
+    //   std::cout << "to do evaluate\n";
+    //   return x;
+    // }
 
 
   std::string to_string(Element a) {
+    if(trivial(a)) { return "0"; }
     std::stringstream ss;
+    bool first = true;
     for(auto monom : a) {
-      ss << "+ " << Ring_.to_string(monom.second) << ".q^" << monom.first << " ";
+      if(first) {
+        first = false;
+        ss << ring_.to_string(monom.second) << ".q^" << monom.first << " ";
+      }
+      else {
+        ss << "+ " << ring_.to_string(monom.second) << ".q^" << monom.first << " ";
+      }
     }
     return ss.str();
   }
@@ -260,7 +275,7 @@ public:
 
 
 private:
-  Coeff_struct Ring_;
+  Ring_struct ring_;
 
 };
 
