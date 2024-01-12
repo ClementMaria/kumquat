@@ -107,13 +107,8 @@ public:
     return a;
   }
 
-
-
-
 /** \brief Return true iff the element is the additive identity.*/
   bool trivial(Element & a) { return a.empty(); }
-
-
 
 /** \brief Set \f$a \leftarrow z \times a\f$, using the \f$Z\f$-module structure of 
  * the group.
@@ -170,6 +165,11 @@ public:
       else { ++ita; ++itb; }
     }
     return (itb == b.end());
+  }
+
+/** Construct a Laurent polynomial equal to 0.*/
+  Element element() {
+    return Element();
   }
 /** \brief Converts an Integer into an element of the group.
  * 

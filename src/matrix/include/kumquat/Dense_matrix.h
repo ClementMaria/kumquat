@@ -847,6 +847,29 @@ public:
     *this = prod_mat; //move
   }
 
+
+  /** \brief Matrix multiplication on the right by a scalar. 
+   * 
+   * The scalar may be an integer type, in which case coefficient-wise multiplication are the ones from the Z-module structure of group coefficients, or may be of the same type as the matrix coefficients, in which case the matrix coefficients must belong to a ring. 
+   * */
+  template<typename Scalar>
+  void rtimes_equal(Scalar x) {
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < rhs.num_columns(); ++j) {
+          G_.times_equal( prod_mat(i,j), x ) ;  
+        }
+      }
+    }
+    *this = prod_mat; //move
+  }
+
+/** \brief Multiplication on the right by a scalar. */
+  template<typename Scalar>
+  Dense_matrix& operator*=(Scalar x) {
+    this->rtimes_equal(x);
+    return *this;
+  }
+
 /** \brief Multiplication on the right. */
   Dense_matrix& operator*=(const Dense_matrix& rhs) {
     this->rtimes_equal(rhs);
