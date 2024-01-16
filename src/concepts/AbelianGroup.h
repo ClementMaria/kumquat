@@ -1,10 +1,12 @@
-/*    This file is part of the KUMQUAT Library - https://kumquat.inria.fr/ 
- *    - released under  GNU GENERAL PUBLIC LICENSE v.3
- *    See file LICENSE or go to https://kumquat.inria.fr/licensing/ for full 
+/*    This file is part of the KUMQUAT Library -
+ *    https://kumquat.inria.fr/ 
+ *    - which is a licence protected library. See file LICENSE 
+ *    or go to https://kumquat.inria.fr/licensing/ for full 
  *    license details.
+ *
  *    Author(s):       Clément Maria
  *
- *    Copyright (C) 2023 Inria
+ *    Copyright (C) 2024 Inria
  *
  *    Modification(s):
  *      - YYYY/MM Author: Description of the modification
@@ -16,11 +18,9 @@ namespace kumquat {
  * 
  * As a group with multiplication, the concept Ring inherits all types and 
  * methods from the concept AbelianGroup. */
-struct AbelianGroup {
+struct AbelianGroup : Set {
 /** A signed integer type, in particular for the Z-module structure.*/
   typedef unspecified Integer;
-/** The type of elements of the group. Must be copiable. */
-	typedef unspecified Element;
 /** A container to store Elements. */
 	// typedef unspecified Element_container;
 /**A handle to point at Element, must be of type Element_container::iterator. */
@@ -47,8 +47,6 @@ struct AbelianGroup {
 	// Element_container generators();
 /** Return true iff the Element is equal to the additive identity.*/
 	// bool is_additive_identity(Element a);
-/** Return true iff a and b represent the same element of the group.*/
-  bool equal(Element a, Element b);
 /** Convert an integer to an element of the group, equal to z*1.*/
   Element element(Integer z);
 /** Check whether an element is trivial.*/

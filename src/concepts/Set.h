@@ -14,11 +14,11 @@
 
 namespace kumquat {
 
-/** Concept for a field (algebra). 
- * 
- * A Field is a Ring where all elements have multiplicative inverse, except 0. The Ring method multiplicative_inverse must always return a non zero value for a non-zero input.
- */
-struct Field : public Ring {
-};  
+class Set {
+/** The type of elements in the set. Must be copiable. */
+  typedef unspecified Element;
+/** Return true iff a and b represent the same element of the set.*/
+  bool equal(Element a, Element b);
+};
 
-} //namespace kumquat
+} // namespace kumquat

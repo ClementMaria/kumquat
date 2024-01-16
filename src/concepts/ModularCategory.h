@@ -14,15 +14,11 @@
 
 namespace kumquat {
 
-/** Concept for a ring (algebra). 
+/** Concept for a modular category (algebra). 
  * 
- * As a pseudo ring with unit, the concept Ring inherits all types and 
- * methods from the concept PseudoRing. */
-struct Ring : public PseudoRing {
-/** Return the multiplicative identity 1.*/
-    Element multiplicative_identity();
-/** Return the multiplicative inverse of a Element a if it exists, and return the additive identity 0 otherwise.*/
-    Element multiplicative_inverse(Element a);
+ */
+struct ModularCategory : public RibbonCategory {
+
 };  
 
 } //namespace kumquat
