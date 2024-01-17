@@ -53,6 +53,10 @@ struct RibbonCategory : public MonoidalCategory {
   Morphism_handle copairing(Object_handle v_h);
 /** \brief Return the dimension of an object.
  *
+ * Input the handle for object \f$V\f$, return an element of \f$\operatorname{End}(\mathbbm{1})\f$.*/
+  Base_element dim(Object_handle v_h);
+/** Return the trace of a morphism.*/
+  Base_element trace(const Morphism& phi);
 };  
 
 } //namespace kumquat

@@ -15,9 +15,7 @@
 namespace kumquat {
 
 /** Concept for an abelian group (algebra), with additive notation (A,+). 
- * 
- * As a group with multiplication, the concept Ring inherits all types and 
- * methods from the concept AbelianGroup. */
+ */
 struct AbelianGroup : Monoid {
 /** A signed integer type, in particular for the Z-module structure.*/
   typedef unspecified Integer;

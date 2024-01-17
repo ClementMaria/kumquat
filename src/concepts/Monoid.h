@@ -14,10 +14,10 @@
 
 namespace kumquat {
 
-/** Concept for an abelian group (algebra), with additive notation (A,+). 
+/** Concept for a monoid (algebra), with additive notation (M,+). 
  * 
- * As a group with multiplication, the concept Ring inherits all types and 
- * methods from the concept AbelianGroup. */
+ * A monoid is a set with a (not necessarily commutative) associative binary 
+ * operation +, and a unit 0.*/
 struct Monoid : Set {
 /** Return the additive identity 0.*/
   Element additive_identity();
