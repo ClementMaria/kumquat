@@ -16,9 +16,39 @@ namespace kumquat {
 
 /** Concept for a monoidal category (algebra). 
  * 
- * A MonoidalCategory defines a tensor product.
+ * A MonoidalCategory defines the notion of tensor product.
  */
 struct MonoidalCategory : public Category {
+  /** \brief Tensor product of objects, to the right.
+   * 
+   * Set \f$\mathtt{lhs <- lhs} \otimes \mathtt{rhs}\f$.
+   * */
+  void rtensor_equal(Object &lhs, const Object& rhs);
+  /** \brief Tensor product of objects.
+   * 
+   * Return \f$\mathtt{lhs} \otimes \mathtt{rhs}\f$, based on \f$\mathtt{rtensor_equal}\f$.
+   * */
+  Object tensor(Object lhs, const Object& rhs);
+  /** \brief Tensor product of objects, to the left.
+   * 
+   * Set \f$\mathtt{rhs <- lhs} \otimes \mathtt{rhs}\f$.
+   * */
+  void ltensor_equal(Object& rhs, const Object& lhs);
+  /** \brief Tensor product of morphisms, to the right.
+   * 
+   * Set \f$\mathtt{lhs <- lhs} \otimes \mathtt{rhs}\f$.
+   * */
+  void rtensor_equal(Morphism& lhs, const Morphism& rhs);
+  /** \brief Tensor product of morphisms.
+   * 
+   * Return \f$\mathtt{lhs} \otimes \mathtt{rhs}\f$, based on \f$\mathtt{rtensor_equal}\f$.
+   * */
+  Morphism tensor(Morphism lhs, const Morphism& rhs);
+  /** \brief Tensor product of morphisms, to the left.
+   * 
+   * Set \f$\mathtt{rhs <- lhs} \otimes \mathtt{rhs}\f$.
+   * */
+  void ltensor_equal(Morphism& rhs, const Morphism& lhs);
 
 };  
 
