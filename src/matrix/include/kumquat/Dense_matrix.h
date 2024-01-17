@@ -33,7 +33,7 @@ namespace kumquat {
  * row operations are more efficient than column operations.
  */
 template< class CoefficientStructure >
-class Dense_matrix {
+class Dense_matrix : public ScalarSetOperations {
 public:
 /** The algebraic structure containing the coefficients for the matrix entries.
  * 
@@ -43,55 +43,184 @@ public:
   typedef typename Coeff_struct::Element Coefficient;
 /** \brief Signed integer type. Must be a model of SignedInteger.*/
   typedef typename Coeff_struct::Integer Integer;
+
+
+/** \name Model of ScalarSetOperations, and additional constructor.
+ * 
+ * @{ \*
+
 /** \brief Creates an n by m matrix with uninitialized coefficients. */
   Dense_matrix(size_t n, size_t m, CoefficientStructure G) 
   : n_(n), m_(m), G_(G), dim_ker_(-1), dim_im_(-1) {
-    mat_ = std::vector< std::vector< Coefficient > >
-                              (n, std::vector< Coefficient >(m));
+    mat_.resize(n);
+    for(size_t i=0; i<n; ++i) { mat_[i].resize(m); } 
     row_idx_.reserve(n);
     for(size_t i=0; i<n; ++i) { row_idx_.push_back(i); }
     col_idx_.reserve(m);
     for(size_t j=0; j<m; ++j) { col_idx_.push_back(j); }
   }
 /** \brief Copy constructor. */
-  Dense_matrix(Dense_matrix & other) : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_), row_idx_(other.row_idx_), col_idx_(other.col_idx_) {}
-
-/** \brief User-defined move constructor relocates the whole matrix.*/
-  Dense_matrix(Dense_matrix && mat_source) {
-    move_from(mat_source);
+  Dense_matrix(const Dense_matrix& other) 
+  : n_(other.n_), m_(other.m_), mat_(other.mat_), G_(other.G_), dim_ker_(other.dim_ker_), dim_im_(other.dim_im_), row_idx_(other.row_idx_), col_idx_(other.col_idx_) {}
+/** \brief Move constructor.*/
+  Dense_matrix(Dense_matrix&& other) noexcept {
+    move_from(other);
+  } 
+/** Destructor. */
+  ~Dense_matrix() { clear_matrix(); }
+/** \brief Copy assignment. */  
+  Dense_matrix& operator=(const Dense_matrix& other) {
+    copy_from(other);
+    return *this;
   }
-  /** \brief User-defined move assignment relocates the whole matrix.
-   */
-  Dense_matrix& operator=(Dense_matrix&& mat_source) {
-    if(&mat_source != this) {
+/** \brief Move assignment relocates the whole matrix. */
+  Dense_matrix& operator=(Dense_matrix&& other) noexcept {
+    if(&other != this) {
       clear_matrix();
-      move_from(mat_source);
+      move_from(other);
     }
     return *this;
   }
-private:
-  //move from mat_source to this"
-  void move_from(Dense_matrix &mat_source) {
-    n_ = std::move(mat_source.n_);
-    m_ = std::move(mat_source.m_);
-    mat_ = std::move(mat_source.mat_);
-    G_ = std::move(mat_source.G_);
-    dim_ker_ = std::move(mat_source.dim_ker_);
-    dim_im_ = std::move(mat_source.dim_im_);
-    row_idx_ = std::move(mat_source.row_idx_);
-    col_idx_ = std::move(mat_source.col_idx_);
+/** \brief Test for equality.*/
+  inline bool operator==(const Dense_matrix& lhs, const Dense_matrix& rhs) {
+    return (   (lhs.mat_ == rhs.mat_) 
+            && (lhs.row_idx_ == rhs.row_idx_) 
+            && (lhs.col_idx_ && rhs.col_idx_) );
   }
-
+/** \brief Test for inequality.*/
+  inline bool operator!=(const Dense_matrix& lhs, const Dense_matrix& rhs) {
+    return !(lhs == rhs);
+  }
+private:
+//copy other into this
+  void copy_from(Dense_matrix& other) {
+    if(this != &other) {
+      n_ = other.n_;
+      m_ = other.m_;
+      mat_ = other.mat_;
+      G_ = other.G_;
+      dim_ker_ = other.dim_ker_;
+      dim_im_ = other.dim_im_;
+      row_idx_ = other.row_idx_;
+      col_idx_ = other.col_idx_;
+      // n_ = other.num_rows();
+      // m_ = other.num_columns();
+      // //copy the mat_
+      // mat_.clear();   mat_.resize(n_);
+      // for(size_t i=0; i < n_; ++i) {
+      //   mat_[i].resize(m_);
+      //   for(size_t j=0; j < m_; ++j) {
+      //     mat_[i][j] = other[i][j];//CoefficientStructure::Element must be assignable
+      //   }
+      // }
+      // //copy the coefficient structure
+      // G_ = other.G_;
+      // //copy remaining fields
+      // dim_ker_ = other.dim_ker_; 
+      // dim_im_ = other.dim_im_;
+      // row_idx_.resize(n_); 
+      // for(size_t i=0; i < n_; ++i) { row_idx_[i] = other.row_idx_[i]; }
+      // col_idx_.resize(m_);
+      // for(size_t j=0; j < m_; ++j) { col_idx_[j] = other.col_idx_[j]; }
+    }
+  }
+//move from other to this.
+  void move_from(Dense_matrix &other) {
+    n_ = std::move(other.n_);
+    m_ = std::move(other.m_);
+    mat_ = std::move(other.mat_);
+    G_ = std::move(other.G_);
+    dim_ker_ = std::move(other.dim_ker_);
+    dim_im_ = std::move(other.dim_im_);
+    row_idx_ = std::move(other.row_idx_);
+    col_idx_ = std::move(other.col_idx_);
+  }
+//clear the memory for the matrix
   void clear_matrix() {
     mat_.swap(std::vector< std::vector< Coefficient > >());
     row_idx_.swap(std::vector<size_t>());
     col_idx_.swap(std::vector<size_t>());
   }
+
+/* @} */ // end ScalarSetOperations
+
 public:
+
+/** \name Accessors and simple calculations.
+ * 
+ * @{ */
+/** \brief Access the element in row i and column j in the matrix. 
+ * 
+ * Undefined behavior if i or j is outside the range.
+ * */
+  Coefficient& operator()(size_t i, size_t j) {
+    return mat_[row_idx_[i]][col_idx_[j]];
+  }
+/** \brief Return the total number of rows in the matrix.*/
+  size_t num_rows() const { return n_; }
+/** \brief Return the total number of columns in the matrix.*/
+  size_t num_columns() const { return m_; }
+/** \brief Return a reference to the algebraic structure of the entries of 
+ * the matrix.*/
+  Coeff_struct & coefficient_structure() { return G_; }
+/** \brief Set the matrix to 0, while maintaining its size. **/
+  void set_to_zero() {
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < num_columns(); ++j) {
+        (*this)(i,j) = G_.additive_identity();
+      }
+    }
+  }
 /** \brief Access the vector encoding the row at index idx.*/
   std::vector< Coefficient > & operator[](size_t idx) {
     return mat_[row_idx_[idx]];
   };
+/** \brief Return the dimension of the kernel of the matrix, seen 
+ * as a morphism.
+ * 
+ * Return -1 if the kernel has not been computed. The matrix must 
+ * have coefficient in a field.
+ * */
+  int dim_kernel() { return dim_ker_; }
+/** \brief Return the dimension of the image of the matrix, seen 
+ * as a morphism between vector space.
+ * 
+ * Return -1 if the kernel has not been computed. The matrix must 
+ * have coefficient in a field.
+ * */
+  int dim_image() { return dim_im_; }
+/**\brief Return the trace of a square matrix.*/
+  Coefficient trace() {
+    if(num_rows() != num_columns()) {
+      std::cout << "Error trace on non-square matrix.\n";
+      return 0;
+    }
+    Coefficient tr = G_.additive_identity(0);
+    for(size_t i=0; i<num_rows(); ++i) {
+      G_.plus_equal(tr,(*this)(i,i));
+    }
+    return tr;
+  }
+
+/* @} */ // end accessors
+
+/** \name Global modifications of the matrix.
+ * @{ */
+
+/** \brief Set the matrix to the identity. 
+ * 
+ * Works also if the matrix is rectangular, and turn the matrix into a block diagonal matrix, with a maximal top-left block identity, and all other coefficients to 0.
+ * */
+  void set_to_identity() {
+    for(size_t i = 0; i < num_rows(); ++i) {
+      for(size_t j = 0; j < num_columns(); ++j) {
+        if(i==j) { (*this)(i,j) = G_.multiplicative_identity(); }
+        else { 
+          (*this)(i,j) = G_.additive_identity();
+        }
+      }
+    }
+  }
 /** \brief Fills up the matrix from the values of a bi-variate function f.
  *  
  * The type Function must implement the operator:
@@ -107,6 +236,12 @@ public:
       }
     }
   }
+
+/* @} */ // end global modifications of the matrix
+
+/** \name Row and column operations.
+ * 
+ * @{ */
 /** \brief Set \f$\col_i \leftarrow z \times \col_i\f$. 
  * 
  * If CoefficientStructure implements AbelianGroup, WeightType can be of type CoefficientStructure::Integer.
@@ -182,29 +317,69 @@ public:
   void exchange_row(size_t i, size_t j) {
     if(i==j) { return; }
     std::swap(row_idx_[i],row_idx_[j]);
-    // for(size_t k=0; k<m_; ++k) {
-    //   std::swap((*this)(i,k),(*this)(j,k));
-    // }
   }
-/** \brief Return the total number of rows in the matrix.*/
-  size_t num_rows() const { return n_; }
-/** \brief Return the total number of columns in the matrix.*/
-  size_t num_columns() const { return m_; }
-/** \brief Return a reference to the algebraic structure of the entries of 
- * the matrix.*/
-  Coeff_struct & coefficient_structure() { return G_; }
+
+/** \brief Labels for row and column operations.*/
+  enum Operation_type {// ? means undefined
+    plus_equal_column_t,//(i,j,z)  col_i <- col_i + z*col_j 
+    plus_equal_row_t,//(i,j,z)     row_i <- row_i + z*row_j
+    exchange_column_t,//(i,j,?)    col_i <-> col_j 
+    exchange_row_t,//(i,j,?)       row_i <-> row_j 
+    times_equal_column_t,//(i,?,z) col_i <- z*col_i 
+    times_equal_row_t };//(i,?,z)  row_i <- z*row_i
+/** \brief Type of row and column operations, to keep track of a reduction algorithm.*/
+  struct Elementary_matrix_operation {
+  public:
+    Elementary_matrix_operation(size_t i, size_t j, Coefficient z, Operation_type op) : i_(i), j_(j), z_(z), op_(op) {}
+
+    size_t lhs() { return i_; }
+    size_t rhs() { return j_; }
+    Coefficient coefficient() { return z_; }
+    Operation_type type() { return op_;}
+    
+    std::string to_string() {
+      switch(type()) {
+        case plus_equal_column_t: 
+          return "col_" + std::to_string(lhs()) + " <- col_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * " + "col_" + std::to_string(rhs());
+        case plus_equal_row_t: 
+          return "row_" + std::to_string(lhs()) + " <- row_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(rhs());
+          break;
+        case exchange_column_t:
+          return "col_" + std::to_string(lhs()) + " <-> col_" + std::to_string(rhs());
+        case exchange_row_t:
+          return "row_" + std::to_string(lhs()) + " <-> row_" + std::to_string(rhs());
+        case times_equal_column_t:
+          return "col_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * col_" + std::to_string(lhs());
+        case times_equal_row_t:
+          return "row_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(lhs());
+        default: return "unknown";     
+      }
+    }
+
+  private:
+    size_t i_;
+    size_t j_;
+    Coefficient z_;
+    Operation_type op_;
+  };
+
+/* @} */ // end row column operations
+
+/** \name Matrix reduction algorithms.
+ * 
+ * @{ */
 /** \brief Reduce the matrix to column echelon form.
  * 
  * Keep track of the sequence of operation as a vector of 
  * tuple (i,j,z), meaning operation col_i <- col_i + z * col_j, 
  * pushed into the input col_ops.
  * 
- * The Dense_matrix is in column echelon form after the operation
+ * The Dense_matrix is in column echelon form after the operation.
  * 
- * The coefficient structure must be a field.
+ * The coefficient structure must be a model of concept Field.
  * */
   void column_echelon_form(std::vector< 
-                std::tuple<size_t,size_t,Coefficient> > & col_ops) {
+                           std::tuple<size_t,size_t,Coefficient> > & col_ops) {
     dim_ker_ = 0;
     //low_to_col_idx[low] = i indicates that non-trivial reduced col_i has lowest non-zero element at index low
     std::map<size_t, size_t> low_to_col_idx;
@@ -242,11 +417,10 @@ public:
  * 
  * The Dense_matrix is in row echelon form after the operation
  * 
- * The coefficient structure must be a field.
+ * The coefficient structure must be a model of concept Field.
  * */
   void row_echelon_form(std::vector< 
                               std::tuple<size_t,size_t,Coefficient> > & row_ops) {
-    // dim_ker_ = 0;
     dim_im_ = 0;
     //low_to_row_idx[low] = i indicates that non-trivial reduced row_i has rightmost non-zero element at index low
     std::map<size_t, size_t> low_to_row_idx;
@@ -277,20 +451,6 @@ public:
     }
     dim_ker_ = num_columns() - dim_im_; 
   }
-/** \brief Return the dimension of the kernel of the matrix, seen 
- * as a morphism.
- * 
- * Return -1 if the kernel has not been computed. The matrix must 
- * have coefficient in a field.
- * */
-  int dim_kernel() { return dim_ker_; }
-/** \brief Return the dimension of the image of the matrix, seen 
- * as a morphism between vector space.
- * 
- * Return -1 if the kernel has not been computed. The matrix must 
- * have coefficient in a field.
- * */
-  int dim_image() { return dim_im_; }
 
 private:
 /** Return the lowest index of a non-zero entry to the i-th column, and return -1 if the column is all 0.
@@ -325,48 +485,6 @@ private:
   }
 
 public:
-  enum Operation_type {// ? means undefined
-    plus_equal_column_t,//(i,j,z)  col_i <- col_i + z*col_j 
-    plus_equal_row_t,//(i,j,z)     row_i <- row_i + z*row_j
-    exchange_column_t,//(i,j,?)    col_i <-> col_j 
-    exchange_row_t,//(i,j,?)       row_i <-> row_j 
-    times_equal_column_t,//(i,?,z) col_i <- z*col_i 
-    times_equal_row_t };//(i,?,z)  row_i <- z*row_i
-
-    struct Elementary_matrix_operation {
-    public:
-      Elementary_matrix_operation(size_t i, size_t j, Coefficient z, Operation_type op) : i_(i), j_(j), z_(z), op_(op) {}
-
-      size_t lhs() { return i_; }
-      size_t rhs() { return j_; }
-      Coefficient coefficient() { return z_; }
-      Operation_type type() { return op_;}
-      
-      std::string to_string() {
-        switch(type()) {
-          case plus_equal_column_t: 
-            return "col_" + std::to_string(lhs()) + " <- col_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * " + "col_" + std::to_string(rhs());
-          case plus_equal_row_t: 
-            return "row_" + std::to_string(lhs()) + " <- row_" + std::to_string(lhs()) + " + " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(rhs());
-            break;
-          case exchange_column_t:
-            return "col_" + std::to_string(lhs()) + " <-> col_" + std::to_string(rhs());
-          case exchange_row_t:
-            return "row_" + std::to_string(lhs()) + " <-> row_" + std::to_string(rhs());
-          case times_equal_column_t:
-            return "col_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * col_" + std::to_string(lhs());
-          case times_equal_row_t:
-            return "row_" + std::to_string(lhs()) + " <- " + std::to_string((long long)coefficient()) + " * row_" + std::to_string(lhs());
-          default: return "unknown";     
-        }
-      }
-
-    private:
-      size_t i_;
-      size_t j_;
-      Coefficient z_;
-      Operation_type op_;
-    };
 /** \brief Computes the Smith normal form of a matrix with coefficients in a PID.
  * 
  * The coefficients of the matrix must be part of a PID (i.e., Coeff_struct 
@@ -449,11 +567,12 @@ public:
       }
     } 
   }
+
 private:
-  /** \brief Check whether a column is trivial.*
-   * 
-   * Return the first row index of a non-zero element if the column is not trivial, and return -1 otherwise. hint is an optional starting index; if given, the procedure checks only whether col[hint ...] is non-trivial, assuming that col[0...hint-1] is known to be 0.
-   */
+/** \brief Check whether a column is trivial.*
+ * 
+ * Return the first row index of a non-zero element if the column is not trivial, and return -1 otherwise. hint is an optional starting index; if given, the procedure checks only whether col[hint ...] is non-trivial, assuming that col[0...hint-1] is known to be 0.
+ */
   int trivial_column(size_t idx, int hint = -1) {
     size_t start;
     if(hint < 0) { start = 0; }
@@ -492,10 +611,9 @@ public:
       std::cerr << "Gram matrix is not square.\n"; return; 
     }
     auto p = G_.p();
-
+    //distinguish odd and even prime p
     if((p % 2) == 0) { diagonalize_gram_matrix_Qp_mod_Z_p_even(); }
     else { diagonalize_gram_matrix_Qp_mod_Z_p_odd(); }
-
   }
 /** \brief Compute the Gauss sum associated to a general bilinear map on a p-group.
  * */
@@ -570,27 +688,7 @@ public:
     }
     return gauss_sum;
   }
-// /** \brief Compute the Gauss sum associated to an irreducible bilinear map on a p-group.
-//  * */
-//   typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x) {
 
-//   }
-// /**
-//   *
-//   * Case p=2 and we have a 2 x 2 block of the form:
-//   * | x  y |
-//   * | y  z |
-//   *  
-//   * 
-//   * 
-//   */
-
-//   typename Q_U1<Integer>::Element gauss_sum_Qp_mod_Z_irreducible_form(Integer p, Coefficient x, Coefficient y, Coefficient z) {
-//     Q_U1<Integer> q_u1;
-//     if(G_.trivial(x)) { return q_u1.additive_identity(); }
-//     //compute r such that y = 1/2^r
-
-//   }
 private:
 //diagonalize the gram matrix in Qp_mod_Z with p odd 
   void diagonalize_gram_matrix_Qp_mod_Z_p_odd() {
@@ -651,8 +749,6 @@ private:
       }
     }
   }
-
-private:
 /* Find the element in the sub-matrix M[idx...n][idx...n] with maximal order in Qp_mod_Z.
 If such element is in the diagonal, always return a diagonal element. If the matrix is uniformly 0, the pivot indices are returned as -1.
 */
@@ -676,7 +772,7 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     }
     if(max_order == 0) { pivot_i = -1; pivot_j = -1; }//matrix is 0
   }
-  /* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other elements in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
+/* Cancel the row and column of given index idx assuming that the element M[idx][idx] has maximal order in Qp_mod_Z over all other elements in M[idx...n][idx...n]. Subroutine of diagonalization of Gram matrices.*/ 
   void cancel_row_column_Qp_mod_Z(size_t idx) {
         auto p = G_.p(); auto n = num_rows();
     //top left element M[idx][idx] has minimal order
@@ -701,11 +797,11 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     }
 
     top_left = (*this)(idx,idx);
-//we do have M[idx][idx]== eps/p^k, for eps = 1 or 
-//eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
+  //we do have M[idx][idx]== eps/p^k, for eps = 1 or 
+  //eps quadratic non-residue mod p, and eps_inv = eps^-1 mod p^r
     for(size_t i=idx+1; i<n; ++i) {
-//compute beta such that B[idx][i]== beta * b / p^r with beta > 1
-// G_.p_normalize((*this)(idx,i));
+  //compute beta such that B[idx][i]== beta * b / p^r with beta > 1
+  // G_.p_normalize((*this)(idx,i));
       Integer beta = kumquat::division(top_left.second, (*this)(idx,i).second);//in number_theory.h
       //do row_i <- row_i - beta * b * eps^-1 * row_idx and
       //   col_i <- col_i - beta * eps^-1 * col_idx
@@ -720,7 +816,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
       plus_equal_column(i,idx,z);
     }
   } 
-
 /* Subroutine of the diagonalization of the Gram matrix with coefficients in Q_2 / Z, where the block B[idx,idx+1][idx,idx+1] is of the form:
 *  |2a/2^m   b/2^m |   where b is odd and a,c are arbitrary
 *  |               |
@@ -791,30 +886,21 @@ If such element is in the diagonal, always return a diagonal element. If the mat
     }
   }
 
+/* @} */ //end matrix reductions
+
 public:
-  /* methods for jones polynomial on braids */
-  /**\brief Return the trace of a square matrix.*/
-  Coefficient trace() {
-    if(num_rows() != num_columns()) {
-      std::cout << "Error trace on non-square matrix.\n";
-      return 0;
-    }
-    Coefficient tr = G_.additive_identity(0);
-    for(size_t i=0; i<num_rows(); ++i) {
-      G_.plus_equal(tr,(*this)(i,i));
-    }
-    return tr;
-  }
 
 
-  /** \brief Matrix multiplication on the right. 
-   * 
-   * Naive cubic algorithm.
-   * this <- this * rhs
-   * */
-  void rtimes_equal(const Dense_matrix& rhs) {
+public:  
+/** \name Model of ScalarRingOperations, and additional matrix specific multiplication operations.
+ * @{ */
+
+/** \brief Matrix multiplication on the right. 
+ * 
+ * Naive cubic algorithm.
+ **/
+  Dense_matrix rtimes(const Dense_matrix& rhs) {
     assert( num_columns() == rhs.num_rows() );
-    
     Dense_matrix prod_mat(num_rows(),rhs.num_columns(),G_); 
     for(size_t i = 0; i < num_rows(); ++i) {
       for(size_t j = 0; j < rhs.num_columns(); ++j) {
@@ -825,17 +911,20 @@ public:
         }
       }
     }
-    *this = prod_mat; //move
+    return prod_mat;
   }
-
-  /** \brief Matrix multiplication on the left. 
-   * 
-   * Naive cubic algorithm.
-   * this <- lhs * this
-   * */
-  void ltimes_equal(const Dense_matrix& lhs) {
+/** \brief Matrix multiplication on the right.
+ * 
+ * Set \mathtt{(*this) <- (*this) * rhs}, based on \f$\mathtt{rtimes}\f$.*/
+  void rtimes_equal(const Dense_matrix& rhs) {
+    *this = rtimes(rhs);
+  }
+/** \brief Matrix multiplication on the left. 
+ * 
+ * Naive cubic algorithm.
+ * */
+  Dense_matrix ltimes(const Dense_matrix& lhs) {
     assert( num_rows() == lhs.num_columns() );
-    
     Dense_matrix prod_mat(lhs.num_rows(),num_columns(),G_); 
     for(size_t i = 0; i < lhs.num_rows(); ++i) {
       for(size_t j = 0; j < num_columns(); ++j) {
@@ -846,67 +935,54 @@ public:
         }
       }
     }
-    *this = prod_mat; //move
+    return prod_mat; //move
   }
-
-
-  /** \brief Matrix multiplication on the right by a scalar. 
-   * 
-   * The scalar may be an integer type, in which case coefficient-wise multiplication are the ones from the Z-module structure of group coefficients, or may be of the same type as the matrix coefficients, in which case the matrix coefficients must belong to a ring. 
-   * */
+/** \brief Matrix multiplication on the left.
+ * 
+ * Set \f$\mathtt{(*this) <- lhs * (*this)}, based on \f$\mathtt{ltimes}.*/
+  void ltimes_equal(const Dense_matrix& lhs) {
+    *this = ltimes(rhs);
+  }
+/** \brief Matrix multiplication on the right by a scalar. 
+ * 
+ * The scalar may be an integer type, in which case coefficient-wise multiplication are the ones from the Z-module structure of group coefficients, or may be of the same type as the matrix coefficients, in which case the matrix coefficients must belong to a ring. 
+ * */
   template<typename Scalar>
   void rtimes_equal(Scalar x) {
     for(size_t i = 0; i < num_rows(); ++i) {
       for(size_t j = 0; j < rhs.num_columns(); ++j) {
-          G_.times_equal( prod_mat(i,j), x ) ;  
-        }
+          G_.times_equal( (*this)(i,j), x ) ;  
       }
     }
-    *this = prod_mat; //move
   }
 
-/** \brief Multiplication on the right by a scalar. */
+/** \brief Multiplication on the right by a scalar.
+ * 
+ * Based on \f$\mathtt{rtimes_equal}\f$. */
   template<typename Scalar>
   Dense_matrix& operator*=(Scalar x) {
     this->rtimes_equal(x);
     return *this;
   }
-
-/** \brief Multiplication on the right. */
+/** \brief Multiplication on the right by a matrix. 
+ * 
+ * Based on \f$\mathtt{rtimes_equal}\f$. */
   Dense_matrix& operator*=(const Dense_matrix& rhs) {
     this->rtimes_equal(rhs);
     return *this;
   }
-  /** \brief Access the element in row i and column j in the matrix. */
-  Coefficient& operator()(size_t i, size_t j) {
-    return mat_[row_idx_[i]][col_idx_[j]];
-  }
+/* } */ // end ScalarRingOperations 
 
-  /** \brief Set the matrix to 0. **/
-  void set_to_zero() {
-    for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < num_columns(); ++j) {
-        (*this)(i,j) = G_.additive_identity();
-      }
-    }
-  }
-  /** \brief Set the matrix to the identity (if square). **/
-  void set_to_identity() {
-    for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < num_columns(); ++j) {
-        if(i==j) { (*this)(i,j) = G_.multiplicative_identity(); }
-        else { 
-          (*this)(i,j) = G_.additive_identity();
-        }
-      }
-    }
-  }
+
+
+
+
 
   /** \brief Compute the tensor product on the right with the input matrix.
    * 
    * this <- this tensor rhs.
    **/
-  Dense_matrix rtensor(Dense_matrix &rhs) {
+  Dense_matrix rtensor(const Dense_matrix &rhs) {
     Dense_matrix res( num_rows()*rhs.num_rows()
                     , num_columns()*rhs.num_columns(), G_);
     for(size_t i=0; i<num_rows(); ++i) {
@@ -921,11 +997,18 @@ public:
     }
     return res;
   }
+/** \brief Tensoring to the right.
+ * 
+ * Set *this <- *this \f$\otimes\f$ rhs, based on rtensor.*/
+  void rtensor_equal(const Dense_matrix& rhs) {
+    *this = rtensor(rhs);
+  }
+
   /** \brief Compute the tensor product on the left with the input matrix.
    * 
    * this <- lhs tensor this.
    **/
-  Dense_matrix ltensor(Dense_matrix &lhs) {
+  Dense_matrix ltensor(const Dense_matrix& lhs) {
     Dense_matrix res( num_rows()*lhs.num_rows()
                     , num_columns()*lhs.num_columns(), G_);
     for(size_t i=0; i<lhs.num_rows(); ++i) {

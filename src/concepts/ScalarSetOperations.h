@@ -19,6 +19,12 @@ namespace kumquat {
  * A scalar in \kumquat is a mathematical object on which C++ operators are defined, that correspond to algebraic operations (such as addition, multiplication, etc). Scalars are often described by the type of algebraic structures they belong too (such as a group, an abelian group, a ring, etc).
  * */ 
 class ScalarSetOperations {
+  /** \brief Copy constructor.*/
+  ScalarSetOperations(const ScalarSetOperations& other);
+  /** \brief Move constructor.*/
+  ScalarSetOperations(ScalarSetOperations&& other) noexcept;
+  /** brief Destructor.*/
+  ~ScalarSetOperations();
   /** \brief Copy assignment.
    * 
    * return *this;

@@ -19,10 +19,6 @@ namespace kumquat {
  * A MonoidalCategory defines a tensor product.
  */
 struct Category : Set {
-/** \brief The type of object in the category. Must be copiable. */
-  typedef unspecified Element;
-/** \brief Return true iff a and b represent the same object of the category.*/
-  bool equal(Element a, Element b);
 /** \brief The type of arrows in the category.*/
   typedef unspecifed Morphism;
 /** \brief Compose a morphism to the right.
