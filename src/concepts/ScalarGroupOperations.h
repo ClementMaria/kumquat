@@ -17,27 +17,27 @@ namespace kumquat {
 /** \brief The concept for a scalar with standard group operations, where the underlying group is denoted (G,+).
   * */
 struct ScalarGroupOperations : public ScalarSetOperations {
-  /** \brief Addition to the right.
-   * 
-   * Set *this <- *this + rhs.
-   * return *this;
-   * */
+/** \brief Addition to the right.
+ * 
+ * Set *this <- *this + rhs.
+ * return *this;
+ * */
   ScalarGroupOperations& operator+=(const ScalarGroupOperations& rhs); 
-  /** Return the addition of two group elements.
-   * 
-   * Return (lhs + rhs), based on operator +=.
-   * */
+/** Return the addition of two group elements.
+ * 
+ * Return (lhs + rhs), based on operator +=.
+ * */
   friend ScalarGroupOperations operator+(ScalarGroupOperations lhs, const ScalarGroupOperations& rhs);
-  /** \brief Substraction to the right.
-   * 
-   * Set *this <- *this - rhs.
-   * return *this;
-   * */
+/** \brief Subtraction to the right.
+ * 
+ * Set *this <- *this - rhs.
+ * return *this;
+ * */
   ScalarGroupOperations& operator-=(const ScalarGroupOperations& rhs);
-  /** Return the substraction of an element to the other.
-   * 
-   * Return (lhs - rhs), based on operator -=.
-   * */
+/** Return the subtraction of an element to the other.
+ * 
+ * Return (lhs - rhs), based on operator -=.
+ * */
   friend ScalarGroupOperations operator-(ScalarGroupOperations lhs, const ScalarGroupOperations& rhs); 
 };
 

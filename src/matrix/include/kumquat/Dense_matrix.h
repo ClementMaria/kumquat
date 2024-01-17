@@ -892,12 +892,58 @@ public:
 
 
 public:  
+/** \name Model of ScalarGroupOperations, and additional matrix specific addition operations.
+ * @{ */
+  /** \brief Pointwise matrix addition (to the right).
+   * 
+   * Set *this <- *this + rhs, where the plus sign is the one of the group of coefficients.
+   * */
+  Dense_matrix& operator+=(const Dense_matrix& rhs) {
+    for(size_t i=0; i<n_; ++i) {
+      for(size_t j=0; j<m_; ++j) {
+        G_.plus_equal((*this)(i,j),rhs(i,j));
+      }
+    }
+    return *this;
+  }
+  /** Return the pointwise addition of two matrices.
+   * 
+   * Return (lhs + rhs), based on operator +=.
+   * */
+  friend Dense_matrix operator+(Dense_matrix lhs, const Dense_matrix& rhs) {
+    lhs += rhs;
+    return lhs;
+  }
+  /** \brief Pointwise matrix subtraction (to the right).
+   * 
+   * Set *this <- *this - rhs, where the minus sign is the one of the group of coefficients.
+   * */
+  Dense_matrix& operator-=(const Dense_matrix& rhs) {
+    for(size_t i=0; i<n_; ++i) {
+      for(size_t j=0; j<m_; ++j) {
+        G_.plus_equal((*this)(i,j),G_.additive_inverse(rhs(i,j)));
+      }
+    }
+    return *this;
+  }
+/** Return the subtraction of a matrix to the other.
+ * 
+ * Return (lhs - rhs), based on operator -=.
+ * */
+  friend Dense_matrix operator-(Dense_matrix lhs, const Dense_matrix& rhs) {
+    lhs -= rhs;
+    return lhs;
+  } 
+
+/* @} */ // end model ScalarGroupOperations
+
 /** \name Model of ScalarRingOperations, and additional matrix specific multiplication operations.
  * @{ */
 
 /** \brief Matrix multiplication on the right. 
  * 
  * Naive cubic algorithm.
+ * Return \mathtt{(*this) * rhs}\f$.
  **/
   Dense_matrix rtimes(const Dense_matrix& rhs) {
     assert( num_columns() == rhs.num_rows() );
@@ -922,6 +968,7 @@ public:
 /** \brief Matrix multiplication on the left. 
  * 
  * Naive cubic algorithm.
+ * Return \mathtt{lhs * (*this)}\f$.
  * */
   Dense_matrix ltimes(const Dense_matrix& lhs) {
     assert( num_rows() == lhs.num_columns() );
@@ -948,20 +995,28 @@ public:
  * The scalar may be an integer type, in which case coefficient-wise multiplication are the ones from the Z-module structure of group coefficients, or may be of the same type as the matrix coefficients, in which case the matrix coefficients must belong to a ring. 
  * */
   template<typename Scalar>
-  void rtimes_equal(Scalar x) {
+  void times_equal(Scalar x) {
     for(size_t i = 0; i < num_rows(); ++i) {
       for(size_t j = 0; j < rhs.num_columns(); ++j) {
           G_.times_equal( (*this)(i,j), x ) ;  
       }
     }
   }
-
-/** \brief Multiplication on the right by a scalar.
+/** Return the product of the matrix by a scalar.
  * 
- * Based on \f$\mathtt{rtimes_equal}\f$. */
+ * Based on \f$\mathtt{times_equal}.*/
+  template<typename Scalar>
+  Dense_matrix times(Scalar x) {
+    Dense_matrix res(*this);
+    res.rtimes_equal(x);
+    return res;
+  }
+/** \brief Multiplication by a scalar.
+ * 
+ * Based on \f$\mathtt{times_equal}\f$. */
   template<typename Scalar>
   Dense_matrix& operator*=(Scalar x) {
-    this->rtimes_equal(x);
+    this->times_equal(x);
     return *this;
   }
 /** \brief Multiplication on the right by a matrix. 
@@ -971,6 +1026,15 @@ public:
     this->rtimes_equal(rhs);
     return *this;
   }
+  /** Return the multiplication of two matrices.
+   * 
+   * Return (lhs * rhs), based on operator *=.
+   * */
+  friend Dense_matrix operator*(Dense_matrix lhs, const Dense_matrix& rhs) {
+    lhs *= rhs;
+    return lhs;
+  }
+  
 /* } */ // end ScalarRingOperations 
 
 
