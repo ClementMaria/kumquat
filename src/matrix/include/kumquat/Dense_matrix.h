@@ -1034,18 +1034,19 @@ public:
     lhs *= rhs;
     return lhs;
   }
-  
+
 /* } */ // end ScalarRingOperations 
 
 
 
 
-
-
-  /** \brief Compute the tensor product on the right with the input matrix.
-   * 
-   * this <- this tensor rhs.
-   **/
+/** \name Model of ObjectMonoidalCategory, and additional tensor operations.
+ * 
+ * @{ */
+/** \brief Matrix tensor product to the right. 
+ *  
+ * Return \f$\mathtt{*this) <- (*this)} \otimes \mathtt{rhs}\f$.
+ **/
   Dense_matrix rtensor(const Dense_matrix &rhs) {
     Dense_matrix res( num_rows()*rhs.num_rows()
                     , num_columns()*rhs.num_columns(), G_);
@@ -1061,17 +1062,17 @@ public:
     }
     return res;
   }
-/** \brief Tensoring to the right.
- * 
- * Set *this <- *this \f$\otimes\f$ rhs, based on rtensor.*/
+/** \brief Matrix tensor product to the right. 
+ *  
+ * Set \f$\mathtt{(*this) <- (*this)} \otimes \mathtt{rhs}\f$.
+ **/
   void rtensor_equal(const Dense_matrix& rhs) {
     *this = rtensor(rhs);
   }
-
-  /** \brief Compute the tensor product on the left with the input matrix.
-   * 
-   * this <- lhs tensor this.
-   **/
+/** \brief Matrix tensor product to the left. 
+ *  
+ * Return \f$\mathtt{lhs} \otimes \mathtt{(*this)}\f$.
+ **/
   Dense_matrix ltensor(const Dense_matrix& lhs) {
     Dense_matrix res( num_rows()*lhs.num_rows()
                     , num_columns()*lhs.num_columns(), G_);
@@ -1087,14 +1088,20 @@ public:
     } 
     return res;
   }
-
-/** \brief Return the tensor product \f$\operatorname{id}_m \otimes M \otimes \operatorname{id}_n\f$,
-   * where \f$\operatorname{id}_k\f$ is the k by k identity matrix.
+/** \brief Matrix tensor product to the left. 
+ *  
+ * Set \f$\mathtt{(*this) <- lhs} \otimes \mathtt{(*this)}\f$.
+ **/
+  void ltensor_equal(const Dense_matrix& lhs) {
+    *this = ltensor(lhs);
+  }
+/** \brief Return the tensor product 
+ * \f$\operatorname{id}_m \otimes \mathtt{(*this)} \otimes \operatorname{id}_n\f$,
+ * where \f$\operatorname{id}_k\f$ is the k by k identity matrix.
   **/
   Dense_matrix tensor_id(int m, int n) {
     return (this->rtensor(identity_matrix(n))).ltensor(identity_matrix(m));
   }
-
 /** \brief Return the n by n identity matrix.*/
   Dense_matrix identity_matrix(size_t n) {
     Dense_matrix id(n,n, G_);
@@ -1102,6 +1109,8 @@ public:
     return id;
   }
 
+/* @} */ // end model of ObjectMonoidalCategory
+  
 private:
   //number of rows of the matrix
   size_t n_;
