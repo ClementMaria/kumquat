@@ -18,7 +18,7 @@ namespace kumquat {
  * 
  * A MonoidalCategory defines the notion of tensor product.
  */
-struct MonoidalCategory : public Category {
+struct StrictMonoidalCategory : public Category {
   /** \brief Tensor product of objects, to the right.
    * 
    * Set \f$\mathtt{lhs <- lhs} \otimes \mathtt{rhs}\f$.

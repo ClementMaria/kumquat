@@ -18,19 +18,9 @@ namespace kumquat {
  * 
  * As a group with multiplication, the concept Ring inherits all types and 
  * methods from the concept AbelianGroup. */
-struct AbelianGroup : Set {
+struct AbelianGroup : Monoid {
 /** A signed integer type, in particular for the Z-module structure.*/
   typedef unspecified Integer;
-/** A container to store Elements. */
-	// typedef unspecified Element_container;
-/**A handle to point at Element, must be of type Element_container::iterator. */
-	// typedef unspecified Element_handle;
-/** Return the additive identity 0.*/
-  Element additive_identity();
-/** Set a <- (a+b). */	
-	void plus_equal(Element & a, Element b);
-/** Return a+b.*/
-	Element plus(Element a, Element b);
 /** Set a<- z*a using the Z-module structure of the group.*/
 	void times_equal(Element a, Integer z);
 /** Return z*a using the Z-module structure of the group.*/
@@ -43,10 +33,6 @@ struct AbelianGroup : Set {
 	Integer order(Element a);
 /** Return the rank of the group, i.e., the minimal number of generators. */
  Integer rank(); 
-/** Return a container of Element that form a minimal family of generators for the group. */
-	// Element_container generators();
-/** Return true iff the Element is equal to the additive identity.*/
-	// bool is_additive_identity(Element a);
 /** Convert an integer to an element of the group, equal to z*1.*/
   Element element(Integer z);
 /** Check whether an element is trivial.*/

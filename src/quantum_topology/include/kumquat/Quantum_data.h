@@ -45,7 +45,7 @@ enum Quantum_group_type {Uqsl2C_genq};
 /** \brief Return the quantum integer 
  * \f$[n]_q = \frac{q^{n/2} - q^{-n/2}}{q^{1/2}-q^{-1/2}}\f = 
  *          = \frac{X^{n}-X^{-n}}{X - X^{-1}}
- *          = \frac{X^{2n}-1}{X^{n+1}-X^{n-1}}
+ *          = \frac{X^{2n}-1}{X^{n+1}-X^{n-1}}\f$
  * 
  * (is also a polynomial \f$q^{1-n}(1+q+q^2+\ldots+q^{n-1})=q^{-n+1}+ ... + q^{-1} + 1\f$).
  */

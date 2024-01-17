@@ -20,7 +20,6 @@ class ObjectMonoidalCategory : ScalarSetOperations {
   /** \brief Tensor product to the right.
    * 
    * Set \f$\mathtt{(*this) <- (*this)} \otimes \mathtt{rhs}\f$.
-   * return *this;
    * */
   void rtensor_equal(const ScalarRingOperations& rhs);
   /** \brief Tensor product to the right.
@@ -31,7 +30,6 @@ class ObjectMonoidalCategory : ScalarSetOperations {
   /** \brief Tensor product to the left.
    * 
    * Set \f$\mathtt{(*this) <- rhs} \otimes \mathtt{(*this)}\f$.
-   * return *this;
    * */
   void ltensor_equal(const ScalarRingOperations& lhs);
   /** \brief Tensor product to the left.
