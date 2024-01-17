@@ -33,7 +33,7 @@ namespace kumquat {
  * row operations are more efficient than column operations.
  */
 template< class CoefficientStructure >
-class Dense_matrix : public ScalarSetOperations {
+class Dense_matrix : public ScalarRingOperations, public ObjectMonoidalCategory {
 public:
 /** The algebraic structure containing the coefficients for the matrix entries.
  * 
@@ -43,7 +43,6 @@ public:
   typedef typename Coeff_struct::Element Coefficient;
 /** \brief Signed integer type. Must be a model of SignedInteger.*/
   typedef typename Coeff_struct::Integer Integer;
-
 
 /** \name Model of ScalarSetOperations, and additional constructor.
  * 
@@ -1110,7 +1109,7 @@ public:
   }
 
 /* @} */ // end model of ObjectMonoidalCategory
-  
+
 private:
   //number of rows of the matrix
   size_t n_;
