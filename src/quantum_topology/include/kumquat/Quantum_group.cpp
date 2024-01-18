@@ -12,13 +12,26 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
+#ifndef KUMQUAT_QUANTUM_GROUP_H_ 
+#define KUMQUAT_QUANTUM_GROUP_H_
+
+#include <kumquat/Rational_function_integral_mp>
+
 namespace kumquat {
 
-/** Concept for a ribbon category (algebra). 
+enum Quantum_group_type {Uq_sl2C_generic_q, Uq_sl2C_rootofunit_q};
+
+/** \brief Class to produce and store the matrices, deduced from appropriate fusion categories, used to defined quantum invariants under several constructions (Reshetikhin-Turaev, Turaev-Viro-Barrett-Westbury, etc).
+ *
+ * The approach is lazy and keep in memory the useful matrices that have already 
+ * been computed.
  * 
- * Introduces the notion of handle for objects and morphism to name specific objects and morphisms, that may be pre-computed in practice.
- */
-struct RibbonCategory : public MonoidalCategory {
+ * Is model of concept ModularCategory
+ **/
+template<QuantumGroupType>
+class Quantum_group {
+
+
 /** \brief A handle type to designate an object in the category.*/
   typedef unspecified Object_handle;
 /** \brief A handle type to designate a morphism in the category.*/
@@ -54,9 +67,13 @@ struct RibbonCategory : public MonoidalCategory {
 /** \brief Return the dimension of an object.
  *
  * Input the handle for object \f$V\f$, return an element of \f$\operatorname{End}(\mathbbm{1})\f$.*/
-  Ground_element dim(Object_handle v_h);
+  Base_element dim(Object_handle v_h);
 /** Return the trace of a morphism.*/
-  Ground_element trace(const Morphism& phi);
-};  
+  Base_element trace(const Morphism& phi);
+  
 
-} //namespace kumquat
+};
+
+} // namespace kumquat
+
+#endif // END KUMQUAT_QUANTUM_GROUP_H_ 

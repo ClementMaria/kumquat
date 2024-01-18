@@ -23,13 +23,13 @@ struct StrictMonoidalCategory : public Category {
  * 
  * When the unit object is (the vector space) \f$\mathbb{C}\f$, the base monoid is \f$\operatorname{End}(\mathbb{C})\f$ (where the monoid law + is the composition of morphisms) which is isomorph the \f$\mathbb{C}\f$ (any morphism \f$\mathbb{C}\to\mathbb{C}\f$ is a multiplication by a scalar). We use \f$\mathbb{C}\f$ as base monoid in this case.
  * */ 
-  typedef Monoid Base_monoid;
+  typedef Monoid Ground_monoid;
 /** \breif The type of elements in the base monoid \f$\operatorname{End}(\mathbbm{1})\f$.*/
-  typedef Base_monoid::Element Base_element;
+  typedef Ground_monoid::Element Ground_element;
 /** \brief Return the unit object \f$\mathbbm{1}\f$ of the strict category.*/
   Object unit();
 /** \brief Return the (commutative) monoid \f$\operatorname{End}(\mathbbm{1})\f$.*/
-  Base_monoid base_monoid();
+  Ground_monoid base_monoid();
 /** \brief Tensor product of objects, to the right.
  * 
  * Set \f$\mathtt{lhs <- lhs} \otimes \mathtt{rhs}\f$.

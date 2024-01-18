@@ -25,6 +25,8 @@
 namespace kumquat {
 
 /** \brief A data type for multi-precision rational function represented by two polynomials (P,Q) such that gcd(P,Q) = cste and P and Q have multiprecision integer coefficients.
+ * 
+ * Is model of concept ScalarFieldOperations
  */
 class Rational_function_integral_mp {
 public:
@@ -37,89 +39,116 @@ public:
   Rational_function_integral_mp() : numerator_({{0}}), denominator_({{1}}) {}
 /** \brief Initialization with an integer z, z/1.*/
   Rational_function_integral_mp(int z) : numerator_({{(Coefficient)z}}), denominator_({{1}}) {}
-/** \brief Initialization with an integer z, z/1.*/
+/** \brief Initialization with a range.*/
   template<typename RangeType>
   Rational_function_integral_mp(RangeType &num, RangeType &den) 
   : numerator_(num.begin(),num.end()), denominator_(den.begin(),den.end()) {
     normalize();
   }
+/** \name Model of ScalarSetOperations
+ * 
+ * @{ */
+/** \brief Copy constructor.*/
+  Rational_function_integral_mp(const Rational_function_integral_mp& other) {
+    numerator_ = other.numerator_;
+    denominator_ = other.denominator_;
+  }
+/** \brief Move constructor.*/
+  Rational_function_integral_mp(Rational_function_integral_mp&& other) noexcept {
+    numerator_ = std::move(other.numerator_);
+    denominator_ = std::move(other.denominator_);
+  }
+/** brief Destructor.*/  
+  ~Rational_function_integral_mp() {}
+/** \brief Copy assignment.*/
+  Rational_function_integral_mp& operator=(const Rational_function_integral_mp& other) 
+  {
+    numerator_ = other.numerator_;
+    denominator_ = other.denominator_;  
+    return *this;
+  }
+/** \brief Move assignment.*/
+  Rational_function_integral_mp& operator=(Rational_function_integral_mp&& other) noexcept
+  {
+    numerator_ = other.numerator_;
+    denominator_ = other.denominator_;  
+    return *this;
+  }
 
-// copy assignment
-Rational_function_integral_mp& operator=(const Rational_function_integral_mp& other) 
-{
-  numerator_ = other.numerator_;
-  denominator_ = other.denominator_;  
-  return *this;
-}
-// move assignment
-Rational_function_integral_mp& operator=(Rational_function_integral_mp&& other) noexcept
-{
-  numerator_ = other.numerator_;
-  denominator_ = other.denominator_;  
-  return *this;
-}
+  inline bool operator==(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { 
+    return (lhs.numerator_ == rhs.numerator_) && (lhs.denominator_ == rhs.denominator_);
+   }
+  inline bool operator!=(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { return !(lhs == rhs); }
+/* @} */
 
-Rational_function_integral_mp& operator+=(const Rational_function_integral_mp& rhs) 
-{ 
-  numerator_ = numerator_*rhs.denominator_ + denominator_*rhs.numerator_;
-  denominator_ *= rhs.denominator_;
-  normalize();             
-  return *this;
-}
+/** \name Model of ScalarGroupOperations
+ * 
+ * @{ */
+  Rational_function_integral_mp& operator+=(const Rational_function_integral_mp& rhs) 
+  { 
+    numerator_ = numerator_*rhs.denominator_ + denominator_*rhs.numerator_;
+    denominator_ *= rhs.denominator_;
+    normalize();             
+    return *this;
+  }
 
-friend Rational_function_integral_mp operator+(Rational_function_integral_mp lhs,        
-                   const Rational_function_integral_mp& rhs) 
-{
-  lhs += rhs;
-  return lhs;
-}
+  friend Rational_function_integral_mp operator+(Rational_function_integral_mp lhs,        
+                     const Rational_function_integral_mp& rhs) 
+  {
+    lhs += rhs;
+    return lhs;
+  }
 
-Rational_function_integral_mp& operator-=(const Rational_function_integral_mp& rhs) 
-{             
-  numerator_ = numerator_*rhs.denominator_ - denominator_*rhs.numerator_;
-  denominator_ *= rhs.denominator_;
-  normalize();             
-  return *this;
-}
+  Rational_function_integral_mp& operator-=(const Rational_function_integral_mp& rhs) 
+  {             
+    numerator_ = numerator_*rhs.denominator_ - denominator_*rhs.numerator_;
+    denominator_ *= rhs.denominator_;
+    normalize();             
+    return *this;
+  }
 
-friend Rational_function_integral_mp operator-(Rational_function_integral_mp lhs, const Rational_function_integral_mp& rhs) 
-{
-  lhs -= rhs;
-  return lhs;
-}
+  friend Rational_function_integral_mp operator-(Rational_function_integral_mp lhs, const Rational_function_integral_mp& rhs) 
+  {
+    lhs -= rhs;
+    return lhs;
+  }
+/* @} */
 
-Rational_function_integral_mp& operator*=(const Rational_function_integral_mp& rhs) 
-{                 
-  numerator_ *= rhs.numerator_;
-  denominator_ *= rhs.denominator_;
-  normalize();             
-  return *this; 
-}
+/** \name Model of ScalarRingOperations
+ * 
+ * @{ */
+  Rational_function_integral_mp& operator*=(const Rational_function_integral_mp& rhs) 
+  {                 
+    numerator_ *= rhs.numerator_;
+    denominator_ *= rhs.denominator_;
+    normalize();             
+    return *this; 
+  }
 
-friend Rational_function_integral_mp operator*(Rational_function_integral_mp lhs, const Rational_function_integral_mp& rhs) 
-{
-  lhs *= rhs;
-  return lhs;
-}
+  friend Rational_function_integral_mp operator*(Rational_function_integral_mp lhs, const Rational_function_integral_mp& rhs) 
+  {
+    lhs *= rhs;
+    return lhs;
+  }
+/* @} */
 
-Rational_function_integral_mp& operator/=(const Rational_function_integral_mp& rhs) 
-{                     
-  numerator_ *= rhs.denominator_;
-  denominator_ *= rhs.numerator_;
-  normalize();             
-  return *this;
-}
+/** \name Model of ScalarFieldOperations
+ * 
+ * @{ */
+  Rational_function_integral_mp& operator/=(const Rational_function_integral_mp& rhs) 
+  {                     
+    numerator_ *= rhs.denominator_;
+    denominator_ *= rhs.numerator_;
+    normalize();             
+    return *this;
+  }
 
-friend Rational_function_integral_mp operator/(Rational_function_integral_mp lhs,  const Rational_function_integral_mp& rhs) 
-{
-  lhs /= rhs;
-  return lhs;
-}
-
-inline bool operator==(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { 
-  return (lhs.numerator_ == rhs.numerator_) && (lhs.denominator_ == rhs.denominator_);
- }
-inline bool operator!=(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { return !(lhs == rhs); }
+  friend Rational_function_integral_mp operator/(Rational_function_integral_mp lhs,  const Rational_function_integral_mp& rhs) 
+  {
+    lhs /= rhs;
+    return lhs;
+  }
+/* @} */
 
 
 private:
