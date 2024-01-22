@@ -22,8 +22,6 @@
 
 namespace kumquat {
 
-
-
 /** \brief Class implementing the standard requirement for a category whose objects are finite dimensional vector space or free modules over a field/ring.
  * 
  * Morphisms are represented by matrices.
