@@ -18,9 +18,9 @@ namespace kumquat {
  * 
  * A MonoidalCategory defines a tensor product.
  */
-struct Category : Set {
-/** \brief Rename the elements of a set.*/
-  typedef Element Object;
+struct Category {
+/** \brief Type object is a model of Set.*/
+  typedef unspecified Object;
 /** \brief The type of arrows in the category.*/
   typedef unspecifed Morphism;
 /** \brief Compose a morphism to the right.

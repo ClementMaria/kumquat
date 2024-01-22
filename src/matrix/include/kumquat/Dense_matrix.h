@@ -43,7 +43,8 @@ public:
   typedef typename Coeff_struct::Element Coefficient;
 /** \brief Signed integer type. Must be a model of SignedInteger.*/
   typedef typename Coeff_struct::Integer Integer;
-
+/** \brief A dense vector type.*/
+  typedef std::vector< Coefficient > Vector;
 /** \name Model of ScalarSetOperations, and additional constructor.
  * 
  * @{ \*
@@ -958,6 +959,19 @@ public:
     }
     return prod_mat;
   }
+/** Product with a vector on the right.
+ * 
+ * The vector is considered vertical.*/
+  Vector rtimes(const Vector& v) {
+    Vector res(num_rows(),G_.additive_identity());
+    for(size_t i=0; i<num_rows(); ++i) {
+      for(size_t j=0; j<num_columns(); ++j) {
+        G_.plus_equal(res[i], G_times( (*this)(i,j), v[j] ) ); 
+      }
+    }
+    return res;
+  }
+
 /** \brief Matrix multiplication on the right.
  * 
  * Set \mathtt{(*this) <- (*this) * rhs}, based on \f$\mathtt{rtimes}\f$.*/

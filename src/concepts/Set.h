@@ -42,8 +42,8 @@ class Set {
   * Based on ==.
   * */
   inline bool operator!=(const Set& lhs, const Set& rhs);
-/** The type of elements in the set. Must be a model of Set. */
-  typedef Set Element;
+/** The type of elements in the set. Must be a model of ScalarSetOperations. */
+  typedef ScalarSetOperations Element;
 /** Return true iff a and b represent the same element of the set.*/
   bool equal(Element a, Element b);
 };
