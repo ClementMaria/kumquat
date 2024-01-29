@@ -25,7 +25,9 @@ namespace kumquat {
  * 
  * 
  **/
+
 // template<int N>
+
 class Quantum_data {
 public:
   typedef boost::multiprecision::mpz_int Integer;
@@ -44,6 +46,15 @@ public:
     return Rational_f(num,den);
   }
 /** \brief Return \f$X^k = q^{k/4}\f$ for any integer k.*/
+
+
+/**
+ * @brief      Return \f$X^k = q^{k/4}\f$ for any integer k.  
+ *
+ * @param[in]  k    The input degree for the monomial.
+ *
+ * @return     The monomial output as a rational function.
+ */
   Rational_f quantum_monomial(int k) {
     if(k>=0) {//return X^k
       std::vector<Integer> num(k+1,0); num[k]=1;
