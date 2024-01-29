@@ -19,7 +19,7 @@ namespace kumquat {
  * A MonoidalCategory defines a tensor product.
  */
 struct Category {
-/** \brief Type object is a model of Set.*/
+/** \brief The type of objects in the category.*/
   typedef unspecified Object;
 /** \brief The type of arrows in the category.*/
   typedef unspecifed Morphism;
@@ -48,6 +48,8 @@ struct Category {
  * Return \f$ x \leftarrow \phi(x)\f$, based on \f$\mathtt{evaluate_equal}\f$.
  * */
   Object evaluate(Object &obj, const Morphism& phi);
+/** \brief Test for equality of objects.*/
+  bool equal(Object &o1, Object &o2);
 };  
 
 } //namespace kumquat
