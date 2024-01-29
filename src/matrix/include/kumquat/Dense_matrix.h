@@ -31,9 +31,11 @@ namespace kumquat {
  * 
  * All the values of a same row are represented contiguously in memory ; hence 
  * row operations are more efficient than column operations.
+ * 
+ * \implements ScalarRingOperations, ObjectMonoidalCategory
  */
 template< class CoefficientStructure >
-class Dense_matrix : public ScalarRingOperations, public ObjectMonoidalCategory {
+class Dense_matrix {
 public:
 /** The algebraic structure containing the coefficients for the matrix entries.
  * 
