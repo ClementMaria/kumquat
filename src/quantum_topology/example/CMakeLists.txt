@@ -1,3 +1,5 @@
-project(xxx_example)
+project(quantum_topology_example)
 
-add_executable ( xxx_example xxx_example.cpp )
+add_executable ( simple_quantum_data_example simple_quantum_data_example.cpp )
+
+add_executable( simple_quantum_group_example simple_quantum_group_example.cpp )

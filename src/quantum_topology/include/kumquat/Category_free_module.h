@@ -22,11 +22,11 @@
 
 namespace kumquat {
 
-/** \brief Class implementing the standard requirement for a category whose objects are finite dimensional vector space or free modules over a field/ring.
+/** \brief Class implementing the standard requirement for a category of free modules (or vector spaces).
  * 
- * Morphisms are represented by matrices.
+ * Objects are finite rank free modules over a ring (or finite dimensional vector spaces over a field), and matrices are morphisms are represented by matrices.
  * 
- * template CoefficientStructure is a model of Ring.
+ * template CoefficientStructure is a model of Ring, and the ring on which the module is defined, and the ring of coefficients of the matrices.
  * */
 template<typename CoefficientStructure>
 class Category_free_modules {
@@ -68,7 +68,10 @@ class Category_free_modules {
  * Return \f$ x \leftarrow \phi(x)\f$, based on \f$\mathtt{evaluate_equal}\f$.
  * */
   Object evaluate(Object &obj, const Morphism& phi);
-
+/** \brief Test for equality of objects.*/
+  bool equal(Object &o1, Object &o2) {
+    return o1.rank() == o2.rank();
+  }
 
    
 };
