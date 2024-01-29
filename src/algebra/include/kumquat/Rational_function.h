@@ -26,16 +26,16 @@
 
 namespace kumquat {
 
-/** \class R R.h kumquat/R.h 
-  * \brief Field of real numbers \f$\mathbb{R}\f$.
+/** \class Rational_function Rational_function.h kumquat/Rational_function.h 
+  * \brief Field of rational functions \f$\mathbb{Q}(X)\f$.
   *
-  * The structure is a field \f$(\mathbb{R},0,+,\times,1)\f$.
+  * The structure is a field \f$(\mathbb{Q}(X),0/1,+,\times,1/1)\f$.
   * 
-  * Wrapper on the class gmp_float
+  * Uses Rational_function_integral_mp as base scalar type.
   * 
   * \implements Ring
   */
-class R {
+class Rational_function {
 public:
   static const bool abelian_group = true;
   static const bool pseudo_ring = true;//multiplication undefined a/b*c/d != a/b*(c+d)/d
@@ -45,7 +45,7 @@ public:
 
 /** \brief Initialization.
   * */
-  R() {}
+  Rational_function() {}
 
 /** \name Methods for Abelian groups. Implements AbelianGroup.
  * @{ */
@@ -66,7 +66,7 @@ public:
   * 
   * Must be copiable. 
   * */
-  typedef boost::multiprecision::mpf_float_1000   Element;
+  typedef Rational_function_integral_mp   Element;
 /** \brief Return the additive identity 0.
  * 
  * The additive identity can be represented by any pair of integers (0,y) with 

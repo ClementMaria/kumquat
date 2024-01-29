@@ -79,6 +79,11 @@ public:
     return (lhs.numerator_ == rhs.numerator_) && (lhs.denominator_ == rhs.denominator_);
    }
   inline bool operator!=(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { return !(lhs == rhs); }
+
+  inline bool operator==(const Rational_function_integral_mp& lhs, const int& rhs) { 
+    return (lhs.numerator_ == rhs) && (lhs.denominator_ == 1);
+   }
+  inline bool operator!=(const Rational_function_integral_mp& lhs, const int& rhs) { return !(lhs == rhs); }
 /* @} */
 
 /** \name Model of ScalarGroupOperations
