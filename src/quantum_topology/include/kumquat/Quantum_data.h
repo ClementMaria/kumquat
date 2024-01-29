@@ -84,11 +84,11 @@ public:
     return q_fact;
   }
 
-/** \brief Return the q-exponential map of a matrix x.
+/** \brief Return the q-exponential map of a matrix with Ratioanl_mp coefficients, given by the sequence of its non-trivial powers.
  * 
  * The input is the sequence of non-zero powers of x, i.e., pow_x[i] = x^i. 
  * 
- * \f[\operatorname{exp}_q(M) = \displaystyle\sum_{n=0}^{+\infty} \frac{q^{n(n-1)/4}}{[n]_q!} M^n = \displaystyle\sum_{n=0}^{+\infty} \frac{X^{n(n-1)/2}}{[n]_q!} M^n \f].
+ * \f[\operatorname{exp}_q(M) = \displaystyle\sum_{n=0}^{+\infty} \frac{q^{n(n-1)/4}}{[n]_q!} M^n = \displaystyle\sum_{n=0}^{+\infty} \frac{X^{n(n-1)}}{[n]_q!} M^n \f].
  * */
   template<typename Matrix>
   Matrix q_exponential_map(std::vector<Matrix>& pow_x) {
@@ -96,12 +96,36 @@ public:
       std::cerr << "Cannot compute the quantum exponential on an empty set of powers.\n"; 
     }
     auto it = pow_x.begin();
-    Matrix expq_x = *it;
-    expq_x *= (1 / quantum_factorial(0));
+    Matrix expq_x = *it;//1/id of appropriate size
     ++it;
+    int n=1;
     while(it != pow_x.end()) {
-      expq_x += (*it) ...
+      expq_x += (quantum_monomial(n*(n-1)) / quantum_factorial(n)) * (*it);
+      ++it; ++n;
     } 
+    return expq_x;
+  }
+
+/** \brief Return the q-exponential map of a matrix x.
+ * 
+ * The input is the sequence of non-zero powers of x, i.e., pow_x[i] = x^i. 
+ * 
+ * \f[\operatorname{exp}_{q^{-1}}(M) = \displaystyle\sum_{n=0}^{+\infty} \frac{q^{-n(n-1)/4}}{[n]_q!} M^n = \displaystyle\sum_{n=0}^{+\infty} \frac{1}{X^{n(n-1)/2} \times [n]_q!} M^n \f].
+ * */
+  template<typename Matrix>
+  Matrix qinv_exponential_map(std::vector<Matrix>& pow_x) {
+    if(pow_x.empty()) { 
+      std::cerr << "Cannot compute the quantum exponential on an empty set of powers.\n"; 
+    }
+    auto it = pow_x.begin();
+    Matrix expq_x = *it;//1/id of appropriate size
+    ++it;
+    int n=1;
+    while(it != pow_x.end()) {
+      expq_x += (quantum_monomial(n*(1-n)) / quantum_factorial(n)) * (*it);
+      ++it; ++n;
+    } 
+    return expq_x;
   }
 
 // /** \name Methods for the implementation of framed oriented tangle/link invariants derived from an irreducible representation \f$\rho: A \to \operatorname{End}(V)\f$ of a ribbon Hopf algebras \f$A\f$ (with data) into a vector space \f$V\f$, as described in "Ohtsuki - Quantum invariants: A study of knots, 3-manifolds, and their sets" Chapter 4, using the same notations.
