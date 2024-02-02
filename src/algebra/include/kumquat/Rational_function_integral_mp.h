@@ -38,7 +38,8 @@ public:
 /** \brief Default initialization to 0/1.*/
   Rational_function_integral_mp() : numerator_({{0}}), denominator_({{1}}) {}
 /** \brief Initialization with an integer z, z/1.*/
-  Rational_function_integral_mp(int z) : numerator_({{(Coefficient)z}}), denominator_({{1}}) {}
+  template<typename IntegerType>
+  Rational_function_integral_mp(IntegerType z) : numerator_({{(Coefficient)z}}), denominator_({{1}}) {}
 /** \brief Initialization with a range.*/
   template<typename RangeType>
   Rational_function_integral_mp(RangeType &num, RangeType &den) 
@@ -75,15 +76,16 @@ public:
     return *this;
   }
 
-  inline bool operator==(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { 
-    return (lhs.numerator_ == rhs.numerator_) && (lhs.denominator_ == rhs.denominator_);
+  inline bool operator==(const Rational_function_integral_mp& rhs) { 
+    return (numerator_ == rhs.numerator_) && (denominator_ == rhs.denominator_);
    }
-  inline bool operator!=(const Rational_function_integral_mp& lhs, const Rational_function_integral_mp& rhs) { return !(lhs == rhs); }
+  inline bool operator!=(const Rational_function_integral_mp& rhs) { return !((*this) == rhs); }
 
-  inline bool operator==(const Rational_function_integral_mp& lhs, const int& rhs) { 
-    return (lhs.numerator_ == rhs) && (lhs.denominator_ == 1);
+  inline bool operator==(const int& rhs) { 
+    Rational_function_integral_mp rf_rhs(rhs);
+    return (*this) == rf_rhs;
    }
-  inline bool operator!=(const Rational_function_integral_mp& lhs, const int& rhs) { return !(lhs == rhs); }
+  inline bool operator!=(const int& rhs) { return !((*this) == rhs); }
 /* @} */
 
 /** \name Model of ScalarGroupOperations
@@ -117,12 +119,27 @@ public:
     lhs -= rhs;
     return lhs;
   }
+
+  /**
+   * @brief      Multiplication by an integer (Z-module structure).
+   *
+   * @param[in]  rhs   The right hand side
+   *
+   * @return     The result of the multiplication assignment
+   */
+  Rational_function_integral_mp& operator*=(Coefficient rhs)
+  {                 
+    numerator_ *= rhs;
+    // denominator_ *= rhs.denominator_;
+    normalize();             
+    return *this; 
+  }
 /* @} */
 
 /** \name Model of ScalarRingOperations
  * 
  * @{ */
-  Rational_function_integral_mp& operator*=(const Rational_function_integral_mp& rhs) 
+  Rational_function_integral_mp& operator*=(const Rational_function_integral_mp& rhs)
   {                 
     numerator_ *= rhs.numerator_;
     denominator_ *= rhs.denominator_;
@@ -155,10 +172,18 @@ public:
   }
 /* @} */
 
+  Polynomial numerator() const { return numerator_; }
+  Polynomial denominator() const { return denominator_; }
+
+  std::string to_string() {
+    std::stringstream ss;
+    ss << numerator_ << "/" << denominator_;
+    return ss.str();
+  }
 
 private:
 //make sure the numerator and denominator are coprime polynomials, i.e., gcd = integer
-  void normalize(Element &rf) {
+  void normalize() {
     auto gcd_poly = boost::math::tools::gcd(numerator_,denominator_);
     numerator_ /= gcd_poly;
     denominator_ /= gcd_poly; 
@@ -169,6 +194,53 @@ private:
   Polynomial numerator_;
   Polynomial denominator_;
 };
+
+  
+
+std::ostream& operator<<(std::ostream& os, const Rational_function_integral_mp& x)
+{
+  auto num = x.numerator();
+  auto den = x.denominator();
+  for(int n=(int)num.size()-1; n>-1; --n) {
+    if(num[n] != 0) { 
+      if(n == 0) {
+        os << num[n];
+      }
+      else {
+        if(num[n] == 1) { os << "X^" << n ; }
+        else { os << num[n] << " X^" << n ; }
+        os << " + ";
+        // if(n != (int)num.size()-1) { os << " + "; } 
+      }
+    }
+  }
+  os << " / ";
+  for(int n=(int)den.size()-1; n>-1; --n) {
+    if(den[n] != 0) {
+      if(n == 0) { 
+        if(den[n] < 0) { os << " " << den[n]; }
+        else { os << " + " << den[n]; }
+      }
+      else { //n>0
+        if(den[n] == 1) { 
+          if(n == (int)den.size()-1) { os << "X^" << n ; }
+          else { os << " + X^" << n ; }
+        }
+        else { //den[n] != 0
+          if(n == (int)den.size()-1) { 
+            os << den[n] << " X^" << n ; 
+          }
+          else { 
+            if(den[n] < 0) { os << den[n] << " X^" << n ; }
+            else { os << " + " << den[n] << " X^" << n ; }
+          }
+        }
+      }
+    }
+  }
+  // os << x.numerator() << "/" << x.denominator();
+  return os;
+}
 
 }  //namespace kumquat
 

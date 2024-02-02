@@ -28,7 +28,7 @@ int main() {
 	std::cout << "\n";
 	std::cout << "Quantum integers [n] = (X^{2n}-X^{-2n}) / (X^2 - X^{-2}): \n";
 	for(int n=-1; n<=10; ++n) {
-		std::cout << "   n = " << n << "  ->  " << qd.quantum_monomial(n) << "\n";
+		std::cout << "   n = " << n << "  ->  " << qd.quantum_integer(n) << "\n";
 	}
 	std::cout << "\n";
 
