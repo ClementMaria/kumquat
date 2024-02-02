@@ -12,10 +12,10 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_JONES_POLYNOMIAL_H_ 
-#define KUMQUAT_JONES_POLYNOMIAL_H_
+#ifndef KUMQUAT_QUANTUM_DATA_H_ 
+#define KUMQUAT_QUANTUM_DATA_H_
 
-#include <kumquat/Rational_function_integral_mp>
+#include <kumquat/Rational_function_integral_mp.h>
 
 namespace kumquat {
 
@@ -32,7 +32,8 @@ class Quantum_data {
 public:
   typedef boost::multiprecision::mpz_int Integer;
   typedef Rational_function_integral_mp Rational_f;
-  Quantum_data();
+  
+  Quantum_data() {};
 
 /** Jones polynomials for braid. We follow "Ohtsuki - Quantum invariants: A study of knots, 3-manifolds, and their sets" (book p.77).
  * 
@@ -61,7 +62,7 @@ public:
       std::vector<Integer> den(1,1);//==1
       return Rational_f(num,den);
     }
-    if(k<0) {
+    else {//k<0
       std::vector<Integer> num(1,1);//==1
       k *= -1;
       std::vector<Integer> den(k+1,0); den[k]=1;
@@ -95,12 +96,22 @@ public:
     return q_fact;
   }
 
-/** \brief Return the q-exponential map of a matrix with Ratioanl_mp coefficients, given by the sequence of its non-trivial powers.
+/** \brief 
  * 
- * The input is the sequence of non-zero powers of x, i.e., pow_x[i] = x^i. 
+ * The input is the 
  * 
  * \f[\operatorname{exp}_q(M) = \displaystyle\sum_{n=0}^{+\infty} \frac{q^{n(n-1)/4}}{[n]_q!} M^n = \displaystyle\sum_{n=0}^{+\infty} \frac{X^{n(n-1)}}{[n]_q!} M^n \f].
  * */
+  /**
+   * @brief      Return the q-exponential map of a matrix with Rational_mp coefficients, given by the sequence of its non-trivial powers.
+   *
+   * @param      pow_x   Sequence of matrices pow_x[i] = M_i, generally powers of a matrix M, i.e., pow_x[i] = M^i, in which case the output is the quantum exponential of M. 
+   *
+   * @tparam     Matrix  A matrix type with usual operators defined.
+   *
+   * @return     The sum of the quantum exponential, i.e.,
+   * \f[\operatorname{exp}_q(M) = \displaystyle\sum_{n=0}^{+\infty} \frac{q^{n(n-1)/4}}{[n]_q!} M_n = \displaystyle\sum_{n=0}^{+\infty} \frac{X^{n(n-1)}}{[n]_q!} M_n. \f]
+   */
   template<typename Matrix>
   Matrix q_exponential_map(std::vector<Matrix>& pow_x) {
     if(pow_x.empty()) { 
@@ -111,7 +122,9 @@ public:
     ++it;
     int n=1;
     while(it != pow_x.end()) {
-      expq_x += (quantum_monomial(n*(n-1)) / quantum_factorial(n)) * (*it);
+      Matrix tmp(*it);
+      tmp.times_equal(quantum_monomial(n*(n-1)) / quantum_factorial(n));
+      expq_x += tmp;//it->times(quantum_monomial(n*(n-1)) / quantum_factorial(n));
       ++it; ++n;
     } 
     return expq_x;
@@ -133,7 +146,9 @@ public:
     ++it;
     int n=1;
     while(it != pow_x.end()) {
-      expq_x += (quantum_monomial(n*(1-n)) / quantum_factorial(n)) * (*it);
+      Matrix tmp(*it);
+      tmp.times_equal((quantum_monomial(n*(1-n)) / quantum_factorial(n)));
+      expq_x += tmp;
       ++it; ++n;
     } 
     return expq_x;
@@ -202,4 +217,4 @@ public:
 
 } //namespace kumquat
 
-#endif // KUMQUAT_JONES_POLYNOMIAL_H_
+#endif // KUMQUAT_QUANTUM_DATA_H_
