@@ -12,11 +12,18 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#include <kumquat/xxx.h>
+#include <kumquat/Braid.h>
 
 using namespace kumquat;
 
-int main(int argc, char * argv[]) {
+int main() {//(int argc, char * argv[]) {
+
+  std::vector< std::pair<int,int> > cross;
+  cross.emplace_back(1,2);   cross.emplace_back(-2,4);
+  Braid b(3,cross);
+  cross.add_twist(2,5);
+
+  std::cout << b << "\n";
 
   return 0;
 }
