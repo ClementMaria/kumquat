@@ -49,8 +49,8 @@ public:
   typedef std::vector< Coefficient > Vector;
 /** \name Model of ScalarSetOperations, and additional constructor.
  * 
- * @{ \*
-
+ * @{ */
+  Dense_matrix() : n_(0), m_(0), G_(), dim_ker_(-1), dim_im_(-1) {}
 /** \brief Creates an n by m matrix with uninitialized coefficients. */
   Dense_matrix(size_t n, size_t m, CoefficientStructure G) 
   : n_(n), m_(m), G_(G), dim_ker_(-1), dim_im_(-1) {
@@ -84,14 +84,14 @@ public:
     return *this;
   }
 /** \brief Test for equality.*/
-  inline bool operator==(const Dense_matrix& lhs, const Dense_matrix& rhs) {
-    return (   (lhs.mat_ == rhs.mat_) 
-            && (lhs.row_idx_ == rhs.row_idx_) 
-            && (lhs.col_idx_ && rhs.col_idx_) );
+  inline bool operator==(const Dense_matrix& rhs) {
+    return (   (mat_ == rhs.mat_) 
+            && (row_idx_ == rhs.row_idx_) 
+            && (col_idx_ && rhs.col_idx_) );
   }
 /** \brief Test for inequality.*/
-  inline bool operator!=(const Dense_matrix& lhs, const Dense_matrix& rhs) {
-    return !(lhs == rhs);
+  inline bool operator!=(const Dense_matrix& rhs) {
+    return !((*this) == rhs);
   }
 private:
 //copy other into this
@@ -139,9 +139,15 @@ private:
   }
 //clear the memory for the matrix
   void clear_matrix() {
-    mat_.swap(std::vector< std::vector< Coefficient > >());
-    row_idx_.swap(std::vector<size_t>());
-    col_idx_.swap(std::vector<size_t>());
+    for(auto it = mat_.begin(); it!=mat_.end(); ++it) {
+      std::vector< Coefficient > empty_v;
+      it->swap(empty_v);
+    }
+    std::vector< std::vector< Coefficient > > empty_v;
+    mat_.swap(empty_v);
+    std::vector< size_t > empty_v1, empty_v2;
+    row_idx_.swap(empty_v1);
+    col_idx_.swap(empty_v2);
   }
 
 /* @} */ // end ScalarSetOperations
@@ -155,8 +161,15 @@ public:
  * 
  * Undefined behavior if i or j is outside the range.
  * */
-  Coefficient& operator()(size_t i, size_t j) {
+  const Coefficient& operator()(size_t i, size_t j) const {
     return mat_[row_idx_[i]][col_idx_[j]];
+  }
+/** \brief Access the element in row i and column j in the matrix. 
+ * 
+ * Undefined behavior if i or j is outside the range.
+ * */
+  Coefficient& operator()(size_t i, size_t j) {
+    return const_cast<Coefficient &>(std::as_const(*this)(i,j));
   }
 /** \brief Return the total number of rows in the matrix.*/
   size_t num_rows() const { return n_; }
@@ -197,7 +210,7 @@ public:
       std::cout << "Error trace on non-square matrix.\n";
       return 0;
     }
-    Coefficient tr = G_.additive_identity(0);
+    Coefficient tr = G_.additive_identity();
     for(size_t i=0; i<num_rows(); ++i) {
       G_.plus_equal(tr,(*this)(i,i));
     }
@@ -900,7 +913,7 @@ public:
    * 
    * Set *this <- *this + rhs, where the plus sign is the one of the group of coefficients.
    * */
-  Dense_matrix& operator+=(const Dense_matrix& rhs) {
+  Dense_matrix& operator+=(Dense_matrix& rhs) {
     for(size_t i=0; i<n_; ++i) {
       for(size_t j=0; j<m_; ++j) {
         G_.plus_equal((*this)(i,j),rhs(i,j));
@@ -912,7 +925,7 @@ public:
    * 
    * Return (lhs + rhs), based on operator +=.
    * */
-  friend Dense_matrix operator+(Dense_matrix lhs, const Dense_matrix& rhs) {
+  friend Dense_matrix operator+(Dense_matrix lhs, Dense_matrix& rhs) {
     lhs += rhs;
     return lhs;
   }
@@ -920,7 +933,7 @@ public:
    * 
    * Set *this <- *this - rhs, where the minus sign is the one of the group of coefficients.
    * */
-  Dense_matrix& operator-=(const Dense_matrix& rhs) {
+  Dense_matrix& operator-=(Dense_matrix& rhs) {
     for(size_t i=0; i<n_; ++i) {
       for(size_t j=0; j<m_; ++j) {
         G_.plus_equal((*this)(i,j),G_.additive_inverse(rhs(i,j)));
@@ -932,7 +945,7 @@ public:
  * 
  * Return (lhs - rhs), based on operator -=.
  * */
-  friend Dense_matrix operator-(Dense_matrix lhs, const Dense_matrix& rhs) {
+  friend Dense_matrix operator-(Dense_matrix lhs, Dense_matrix& rhs) {
     lhs -= rhs;
     return lhs;
   } 
@@ -947,7 +960,7 @@ public:
  * Naive cubic algorithm.
  * Return \mathtt{(*this) * rhs}\f$.
  **/
-  Dense_matrix rtimes(const Dense_matrix& rhs) {
+  Dense_matrix rtimes(Dense_matrix& rhs) {
     assert( num_columns() == rhs.num_rows() );
     Dense_matrix prod_mat(num_rows(),rhs.num_columns(),G_); 
     for(size_t i = 0; i < num_rows(); ++i) {
@@ -964,7 +977,7 @@ public:
 /** Product with a vector on the right.
  * 
  * The vector is considered vertical.*/
-  Vector rtimes(const Vector& v) {
+  Vector rtimes(Vector& v) {
     Vector res(num_rows(),G_.additive_identity());
     for(size_t i=0; i<num_rows(); ++i) {
       for(size_t j=0; j<num_columns(); ++j) {
@@ -977,7 +990,7 @@ public:
 /** \brief Matrix multiplication on the right.
  * 
  * Set \mathtt{(*this) <- (*this) * rhs}, based on \f$\mathtt{rtimes}\f$.*/
-  void rtimes_equal(const Dense_matrix& rhs) {
+  void rtimes_equal(Dense_matrix& rhs) {
     *this = rtimes(rhs);
   }
 /** \brief Matrix multiplication on the left. 
@@ -1003,7 +1016,7 @@ public:
  * 
  * Set \f$\mathtt{(*this) <- lhs * (*this)}, based on \f$\mathtt{ltimes}.*/
   void ltimes_equal(const Dense_matrix& lhs) {
-    *this = ltimes(rhs);
+    *this = ltimes(lhs);
   }
 /** \brief Matrix multiplication on the right by a scalar. 
  * 
@@ -1012,7 +1025,7 @@ public:
   template<typename Scalar>
   void times_equal(Scalar x) {
     for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < rhs.num_columns(); ++j) {
+      for(size_t j = 0; j < num_columns(); ++j) {
           G_.times_equal( (*this)(i,j), x ) ;  
       }
     }
@@ -1023,7 +1036,7 @@ public:
   template<typename Scalar>
   Dense_matrix times(Scalar x) {
     Dense_matrix res(*this);
-    res.rtimes_equal(x);
+    res.times_equal(x);
     return res;
   }
 /** \brief Multiplication by a scalar.
@@ -1037,7 +1050,7 @@ public:
 /** \brief Multiplication on the right by a matrix. 
  * 
  * Based on \f$\mathtt{rtimes_equal}\f$. */
-  Dense_matrix& operator*=(const Dense_matrix& rhs) {
+  Dense_matrix& operator*=(Dense_matrix& rhs) {
     this->rtimes_equal(rhs);
     return *this;
   }
@@ -1045,11 +1058,19 @@ public:
    * 
    * Return (lhs * rhs), based on operator *=.
    * */
-  friend Dense_matrix operator*(Dense_matrix lhs, const Dense_matrix& rhs) {
+  friend Dense_matrix operator*(Dense_matrix lhs, Dense_matrix& rhs) {
     lhs *= rhs;
     return lhs;
   }
-
+  /** Return the multiplication of a matrix by a scalar.
+   * 
+   * Return (lhs * rhs), based on operator *=.
+   * */
+  template<typename ScalarType>
+  friend Dense_matrix operator*(ScalarType lhs, Dense_matrix rhs) {
+    rhs *= lhs;
+    return rhs;
+  }
 /* } */ // end ScalarRingOperations 
 
 

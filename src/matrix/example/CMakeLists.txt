@@ -8,5 +8,5 @@ target_link_libraries( dense_matrix_pid_example LINK_PUBLIC ${Boost_LIBRARIES} $
 add_executable ( dense_matrix_Qp_mod_Z_gram_normalization_example dense_matrix_Qp_mod_Z_gram_normalization_example.cpp )
 target_link_libraries( dense_matrix_Qp_mod_Z_gram_normalization_example LINK_PUBLIC ${Boost_LIBRARIES} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})
 
-add_executable( simple_dense_matrix_eigen simple_dense_matrix_eigen.cpp )
-target_link_libraries( simple_dense_matrix_eigen ${Boost_LIBRARIES} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES} ${EIGEN_LIBRARIES})
+# add_executable( simple_dense_matrix_eigen simple_dense_matrix_eigen.cpp )
+# target_link_libraries( simple_dense_matrix_eigen ${Boost_LIBRARIES} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES} ${EIGEN_LIBRARIES})
