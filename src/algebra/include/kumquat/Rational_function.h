@@ -171,10 +171,8 @@ public:
  * 
  * The type Integer must define a valid operator<<.
  * */
-  std::string to_string(Element x) {
-    std::stringstream ss;
-    ss << x;
-    return ss.str();
+  std::string to_string(Element& x) {
+    return x.to_string();
   }
 
 }; 
