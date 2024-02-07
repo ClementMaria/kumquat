@@ -102,7 +102,13 @@ private:
 
 };
 
- 
+std::ostream& operator<<(std::ostream& os, const Braid& x)
+{
+  for(auto it = x.braid().rbegin(); it != x.braid().rend(); ++it) {
+    os << "[s_" << it->first << "]^" << it->second << " ";
+  }
+  return os;
+} 
 
 } //namespace kumquat
 
