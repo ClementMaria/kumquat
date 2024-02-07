@@ -19,9 +19,10 @@ using namespace kumquat;
 int main() {//(int argc, char * argv[]) {
 
   std::vector< std::pair<int,int> > cross;
-  cross.emplace_back(1,2);   cross.emplace_back(-2,4);
+  cross.emplace_back(1,2);   cross.emplace_back(2,4);
   Braid b(3,cross);
-  cross.add_twist(2,5);
+  b.add_twist(2,-5);
+  b.add_twist(0,-1);
 
   std::cout << b << "\n";
 

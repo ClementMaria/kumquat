@@ -48,41 +48,45 @@ public:
  *
  * @return     Vector of pairs indicating crossing index and number of twists.
  */
-  std::vector< std::pair<Crossing_index, int> >& braid() { return braid_; }
+  const std::vector< std::pair<Crossing_index, int> >& braid() const { return braid_; }
 /**
  * @brief      Adds a single crossing.
  *
  * @param[in]  i     Index of the crossing. Positive for positive crossing at index i, negative for negative crossing at index |i|.
  */
-  void add_crossing(Crossing_index i) {
+  void add_positive_crossing(Crossing_index i) {
     add_twist(i,1);
+  }
+/**
+ * @brief      Adds a single crossing.
+ *
+ * @param[in]  i     Index of the crossing. Positive for positive crossing at index i, negative for negative crossing at index |i|.
+ */
+  void add_negative_crossing(Crossing_index i) {
+    add_twist(i,-1);
   }
 /**
  * @brief      Adds a twist region on top of the braid.
  *
- * @param[in]  i            Index of the crossing. Positive for positive crossing at index i, negative for negative crossing at index |i|.
- * @param[in]  num_twists  The number twists.
+ * @param[in]  i            Index of the crossing. Must be positive.
+ * @param[in]  num_twists  The number twists (positive or negative).
  */
   void add_twist(Crossing_index i, int num_twists) {
     if((int)(std::abs(i)) > (int)num_strands_-1) {
       std::cerr << "Invalid crossing index.\n";
       return;
     }
-    if(num_twists <= 0) {
-      std::cerr << "Invalid number of twists.\n";
+    if(i < 0) {
+      std::cerr << "Invalid crossing index.\n";
       return;
     }
     auto last = braid_.rbegin();
-    if(last->first == i) { last->second += num_twists; return; }
-    if(last->first == (-1)*i) { 
-      last->second -= num_twists; 
-      if(last->second == 0) { braid_.pop_back(); return; }
-      if(last->second < 0) {
-        last->first *= -1; last->second *= -1;
-      }
-      return;
+    if(last->first == i) { 
+      last->second += num_twists; 
+      if(last->second == 0) { braid_.pop_back(); }
+      return; 
     }
-    braid_.emplace_back(i,1);
+    braid_.emplace_back(i,num_twists);
   }
 
 private:
@@ -91,21 +95,14 @@ private:
    */
   size_t num_strands_;
   /**
-   * A braid is represented by a number of strands, and a list of crossings read from bottom to top. Strands are labeled from 1 to k (included). braid_[i] = j means that the i-th generator of the braid is sigma_|j| (involves strands j and j+1), and if j > 0, strands j goes over strand j+1, and if j < 0, strands j goes under strand j+1.
+   * A braid is represented by a number of strands, and a list of crossings read from bottom to top. Strands are labeled from 0 to num_strands_-1 included. braid_[j] = (j,n) means that at level j, the braid is composed of \f$sigma_j^n\f$ (involves strands j and j+1), with j >=0, and n != 0, possibly positive or negative for poisitive crossings and negative crossings. 
    * 
-   * This is a compact representation of the braid, where braid_[i] = (j,n) significate that we have n consecutive sigma_|j|, with appropriate sign.
    */
   std::vector< std::pair<Crossing_index, int> > braid_;
 
 };
 
-std::ostream& operator<<(std::ostream& os, const Braid& b) const
-{
-  for(auto ct : b.braid()) {
-    os << ct.first << "^" << ct.second << " ";
-  }
-  return os;
-}
+ 
 
 } //namespace kumquat
 
