@@ -999,6 +999,9 @@ public:
  * Return \mathtt{lhs * (*this)}\f$.
  * */
   Dense_matrix ltimes(const Dense_matrix& lhs) {
+    if( num_rows() != lhs.num_columns() ) {
+      std::cout << "ltimes issue rhs.num_rows = " << num_rows() << "    lhs.num_columns = " << lhs.num_columns() << "\n";
+    }
     assert( num_rows() == lhs.num_columns() );
     Dense_matrix prod_mat(lhs.num_rows(),num_columns(),G_); 
     for(size_t i = 0; i < lhs.num_rows(); ++i) {

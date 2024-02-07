@@ -21,6 +21,7 @@
 #include <boost/multiprecision/gmp.hpp>//boost multiprecision wrap over gmp
 // #include <boost/integer/extended_euclidean.hpp>//boost extended gcd
 #include <boost/math/tools/polynomial.hpp>
+#include <list>
 
 namespace kumquat {
 
@@ -200,47 +201,110 @@ private:
 std::ostream& operator<<(std::ostream& os, const Rational_function_integral_mp& x)
 {
   auto num = x.numerator();
+  if(num.size() == 0) { 
+    os << "[0]";
+    return os;
+  }
   auto den = x.denominator();
-  for(int n=(int)num.size()-1; n>-1; --n) {
-    if(num[n] != 0) { 
-      if(n == 0) {
-        os << num[n];
-      }
-      else {
-        if(num[n] == 1) { os << "X^" << n ; }
-        else { os << num[n] << " X^" << n ; }
-        os << " + ";
-        // if(n != (int)num.size()-1) { os << " + "; } 
+  int ddeg = 0;  int cdeg = 0; int num_monom = 0;
+  for(int n=(int)den.size()-1; n>-1; --n) {
+    if(den[n] != 0) { 
+      ++num_monom; 
+      ddeg = n;
+      cdeg = (int)den[n];
+    }
+  }
+  if(num_monom == 1) {//if denominator is single monomial
+    if(cdeg == 1 || cdeg == -1) {
+      for(int n=(int)num.size()-1; n>-1; --n) {
+        if(num[n] != 0) { 
+          os << "(" << cdeg*num[n] << "," << n-ddeg << ")"; 
+        }
       }
     }
+    else {
+      for(int n=(int)num.size()-1; n>-1; --n) {
+        if(num[n] != 0) { 
+          os << "(" << num[n] << "/" << cdeg << "," << n-ddeg << ")"; 
+        }
+      }
+    }
+    return os;
+  }
+  //denominator not a monomial
+  for(int n=(int)num.size()-1; n>-1; --n) {
+    if(num[n] != 0) { os << "(" << num[n] << "," << n << ")"; }
   }
   os << " / ";
   for(int n=(int)den.size()-1; n>-1; --n) {
-    if(den[n] != 0) {
-      if(n == 0) { 
-        if(den[n] < 0) { os << " " << den[n]; }
-        else { os << " + " << den[n]; }
-      }
-      else { //n>0
-        if(den[n] == 1) { 
-          if(n == (int)den.size()-1) { os << "X^" << n ; }
-          else { os << " + X^" << n ; }
-        }
-        else { //den[n] != 0
-          if(n == (int)den.size()-1) { 
-            os << den[n] << " X^" << n ; 
-          }
-          else { 
-            if(den[n] < 0) { os << den[n] << " X^" << n ; }
-            else { os << " + " << den[n] << " X^" << n ; }
-          }
-        }
-      }
-    }
+    if(den[n] != 0) { os << "(" << den[n] << "," << n << ")"; }
   }
-  // os << x.numerator() << "/" << x.denominator();
   return os;
 }
+//   auto num = x.numerator();
+//   std::list< std::pair<int,int> > lnum;//|coeff|, degree
+//   for(int n=0; n<(int)num.size(); ++n) {
+//     if(num[n] != 0) { lnum.emplace_front(num[n],n); }
+//     // if(num[n] < 0) { lnum.emplace_front(false, -1*num[n], n); }
+//   }
+
+//   auto den = x.denominator();
+//   std::list< std::pair<int,int> > lden;//sign, |coeff|, degree
+//   for(int n=0; n<(int)den.size(); ++n) {
+//     if(den[n] != 0) { lden.emplace_front(num[n],n); }
+//     // if(den[n] < 0) { lden.emplace_front(false, -1*num[n], n); }
+//   }
+
+//   for(auto monom : lnum) { 
+//     os << "(" << monom.first << "," << monom.second << ")"; 
+//   }
+//   os << " / ";
+//   for(auto monom : lden) { 
+//     os << "(" << monom.first << "," << monom.second << ")"; 
+//   }
+//   return os;
+// }
+
+//   for(int n=(int)num.size()-1; n>-1; --n) {
+//     if(num[n] != 0) { 
+//       if(n == 0) {
+//         os << num[n];
+//       }
+//       else {
+//         if(num[n] == 1) { os << "X^" << n ; }
+//         else { os << num[n] << " X^" << n ; }
+//         os << " + ";
+//         // if(n != (int)num.size()-1) { os << " + "; } 
+//       }
+//     }
+//   }
+//   os << " / ";
+//   for(int n=(int)den.size()-1; n>-1; --n) {
+//     if(den[n] != 0) {
+//       if(n == 0) { 
+//         if(den[n] < 0) { os << " " << den[n]; }
+//         else { os << " + " << den[n]; }
+//       }
+//       else { //n>0
+//         if(den[n] == 1) { 
+//           if(n == (int)den.size()-1) { os << "X^" << n ; }
+//           else { os << " + X^" << n ; }
+//         }
+//         else { //den[n] != 0
+//           if(n == (int)den.size()-1) { 
+//             os << den[n] << " X^" << n ; 
+//           }
+//           else { 
+//             if(den[n] < 0) { os << den[n] << " X^" << n ; }
+//             else { os << " + " << den[n] << " X^" << n ; }
+//           }
+//         }
+//       }
+//     }
+//   }
+  // os << x.numerator() << "/" << x.denominator();
+//   return os;
+// }
 
 }  //namespace kumquat
 
