@@ -64,12 +64,38 @@ public:
     pow_R_.reserve(max_twist+1); 
     pow_R_.push_back(id_morphism(N)); pow_R_.push_back(braiding());
     pow_Rinv_.reserve(max_twist+1);
-    pow_Rinv_.push_back(id_morphism(N)); pow_R_.push_back(braiding_inv());
+    pow_Rinv_.push_back(id_morphism(N)); pow_Rinv_.push_back(braiding_inv());
     for(int i=2; i<= max_twist; ++i) {
       pow_R_.push_back(pow_R_[1]*pow_R_[i-1]);
       pow_Rinv_.push_back(pow_Rinv_[1]*pow_Rinv_[i-1]);
     }
 
+  }
+
+  void display() {
+    std::cout << "***** R matrices:--------\n";
+    for(size_t i=0; i<pow_R_.size(); ++i) {
+      std::cout << "   R^" << i << " = \n";
+      std::cout << pow_R_[i] << "\n\n";
+    }
+    for(size_t i=0; i<pow_Rinv_.size(); ++i) {
+      std::cout << "   R^(-" << i << ") = \n";
+      std::cout << pow_Rinv_[i] << "\n\n";
+    }
+
+    for(size_t i=0; i<pow_R_.size(); ++i) {
+      auto m1 = pow_R_[i];
+      auto m2 = pow_Rinv_[i];
+      m1 *= m2;
+      std::cout << "   R^" << i << "*R^(-" << i << ") = \n";
+      std::cout << m1 << "\n\n";
+    }
+
+
+
+  
+    std::cout << "***** h tensor:-------\n";
+    std::cout << h_tensor_ << "\n\n";
   }
 
 private:
@@ -301,7 +327,7 @@ public:
     Morphism h = K_morphism();
     Morphism tens_h = h;
     for(int i=2; i<= tensor_n; ++i) {
-      tens_h.rtensor(h);
+      tens_h.rtensor_equal(h);
     }
     // tensors_h_[tensor_n] = tens_h;
     return tens_h;
@@ -322,7 +348,13 @@ public:
     auto it = b.braid().begin();
     Morphism tau = id_R_id(it->first,it->second,num_strands);
     ++it;
+
+    std::cout << "+++++++++++++++++++++++++++++++++\n\n";
+    std::cout << tau << "\n";
+    std::cout << "+++++++++++++++++++++++++++++++++\n\n";
+
     for(; it!=b.braid().end(); ++it) {
+      std::cout << "(" << it->first << "," << it->second << "," << num_strands << ")\n";
       tau.ltimes_equal(id_R_id(it->first,it->second,num_strands));
     }
     tau.ltimes_equal(h_tensor_);
@@ -345,10 +377,31 @@ public:
     auto it = b.braid().begin();
     Morphism tau = id_R_id(it->begin(),it->end(),num_strands);
     ++it;
+
+    // std::cout << "Size tau = " << tau.num_rows() << " x " << tau.num_columns() << "\n";
+
+
     for(; it!=b.braid().end(); ++it) {
+
+      // for(auto pp : *it) {
+      //   std::cout << "[" << pp.first << "," << pp.second <<"] ";
+      // }
+      // std::cout << std::endl;
+
       tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands));
+    
+      // std::cout << "Size tau = " << tau.num_rows() << " x " << tau.num_columns() << "\n";
+
     }
+
+    // std::cout << "B\n";
+
+    // std::cout << "Size tau = " << tau.num_rows() << " x " << tau.num_columns() << "     size h = " << h_tensor_.num_rows() << " x " << h_tensor_.num_columns() <<"\n";
+
     tau.ltimes_equal(h_tensor_);
+    
+    // std::cout << "C\n";
+
     return trace(tau);
   }
   /**
@@ -371,30 +424,30 @@ public:
   template<typename IteratorPairs >
   Morphism id_R_id(IteratorPairs beg, IteratorPairs end, int num_strands) {
     if(beg == end) { return id_morphism(std::pow(N,num_strands)); }
-    Morphism M(0,0,Rational_function());
-    auto curr_idx = std::abs(beg->first);
-    //initialize to \operatorname{id}_N^{\otimes (|i_1|-1)} \otimes R^{\operatorname{sign}(i_1) n_1}
-    if(beg->first < 0) {
-      Morphism M = (pow_Rinv_[beg->second]).ltensor(id_morphism(std::pow(N,curr_idx-1)));
+    Morphism M;//(0,0,Rational_function());
+    auto curr_idx = beg->first;
+    //initialize to \operatorname{id}_N^{\otimes (i_1-1)} \otimes R^{n_1}
+    if(beg->second < 0) {//n_1 < 0 => negative twists
+      M = (pow_Rinv_[std::abs(beg->second)]).ltensor(id_morphism(std::pow(N,curr_idx)));
     }
-    else {
-      Morphism M = (pow_Rinv_[beg->second]).ltensor(id_morphism(std::pow(N,curr_idx-1)));
+    else {//n_1 > 0 => positive twists
+      M = (pow_R_[beg->second]).ltensor(id_morphism(std::pow(N,curr_idx)));
     }
     ++beg;
     auto prev_idx = curr_idx;
     while(beg != end) {
-      curr_idx = std::abs(beg->first);
-      if(beg->first < 0) {
-        M.rtensor_equal( id_morphism(std::pow(N,curr_idx-prev_idx-2)).rtensor(pow_Rinv_[beg->second]) );
+      curr_idx = beg->first;
+      if(beg->second < 0) {//n_i < 0
+        M.rtensor_equal( id_morphism(std::pow(N,curr_idx-prev_idx-2)).rtensor(pow_Rinv_[std::abs(beg->second)]) );
       }
-      else {
+      else {//n_i > 0
         M.rtensor_equal( id_morphism(std::pow(N,curr_idx-prev_idx-2)).rtensor(pow_R_[beg->second]) );
       }
       prev_idx = curr_idx;
       ++beg;
     }
     //add the last \otimes id_N^{num_strands-|i_k|-1}
-    M.rtensor_equal(id_morphism(std::pow(N,num_strands-curr_idx-1)));
+    M.rtensor_equal(id_morphism(std::pow(N,num_strands-curr_idx-2)));
     return M;
   }
 
@@ -412,15 +465,17 @@ public:
  * @return     The morphism.
  */
   Morphism id_R_id(int strand_idx, int twist_length, int num_strands) {
-    twist_length = std::abs(twist_length);//should always be > 0 however
-    if(strand_idx < 0) {
-      strand_idx *= -1;
-      return (pow_Rinv_[twist_length].ltensor(id_morphism(std::pow(N,strand_idx-1))) ).rtensor(id_morphism(std::pow(N,num_strands-strand_idx-1)));
+    if(twist_length < 0) {
+      return (pow_Rinv_[std::abs(twist_length)].ltensor(id_morphism(std::pow(N,strand_idx))) ).rtensor(id_morphism(std::pow(N,num_strands-strand_idx-2)));
     }
-    return (pow_R_[twist_length].ltensor(id_morphism(std::pow(N,strand_idx-1))) ).rtensor(id_morphism(std::pow(N,num_strands-strand_idx-1)));
+    return (pow_R_[twist_length].ltensor(id_morphism(std::pow(N,strand_idx))) ).rtensor(id_morphism(std::pow(N,num_strands-strand_idx-2)));
   }
 
-
+/**
+ * @brief      Return the quantum invariant of the unknot.
+ *
+ * @return     The quantum invariant of the unknot, as a rational function.
+ */
   Rational_f quantum_invariant_unknot() {
     Rational_f sum(0);
     for(int i=0; i<N; ++i) {

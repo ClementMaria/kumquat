@@ -80,7 +80,7 @@ public:
     std::vector<Integer> num(4*n+1,0);
     num[0] = -1; num[4*n] = 1;//X^{4n} - X^0
     std::vector<Integer> den(2*n+3,0);
-    den[2*n+2] = 1; den[2*n-2] = -1;
+    den[2*n+2] = 1; den[2*n-2] = -1;//
     return Rational_f(num,den);//==0
   }
 /** \brief Return the quantum factorial 
