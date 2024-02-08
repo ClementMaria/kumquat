@@ -94,9 +94,19 @@ public:
  * @{ */
   Rational_function_integral_mp& operator+=(const Rational_function_integral_mp& rhs) 
   { 
+    
+    std::cout << "           Q(x) += with: " << (*this).numerator_ << "/" << (*this).denominator_ << " += " << rhs.numerator_ << "/" << rhs.denominator_ << "\n";
+
     numerator_ = numerator_*rhs.denominator_ + denominator_*rhs.numerator_;
     denominator_ *= rhs.denominator_;
+    
+    std::cout << "       res before normalization == " << (*this).numerator_ << "/" << (*this).denominator_ << "\n";
+
     normalize();             
+
+    std::cout << "       res after normalization == " << (*this).numerator_ << "/" << (*this).denominator_ << "\n";
+    
+
     return *this;
   }
 
@@ -186,8 +196,18 @@ private:
 //make sure the numerator and denominator are coprime polynomials, i.e., gcd = integer
   void normalize() {
     auto gcd_poly = boost::math::tools::gcd(numerator_,denominator_);
+
+
+    std::cout << "   ******* gcd == " << gcd_poly << "\n";
+    std::cout << "   ******* " << numerator_ << " /= " << gcd_poly << " == ";
     numerator_ /= gcd_poly;
+    
+    std::cout << numerator_ << "\n";
+
+    std::cout << "   ******* " << denominator_ << " /= " << gcd_poly << " == ";
     denominator_ /= gcd_poly; 
+
+    std::cout << denominator_ << "\n";
   }
 
 

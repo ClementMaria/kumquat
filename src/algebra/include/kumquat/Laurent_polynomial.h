@@ -26,7 +26,7 @@
 namespace kumquat {
 
 /** \class Laurent_polynomial Laurent_polynomial.h kumquat/Laurent_polynomial.h 
-  * \brief Ring of Laurent polynomials.
+  * \brief Ring of Laurent polynomials with multiprecision integer coefficients.
   *
   * \implements Ring
   * 
