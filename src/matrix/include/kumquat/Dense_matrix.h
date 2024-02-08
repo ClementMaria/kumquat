@@ -961,24 +961,24 @@ public:
  * Return \mathtt{(*this) * rhs}\f$.
  **/
   Dense_matrix rtimes(Dense_matrix& rhs) {
-    std::cout << "   --> enter rtimes Dense_matrices\n";
+    // std::cout << "   --> enter rtimes Dense_matrices\n";
     assert( num_columns() == rhs.num_rows() );
     Dense_matrix prod_mat(num_rows(),rhs.num_columns(),G_); 
     for(size_t i = 0; i < num_rows(); ++i) {
       for(size_t j = 0; j < rhs.num_columns(); ++j) {
 
-        std::cout << "     entry (" << i << "," << j << ")\n";
+        // std::cout << "     entry (" << i << "," << j << ")\n";
 
         prod_mat(i,j) = G_.additive_identity();
         for(size_t k = 0 ; k < num_columns() ; ++k) {
 
-          std::cout << "      " << prod_mat(i,j) << " += " << (*this)(i,k) << "   *   " << rhs(k,j) << "\n        with value == " << G_.times( (*this)(i,k) , rhs(k,j) ) << "\n";
+          // std::cout << "      " << prod_mat(i,j) << " += " << (*this)(i,k) << "   *   " << rhs(k,j) << "\n        with value == " << G_.times( (*this)(i,k) , rhs(k,j) ) << "\n";
           G_.plus_equal( prod_mat(i,j), 
                          G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
         }
       }
     }
-    std::cout << "      -- end rtimes\n\n";
+    // std::cout << "      -- end rtimes\n\n";
     return prod_mat;
   }
 /** Product with a vector on the right.

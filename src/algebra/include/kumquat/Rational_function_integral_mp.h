@@ -208,6 +208,9 @@ private:
     denominator_ /= gcd_poly; 
 
     std::cout << denominator_ << "\n";
+
+    // boost::math::tools::reduce_to_primitive(numerator_,denominator_);
+
   }
 
 

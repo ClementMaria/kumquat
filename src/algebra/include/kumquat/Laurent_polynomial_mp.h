@@ -22,6 +22,7 @@
 // #include <boost/integer/extended_euclidean.hpp>//boost extended gcd
 // #include <boost/math/tools/polynomial.hpp>
 #include <list>
+#include <map>
 
 namespace kumquat {
 
@@ -31,21 +32,31 @@ namespace kumquat {
  */
 class Laurent_polynomial_mp {
 public:
+  
+/** \brief An integer type for the coefficients.*/
+  typedef boost::multiprecision::mpz_int Integer;//type of coefficients
+
 /** \brief An integer type for the coefficients.*/
   typedef boost::multiprecision::mpz_int Coefficient;//type of coefficients
 
 /** \brief Default initialization to 0.*/
   Laurent_polynomial_mp() : poly_() {}
 /** \brief Initialization with an integer z, z/1.*/
-  template<typename IntegerType>
-  Laurent_polynomial_mp(IntegerType z) {
-    poly_.emplace_back(0,z);
+  // template<typename IntegerType>
+  Laurent_polynomial_mp(int z) {
+    if(z!=0) { poly_.emplace_back(0,z); }
   } 
 /** \brief Initialization with a range.*/
-  template<typename RangeType>
-  Laurent_polynomial_mp(RangeType &poly) 
-  : poly_(poly) {}
-
+  // template<typename RangeType>
+  // Laurent_polynomial_mp(RangeType &poly) 
+  // {
+  //   poly_ = std::list< std::pair<int, Coefficient> >(poly.begin(),poly.end());
+  // }
+/** \brief Initialize as a monomial.*/
+  template<typename IntegerType>
+  Laurent_polynomial_mp(int deg, IntegerType a) {
+    if(a != 0) { poly_.emplace_back(deg,(Coefficient)(a)); }
+  }
 /** \name Model of ScalarSetOperations
  * 
  * @{ */
@@ -79,11 +90,11 @@ public:
     return !((*this) == rhs); 
   }
 
-  inline bool operator==(const int& rhs) { 
-    Laurent_polynomial_mp rf_rhs(rhs);
+  inline bool operator==(const int rhs) { 
+    Laurent_polynomial_mp rf_rhs(0,rhs);
     return (*this) == rf_rhs;
    }
-  inline bool operator!=(const int& rhs) { 
+  inline bool operator!=(const int rhs) { 
     return !((*this) == rhs); 
   }
 /* @} */
@@ -93,18 +104,19 @@ public:
  * @{ */
   Laurent_polynomial_mp& operator+=(const Laurent_polynomial_mp& rhs) 
   { 
-    auto itl = poly_.begin(), auto itr = rhs.poly_.begin();
+    auto itl = poly_.begin(); auto itr = rhs.poly_.begin();
     while(itl != poly_.end() && itr != rhs.poly_.end()) {
-      if(itl.first == itr.first) {//same degree, sum coefficients
-        itl.second += itr.second;
-        if(itl.second == 0) {
+      if(itl->first == itr->first) {//same degree, sum coefficients
+        itl->second += itr->second;
+        if(itl->second == 0) {
           auto tmp = itl;
           ++itl; ++itr;
           poly_.erase(tmp);
         }
+        else { ++itl; ++itr; }
       }
       else {
-        if(itl.first < itr.first) { ++itl; }
+        if(itl->first < itr->first) { ++itl; }
         else { poly_.insert(itl, *itr); ++itr; }
       }
     }
@@ -112,7 +124,6 @@ public:
     while(itr != rhs.poly_.end()) {
       poly_.push_back(*itr); ++itr;
     }
-
     return *this;
   }
 
@@ -126,18 +137,19 @@ public:
 
   Laurent_polynomial_mp& operator-=(const Laurent_polynomial_mp& rhs) 
   { 
-    auto itl = poly_.begin(), auto itr = rhs.poly_.begin();
+    auto itl = poly_.begin(); auto itr = rhs.poly_.begin();
     while(itl != poly_.end() && itr != rhs.poly_.end()) {
-      if(itl.first == itr.first) {//same degree, sum coefficients
-        itl.second -= itr.second;
-        if(itl.second == 0) {
+      if(itl->first == itr->first) {//same degree, sum coefficients
+        itl->second -= itr->second;
+        if(itl->second == 0) {
           auto tmp = itl;
           ++itl; ++itr;
           poly_.erase(tmp);
         }
+        else { ++itl; ++itr; }
       }
       else {
-        if(itl.first < itr.first) { ++itl; }
+        if(itl->first < itr->first) { ++itl; }
         else { poly_.emplace(itl, itr->first, (-1)*itr->second); ++itr; }
       }
     }
@@ -194,10 +206,8 @@ public:
 
       }
     }
-
     poly_.clear();
     for(auto pp : prod) { poly_.push_back(pp); }
-
     return *this; 
   }
 
@@ -226,13 +236,22 @@ public:
   // }
 /* @} */
 
-  Polynomial polynomial() const { return poly_; }
+  // Polynomial polynomial() const { return poly_; }
 
-  std::string to_string() {
+  std::string to_string() const {
     std::stringstream ss;
     for(auto pp : poly_) {
-      ss << "(" << pp.second << ",x^" << pp.first << ")";
+ 
+      if(pp.first == 0) { ss << "(" << pp.second << ")"; }//x^0
+      else {//deg != 0
+        if(pp.second == 1) { ss << "(x^" << pp.first << ")"; }
+        else {
+          if(pp.second == -1) { ss << "(-x^" << pp.first << ")"; }
+          else { ss << "(" << pp.second << "x^" << pp.first << ")"; }
+        }
+      }
     }
+    if(poly_.empty()) { ss << "(0)"; }
     return ss.str();
   }
 
@@ -248,7 +267,7 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const Laurent_polynomial_mp& x)
 {
-
+  os << x.to_string();
   return os;
 }
 

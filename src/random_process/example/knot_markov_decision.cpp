@@ -21,6 +21,48 @@ typedef Markov_decision::Proba_float P_float;
 
 int main() {
 
+  int max_twists = 10;//arbitrary
+  int num_strands = 6;//must be even
+  int num_layers = 11;//must be odd
+  //plat braids on n (even) strands labelled from 0 to n-1, with k layers labelled from 0 to k-1,
+  //are represented by non-zero integers:
+  //     [a_k-1,1] [a_k-1,3]  [a_k-1,5] ...[a_k-1,n-3]  
+  //                      ....
+  //      [a_2,1]   [a_2,3]   [a_2,5]  ...  [a_2,n-3]
+  //  [a_1,0]   [a_1,2]   [a_1,4]   [a_1,6] ...    [a_1,n-2]
+  //      [a_0,1]   [a_0,3]   [a_0,5]  ...  [a_0,n-3]
+  //
+  // where    [a_i,j] represents (s_j)^{a_i,j} at layer i, a_i,j positive or negative
+  // 
+
+  //In the Markov process, each layer correspond to a layer of the plat braid, i.e.
+  // with t the max number of twists (0 included), -t <= a_i,j <= +t, there are
+  // (2t+1)^{n/2-1} states for even layers 0,2,4 ..., and,
+  // (2t+1)^{n/2} states for odd layers 1,3,5 etc 
+
+  //call T the max number of twists; for any twist a_i,j, we have -T <= a_i,j <= T,
+  //and (a_i,j + T) \in [0;2T]
+  // consider layer 
+  //      [a_i,1]   [a_i,3]   [a_i,5]  ...  [a_i,n-3]
+  // we give it label:
+  // 
+  //  (a_i,1 + T) + (a_i,3 + T)*(2T+1) + (a_i,5 + T)*(2T+1)^2 + ...
+  //  from 0 to (2T+1)^{n/2-1}
+  // 
+  // consider layer 
+  //  [a_i,0]   [a_i,2]   [a_i,4]   [a_i,6] ...    [a_i,n-2]
+  // we give it label:
+  //
+  //  (a_i,0 + T) + (a_i,2 + T)*(2T+1) + (a_i,4 + T)*(2T+1)^2 + ...
+  // from 0 to (2T+1)^{n/2}
+
+  //NB, size_t takes values in 0 ... 4,294,967,295
+  // e.g., T=20, n=10 -> 41^5 <        116.000.000
+
+
+  to do
+
+
   //A decision process where states v0 ... vt represent braids with the following encoding:
   //we work with braids on k strands, k even, where strands are labeled from 1 to k included.
   //vi = (i,w) where 1 <= |i| < k encode the location of the crossing \sigma_i. If i>0 it is a positive crossing (strand i above strand i+1), and i negative is a negative crossing

@@ -17,6 +17,9 @@ namespace kumquat {
 /** \brief The concept for a scalar with standard group operations, where the underlying group is denoted (G,+).
   * */
 struct ScalarGroupOperations : public ScalarSetOperations {
+/** \brief An integer type.
+*/
+  typedef unspecified Integer;
 /** \brief Addition to the right.
  * 
  * Set *this <- *this + rhs.

@@ -78,7 +78,7 @@ public:
 
   /** \brief Return a state sampled from the distribution of the Markov process. 
    * 
-   * Transverse the mutipartite graph V0 ... Vt from left to right, 
+   * Transverse the multipartite graph V0 ... Vt from left to right, 
    * and transition by sampling the starting and transition 
    * matrices.
    * 
