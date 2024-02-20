@@ -12,11 +12,12 @@ set(KUMQUAT_MISSING_MODULES "" CACHE INTERNAL "KUMQUAT_MISSING_MODULES")
 
 include(KUMQUAT_third_party_libraries NO_POLICY_SCOPE)
 
-add_compile_options(-Wall -Wextra -Wpedantic -pthread -lmpc -lmpfr -lgmp)
+# add_compile_options(-Wall -Wextra -Wpedantic -pthread -lmpc -lmpfr -lgmp)
 
 include(KUMQUAT_modules)
 
-add_kumquat_module(algebra)
+add_kumquat_module(algebraic_structures)
+add_kumquat_module(algebraic_elements)
 add_kumquat_module(matrix)
 add_kumquat_module(utils)
 add_kumquat_module(random_process)
