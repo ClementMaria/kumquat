@@ -15,12 +15,12 @@
 #ifndef KUMQUAT_C_H_ 
 #define KUMQUAT_C_H_ 
 
-#include <boost/multiprecision/mpc.hpp>
+// #include <boost/multiprecision/mpc.hpp>
 #include <kumquat/Ring_over.h>
 
 namespace kumquat {
 
-typedef boost::multiprecision::mpc_complex Complex_number;
+// typedef boost::multiprecision::mpc_complex Complex_number;
 // typedef Ring_over< Complex_number > C;
 
 } //namespace kumquat

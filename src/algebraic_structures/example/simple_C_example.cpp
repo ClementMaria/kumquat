@@ -19,10 +19,10 @@ using namespace kumquat;
 
 int main() {
  
-  Complex_number a(1,1);
-  Complex_number b(0.5,2);
+  // Complex_number a(1,1);
+  // Complex_number b(0.5,2);
 
-  Complex_number c = a*b;
+  // Complex_number c = a*b;
 
   return 0;
 }
