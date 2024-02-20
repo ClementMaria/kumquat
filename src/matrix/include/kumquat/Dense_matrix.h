@@ -21,6 +21,10 @@
 #include <kumquat/number_theory.h>
 #include <kumquat/Q_U1.h>
 
+// #ifdef KUMQUAT_USE_TBB
+#include <tbb/parallel_for.h>
+// #endif
+
 namespace kumquat {
 
 /** \class Dense_matrix Dense_matrix.h kumquat/Dense_matrix.h 
@@ -245,11 +249,19 @@ public:
  **/
   template< typename Function >
   void fill(Function &f) {
-    for(size_t i=0; i<n_; ++i) {
-      for(size_t j=0; j<m_; ++j) {
-        (*this)(i,j) = f(i,j);
+    tbb::parallel_for(size_t(0), size_t(num_rows()), 
+      [&](size_t i) 
+      {
+        for(size_t j=0; j<m_; ++j) {
+          (*this)(i,j) = f(i,j);
+        }
       }
-    }
+    );
+    // for(size_t i=0; i<n_; ++i) {
+    //   for(size_t j=0; j<m_; ++j) {
+    //     (*this)(i,j) = f(i,j);
+    //   }
+    // }
   }
 
 /* @} */ // end global modifications of the matrix
@@ -886,7 +898,6 @@ If such element is in the diagonal, always return a diagonal element. If the mat
      *  |                |
      *  |1/2^m    1/2^m-1|
      */
-
     if((a*c) % 2 == 0) {
       (*this)(idx,idx) = G_.additive_identity();
       (*this)(idx+1,idx) = G_.element(1,two_to_m);
@@ -914,11 +925,21 @@ public:
    * Set *this <- *this + rhs, where the plus sign is the one of the group of coefficients.
    * */
   Dense_matrix& operator+=(Dense_matrix& rhs) {
-    for(size_t i=0; i<n_; ++i) {
-      for(size_t j=0; j<m_; ++j) {
-        G_.plus_equal((*this)(i,j),rhs(i,j));
+    assert( num_columns() == rhs.num_columns()
+           && num_rows() == rhs.num_rows());
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {
+        for(size_t j=0; j<m_; ++j) {
+          G_.plus_equal((*this)(i,j),rhs(i,j));
+        }
       }
-    }
+    );
+    // for(size_t i=0; i<n_; ++i) {
+    //   for(size_t j=0; j<m_; ++j) {
+    //     G_.plus_equal((*this)(i,j),rhs(i,j));
+    //   }
+    // }
     return *this;
   }
   /** Return the pointwise addition of two matrices.
@@ -934,11 +955,21 @@ public:
    * Set *this <- *this - rhs, where the minus sign is the one of the group of coefficients.
    * */
   Dense_matrix& operator-=(Dense_matrix& rhs) {
-    for(size_t i=0; i<n_; ++i) {
-      for(size_t j=0; j<m_; ++j) {
-        G_.plus_equal((*this)(i,j),G_.additive_inverse(rhs(i,j)));
+    assert( num_columns() == rhs.num_columns()
+           && num_rows() == rhs.num_rows());
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {
+        for(size_t j=0; j<m_; ++j) {
+          G_.plus_equal((*this)(i,j),G_.additive_inverse(rhs(i,j)));
+        }
       }
-    }
+    );
+    // for(size_t i=0; i<n_; ++i) {
+    //   for(size_t j=0; j<m_; ++j) {
+    //     G_.plus_equal((*this)(i,j),G_.additive_inverse(rhs(i,j)));
+    //   }
+    // }
     return *this;
   }
 /** Return the subtraction of a matrix to the other.
@@ -961,24 +992,29 @@ public:
  * Return \mathtt{(*this) * rhs}\f$.
  **/
   Dense_matrix rtimes(Dense_matrix& rhs) {
-    // std::cout << "   --> enter rtimes Dense_matrices\n";
     assert( num_columns() == rhs.num_rows() );
     Dense_matrix prod_mat(num_rows(),rhs.num_columns(),G_); 
-    for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < rhs.num_columns(); ++j) {
-
-        // std::cout << "     entry (" << i << "," << j << ")\n";
-
-        prod_mat(i,j) = G_.additive_identity();
-        for(size_t k = 0 ; k < num_columns() ; ++k) {
-
-          // std::cout << "      " << prod_mat(i,j) << " += " << (*this)(i,k) << "   *   " << rhs(k,j) << "\n        with value == " << G_.times( (*this)(i,k) , rhs(k,j) ) << "\n";
-          G_.plus_equal( prod_mat(i,j), 
-                         G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
+    tbb::parallel_for(size_t(0), size_t(num_rows()), 
+      [&](size_t i) 
+      {
+        for(size_t j = 0; j < rhs.num_columns(); ++j) {
+          prod_mat(i,j) = G_.additive_identity();
+          for(size_t k = 0 ; k < num_columns() ; ++k) {
+            G_.plus_equal( prod_mat(i,j), 
+                           G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
+          }
         }
       }
-    }
-    // std::cout << "      -- end rtimes\n\n";
+    );
+    // for(size_t i = 0; i < num_rows(); ++i) {
+    //   for(size_t j = 0; j < rhs.num_columns(); ++j) {
+    //     prod_mat(i,j) = G_.additive_identity();
+    //     for(size_t k = 0 ; k < num_columns() ; ++k) {
+    //       G_.plus_equal( prod_mat(i,j), 
+    //                      G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
+    //     }
+    //   }
+    // }
     return prod_mat;
   }
 /** Product with a vector on the right.
@@ -986,11 +1022,20 @@ public:
  * The vector is considered vertical.*/
   Vector rtimes(Vector& v) {
     Vector res(num_rows(),G_.additive_identity());
-    for(size_t i=0; i<num_rows(); ++i) {
-      for(size_t j=0; j<num_columns(); ++j) {
-        G_.plus_equal(res[i], G_times( (*this)(i,j), v[j] ) ); 
+
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {
+        for(size_t j=0; j<num_columns(); ++j) {
+          G_.plus_equal(res[i], G_times( (*this)(i,j), v[j] ) ); 
+        }
       }
-    }
+    );
+    // for(size_t i=0; i<num_rows(); ++i) {
+    //   for(size_t j=0; j<num_columns(); ++j) {
+    //     G_.plus_equal(res[i], G_times( (*this)(i,j), v[j] ) ); 
+    //   }
+    // }
     return res;
   }
 
@@ -1006,20 +1051,29 @@ public:
  * Return \mathtt{lhs * (*this)}\f$.
  * */
   Dense_matrix ltimes(const Dense_matrix& lhs) {
-    if( num_rows() != lhs.num_columns() ) {
-      std::cout << "ltimes issue rhs.num_rows = " << num_rows() << "    lhs.num_columns = " << lhs.num_columns() << "\n";
-    }
     assert( num_rows() == lhs.num_columns() );
     Dense_matrix prod_mat(lhs.num_rows(),num_columns(),G_); 
-    for(size_t i = 0; i < lhs.num_rows(); ++i) {
-      for(size_t j = 0; j < num_columns(); ++j) {
-        prod_mat(i,j) = G_.additive_identity();
-        for(size_t k = 0 ; k < lhs.num_columns() ; ++k) {
-          G_.plus_equal( prod_mat(i,j), 
-                         G_.times( lhs(i,k) , (*this)(k,j) ) ) ;  
+    tbb::parallel_for(size_t(0), size_t(lhs.num_rows()), 
+      [&](size_t i) 
+      {
+        for(size_t j = 0; j < num_columns(); ++j) {
+          prod_mat(i,j) = G_.additive_identity();
+          for(size_t k = 0 ; k < lhs.num_columns() ; ++k) {
+            G_.plus_equal( prod_mat(i,j), 
+                           G_.times( lhs(i,k) , (*this)(k,j) ) ) ;  
+          }
         }
       }
-    }
+    ); 
+    // for(size_t i = 0; i < lhs.num_rows(); ++i) {
+    //   for(size_t j = 0; j < num_columns(); ++j) {
+    //     prod_mat(i,j) = G_.additive_identity();
+    //     for(size_t k = 0 ; k < lhs.num_columns() ; ++k) {
+    //       G_.plus_equal( prod_mat(i,j), 
+    //                      G_.times( lhs(i,k) , (*this)(k,j) ) ) ;  
+    //     }
+    //   }
+    // }
     return prod_mat; //move
   }
 /** \brief Matrix multiplication on the left.
@@ -1034,11 +1088,20 @@ public:
  * */
   template<typename Scalar>
   void times_equal(Scalar x) {
-    for(size_t i = 0; i < num_rows(); ++i) {
-      for(size_t j = 0; j < num_columns(); ++j) {
-          G_.times_equal( (*this)(i,j), x ) ;  
+    // for(size_t i = 0; i < num_rows(); ++i) {
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {    
+        for(size_t j = 0; j < num_columns(); ++j) {
+            G_.times_equal( (*this)(i,j), x ) ;  
+        }
       }
-    }
+    );
+    // for(size_t i = 0; i < num_rows(); ++i) {
+    //   for(size_t j = 0; j < num_columns(); ++j) {
+    //       G_.times_equal( (*this)(i,j), x ) ;  
+    //   }
+    // }
   }
 /** Return the product of the matrix by a scalar.
  * 
@@ -1096,16 +1159,30 @@ public:
   Dense_matrix rtensor(const Dense_matrix &rhs) {
     Dense_matrix res( num_rows()*rhs.num_rows()
                     , num_columns()*rhs.num_columns(), G_);
-    for(size_t i=0; i<num_rows(); ++i) {
-      for(size_t j=0; j<num_columns(); ++j) {
-        for(size_t k=0; k<rhs.num_rows(); ++k) {
-          for(size_t l=0; l<rhs.num_columns(); ++l) {
-            res(i*rhs.num_rows() + k, j*rhs.num_columns()+l) = 
-                                  G_.times((*this)(i,j), rhs(k,l));
+    // for(size_t i=0; i<num_rows(); ++i) {
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {
+        for(size_t j=0; j<num_columns(); ++j) {
+          for(size_t k=0; k<rhs.num_rows(); ++k) {
+            for(size_t l=0; l<rhs.num_columns(); ++l) {
+              res(i*rhs.num_rows() + k, j*rhs.num_columns()+l) = 
+                                 G_.times((*this)(i,j), rhs(k,l));
+            }
           }
         }
       }
-    }
+    );
+    // for(size_t i=0; i<num_rows(); ++i) {
+    //   for(size_t j=0; j<num_columns(); ++j) {
+    //     for(size_t k=0; k<rhs.num_rows(); ++k) {
+    //       for(size_t l=0; l<rhs.num_columns(); ++l) {
+    //         res(i*rhs.num_rows() + k, j*rhs.num_columns()+l) = 
+    //                               G_.times((*this)(i,j), rhs(k,l));
+    //       }
+    //     }
+    //   }
+    // }
     return res;
   }
 /** \brief Matrix tensor product to the right. 
@@ -1122,16 +1199,31 @@ public:
   Dense_matrix ltensor(const Dense_matrix& lhs) {
     Dense_matrix res( num_rows()*lhs.num_rows()
                     , num_columns()*lhs.num_columns(), G_);
-    for(size_t i=0; i<lhs.num_rows(); ++i) {
-      for(size_t j=0; j<lhs.num_columns(); ++j) {
-        for(size_t k=0; k<num_rows(); ++k) {
-          for(size_t l=0; l<num_columns(); ++l) {
-            res(i*num_rows() + k, j*num_columns()+l) = 
-                                G_.times(lhs(i,j), (*this)(k,l));
+
+    // for(size_t i=0; i<lhs.num_rows(); ++i) {
+    tbb::parallel_for(size_t(0),size_t(num_rows()),
+      [&](size_t i)
+      {
+        for(size_t j=0; j<lhs.num_columns(); ++j) {
+          for(size_t k=0; k<num_rows(); ++k) {
+            for(size_t l=0; l<num_columns(); ++l) {
+              res(i*num_rows() + k, j*num_columns()+l) = 
+                              G_.times(lhs(i,j), (*this)(k,l));
+            }
           }
         }
       }
-    } 
+    ); 
+    // for(size_t i=0; i<lhs.num_rows(); ++i) {
+    //   for(size_t j=0; j<lhs.num_columns(); ++j) {
+    //     for(size_t k=0; k<num_rows(); ++k) {
+    //       for(size_t l=0; l<num_columns(); ++l) {
+    //         res(i*num_rows() + k, j*num_columns()+l) = 
+    //                             G_.times(lhs(i,j), (*this)(k,l));
+    //       }
+    //     }
+    //   }
+    // } 
     return res;
   }
 /** \brief Matrix tensor product to the left. 
@@ -1156,6 +1248,19 @@ public:
   }
 
 /* @} */ // end model of ObjectMonoidalCategory
+
+std::string to_string() const {
+  std::stringstream ss;
+  for (size_t i = 0; i < num_rows(); i++) {
+    for(size_t j = 0; j < num_columns(); ++j) {
+      // os << std::setw(1) << std::left << mat[i][j] << " ";
+      ss << (*this)(i,j) << " ";
+    }
+    ss << "\n";
+  }
+  return ss.str();
+}
+
 
 private:
   //number of rows of the matrix

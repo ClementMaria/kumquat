@@ -23,8 +23,6 @@ class Set {
   Set(const Set& other);
 /** \brief Move constructor.*/
   Set(Set&& other) noexcept;
-/** brief Destructor.*/
-  ~Set();
 /** \brief Copy assignment.
   * 
   * return *this;

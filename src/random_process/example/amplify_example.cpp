@@ -20,18 +20,41 @@ using namespace kumquat;
 
 typedef Markov_decision::Proba_float P_float;
 
-int main(int argc, char * argv[]) {
+int main() {
 
-  if(argc != 5) { 
-    std::cout << "./exe num_strands num_layers max_twists num_iterations\n";
-    return 0;
-  }
+  // std::vector<size_t> max_samp = {21, 1124, 19, 937, 20, 916, 0, 127, 37, 260, 17, 927, 19, 836, 21, 562, 23, 509, 0, 1058};
 
-  int max_twists = std::atoi(argv[3]);
-//10;//arbitrary
-  int num_strands = std::atoi(argv[1]);//must be even
-  int num_layers = std::atoi(argv[2]);//must be odd
-  int num_iterations = std::atoi(argv[4]);
+// std::vector<size_t> max_samp = {19, 1001, 25, 1091, 16, 619, 20, 989, 13, 1038, 32, 1430, 16, 467, 22, 233, 20, 1564, 0, 442};
+
+// std::vector<size_t> max_samp = {13, 1081, 23, 1360, 20, 486, 23, 333, 30, 226, 0, 1498, 33, 1040, 26, 1075, 0, 70, 0, 1212};
+
+// std::vector<size_t> max_samp = {15, 1338, 24, 441, 12, 7, 0, 636, 16, 19, 31, 842, 0, 848, 27, 387, 15, 684, 31, 550};
+
+// std::vector<size_t> max_samp = {11, 1378, 0, 464, 12, 1424, 18, 676, 27, 707, 11, 1172, 17, 1098, 3, 1327, 0, 1409, 20, 187};
+
+// std::vector<size_t> max_samp = {18, 260, 11, 1339, 0, 463, 39, 392, 10, 507, 16, 1041, 39, 687, 27, 50, 20, 1631, 25, 886};
+
+//   int max_twists = 20;
+// //10;//arbitrary
+//   int num_strands = 4;//must be even
+//   int num_layers = 20;//must be odd
+
+
+
+// std::vector<size_t> max_samp = {18, 2779, 66, 4316, 3, 5234, 33, 3212, 37, 4777, 41, 6389, 76, 3173, 41, 4909, 47, 444, 19, 3459, 16, 4157, 57, 212, 10, 4131, 59, 2950, 24, 626, 43, 3546, 48, 1891, 52, 5858, 77, 3372, 36, 3353, 79, 2884, 37, 164, 12, 3547, 70, 2400, 36, 2297};
+//   int num_strands = 4;//must be even
+//   int num_layers = 50;//must be odd
+//   int max_twists = 40;
+
+
+
+std::vector<size_t> max_samp = {124, 2784, 151, 5543, 365, 4504, 12, 4459, 359, 197, 175, 5581, 141, 5649, 199, 2935, 274, 6927, 330, 3282};
+  int num_strands = 6;//must be even
+  int num_layers = 20;//must be odd
+  int max_twists = 10;
+
+
+
 
   int max_num_crossings = 0;
   if(num_layers % 2 == 0) {
@@ -205,34 +228,6 @@ int main(int argc, char * argv[]) {
     return rew;
   };
 
-  //evaluate randomly the polynomial reward to later normalize it
-  // std::cout << "Out of 10 rewards: ----------------------------\n\n";
-  // P_float minr = 0;
-  // P_float maxr = 0; 
-  // for(size_t k=0; k<10; ++k) {
-  //   auto samp = mdp.sample();
-  //   auto tmpr = rew_jones(samp);
-  //   if(tmpr > maxr) { maxr = tmpr; }
-  //   if(tmpr < minr) { minr = tmpr; }
-  //   std::cout << "       -------------- end of ite " << k << "/100   with rew_jones = " << tmpr << "        min rew = " << minr << "  max rew = " << maxr << "\n";
-  // }
-  // std::cout << "\n" << "Min reward = " << minr << "  Max reward = " << maxr << "\n";
-
-
-  //normalized polynomial reward
-  // auto rew_jones_balanced = [&](std::vector<size_t> &samp)->P_float
-  // {
-  //   auto rew = rew_jones(samp);
-  //   rew -= (maxr+minr)/2.;
-  //   rew *= 0.01 * (1./(maxr-minr));
-  //   return rew;
-  // };
-
-
-
-  //train until possibly stuck in a state
-  size_t num_iteration = (size_t)num_iterations;//generally converges
-  auto max_samp = mdp.train(num_iteration, rew_jones);
 
   //sample the state and brute force improve it a few times
   std::vector<size_t> curr_samp;
@@ -260,24 +255,4 @@ int main(int argc, char * argv[]) {
 
 
 return 0;
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

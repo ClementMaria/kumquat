@@ -199,9 +199,13 @@ public:
     std::vector<size_t> imp_state(state);
     //for all layers
     for(size_t i = 0; i<imp_state.size(); ++i) {
+      std::cout << "Layer " << i << "/" << imp_state.size()-1 << "\n";
+
       size_t new_s = state[i];
       //try to change state locally to improve reward
       for(size_t j=0; j<size_layer(i); ++j) {
+        std::cout << "   state " << j << "/" << size_layer(i) << "\n";
+
         imp_state[i] = j;
         auto curr_rew = reward(imp_state);
         if(curr_rew > max_rew) {
@@ -231,9 +235,21 @@ public:
     Proba_float max_rew = -1;
     std::vector<size_t> max_state;
 
+    std::vector<size_t> prev_samp(0,num_layers());
+    int num_repetitions = 0;
     for(size_t ite = 0; ite < num_iterations; ++ite) {
       Proba_float rew;
       auto samp = sample();
+      
+      if(prev_samp == samp) {
+        ++num_repetitions;
+        if(num_repetitions > 9) { return max_state; }
+      }
+      else {
+        prev_samp = samp;
+        num_repetitions = 1;
+      }
+
       rew = reward(samp); //between -1 and 1
       if(rew > max_rew) { max_rew = rew; max_state = samp; }
       /////
@@ -247,10 +263,16 @@ public:
 
       /////
       // Proba_float factor = 10.*(Proba_float)(ite+1)/(Proba_float)num_iterations;
-      amplify(samp,rew);
+      if(rew != 0) { amplify(samp,rew); }
 
-      for(auto p : start_distribution_) { std::cout << p << " "; }
-        std::cout << "\n\n";
+      //max value of start distrib
+      Proba_float max_p_start = 0;
+      for(auto p : start_distribution_) { 
+        if(p > max_p_start) { max_p_start = p; }
+        // std::cout << p << " "; 
+      }
+      std::cout << "max start proba = " << max_p_start << "\n";
+        // std::cout << "\n\n";
     }
     return max_state;
   }

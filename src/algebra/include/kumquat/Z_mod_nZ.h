@@ -15,6 +15,7 @@
 #ifndef KUMQUAT_Z_MOD_NZ_H_ 
 #define KUMQUAT_Z_MOD_NZ_H_
 
+#include <iostream>
 #include <vector>
 #include <numeric>
 #include <kumquat/number_theory.h>
@@ -37,10 +38,26 @@ public:
   static const bool ring = true;
   static const bool principal_ideal_domain = true;
   static const bool field = false;
-
-/** \brief Create the ring Z/nZ. */
-  Z_mod_nZ(int N) : N_(N) {//brute force computation of the inverses (if they exist)
-    if(N <= 0) { std::cerr << "Instanciation of Z/nZ for n <= 0.\n"; return; }
+/** Default constructor.*/
+  Z_mod_nZ() : N_(0) {}
+/** Destructor */
+  ~Z_mod_nZ() {}
+/** \brief Copy constructor.*/
+  Z_mod_nZ(const Z_mod_nZ& other) {
+    if(N_ != other.N_) {
+      N_ = other.N_;
+      compute_inverses();
+    }
+  }
+/** \brief Move constructor.*/
+  Z_mod_nZ(Z_mod_nZ&& other) noexcept {
+    N_ = std::move(other.N_);
+    inverse_ = std::move(other.inverse_);
+  }
+private:
+  void compute_inverses() {
+  //brute force computation of the inverses (if they exist)
+    if(N_ <= 1) { std::cerr << "Instanciation of Z/nZ for n <= 1.\n"; return; }
     inverse_ = std::vector<Element>(N_, 0);
     inverse_[0] = 0;
     inverse_[1] = 1;
@@ -49,6 +66,37 @@ public:
         if((i*j) % N_ == 1) { inverse_[i] = j; break; } 
       }
     }
+  }
+public:
+/** \brief Copy assignment. */  
+  Z_mod_nZ& operator=(const Z_mod_nZ& other) {
+    if(N_ != other.N_) {
+      N_ = other.N_;
+      compute_inverses();
+    }
+    return *this;
+  }
+/** \brief Move assignment relocates the whole matrix. */
+  Z_mod_nZ& operator=(Z_mod_nZ&& other) noexcept {
+    if(&other != this) {
+      N_ = std::move(other.N_);
+      inverse_.clear();
+      inverse_ = std::move(other.inverse_);
+    }
+    return *this;
+  }
+/** \brief Test for equality.*/
+  inline bool operator==(const Z_mod_nZ& rhs) {
+    return (N_ == rhs.N_);
+  }
+/** \brief Test for inequality.*/
+  inline bool operator!=(const Z_mod_nZ& rhs) {
+    return !((*this) == rhs);
+  }
+
+/** \brief Create the ring Z/nZ. */
+  Z_mod_nZ(int N) : N_(N) {
+    compute_inverses();
   }
 
 /** An integer type, in particular for the Z-module structure of the underlying abelian group.*/

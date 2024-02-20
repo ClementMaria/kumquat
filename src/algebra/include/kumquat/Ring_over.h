@@ -12,8 +12,8 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_R_H_ 
-#define KUMQUAT_R_H_
+#ifndef KUMQUAT_RING_OVER_H_ 
+#define KUMQUAT_RING_OVER_H_
 
 #include <string>
 #include <vector>
@@ -26,17 +26,17 @@
 
 namespace kumquat {
 
-/** \class Ring Ring.h kumquat/Ring.h 
+/** \class Ring_over Ring_over.h kumquat/Ring_over.h 
   * \brief Field of rational functions \f$\mathbb{Q}(X)\f$.
   *
   * The structure is a field \f$(\mathbb{Q}(X),0/1,+,\times,1/1)\f$.
   * 
-  * Uses Ring_integral_mp as base scalar type.
+  * Uses Ring_over_integral_mp as base scalar type.
   * 
   * \implements Ring
   */
 template<typename ScalarRingOperations >
-class Ring {
+class Ring_over {
 public:
   static const bool abelian_group = true;
   static const bool pseudo_ring = true;//multiplication undefined a/b*c/d != a/b*(c+d)/d
@@ -46,7 +46,7 @@ public:
 
 /** \brief Initialization.
   * */
-  Ring() {}
+  Ring_over() {}
 
 /** \name Methods for Abelian groups. Implements AbelianGroup.
  * @{ */
@@ -176,4 +176,4 @@ public:
 
 } //namespace kumquat
 
-#endif //KUMQUAT_Q_MOD_Z_H_
+#endif //KUMQUAT_RING_OVER_H_

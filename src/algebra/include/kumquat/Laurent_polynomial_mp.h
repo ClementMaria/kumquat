@@ -255,6 +255,33 @@ public:
     return ss.str();
   }
 
+
+  int sq_norm() {
+    Integer nrm = 0;
+    for(auto pp : poly_) {
+      nrm += pp.first * pp.first;//non zero deg squared//std::abs(pp.first);
+      // if(pp.second < 0) { nrm -= pp.second; }
+      // else { nrm += pp.second; }//plus coefficient
+    }
+
+    if(nrm < 0) { std::cout << "sq_norm < 0?\n";}
+
+    return (int)nrm;
+  }
+
+  int norm() {
+    Integer nrm = 0;
+    for(auto pp : poly_) {
+      nrm += std::abs(pp.first);// * pp.first;//non zero deg squared//std::abs(pp.first);
+      // if(pp.second < 0) { nrm -= pp.second; }
+      // else { nrm += pp.second; }//plus coefficient
+    }
+
+    if(nrm < 0) { std::cout << "sq_norm < 0?\n";}
+
+    return (int)nrm;
+  }
+
 private:
 /**
  * The list of non-zero monomials, represented by pairs (degree, coefficient). The list is always sorted by increasing degree.

@@ -12,17 +12,17 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_C_H_ 
-#define KUMQUAT_C_H_ 
+#include <iostream>
+#include <kumquat/C.h>
 
-#include <boost/multiprecision/mpc.hpp>
-#include <kumquat/Ring_over.h>
+using namespace kumquat;
 
-namespace kumquat {
+int main() {
+ 
+  Complex_number a(1,1);
+  Complex_number b(0.5,2);
 
-typedef boost::multiprecision::mpc_complex Complex_number;
-// typedef Ring_over< Complex_number > C;
+  Complex_number c = a*b;
 
-} //namespace kumquat
-
-#endif //KUMQUAT_C_H_ 
+  return 0;
+}
