@@ -195,7 +195,13 @@ public:
  */
   Laurent_p quantum_invariant(Braid& b) {
 
+    std::cout << "G \n";
+
+
     if(b.braid().empty()) { return Laurent_p(); }
+
+
+    std::cout << "H  \n";
 
     int num_strands = b.num_strands();
     auto it = b.braid().begin();
@@ -206,11 +212,25 @@ public:
     // std::cout << tau << "\n";
     // std::cout << "+++++++++++++++++++++++++++++++++\n\n";
 
+    std::cout << "I  \n";
+
     for(; it!=b.braid().end(); ++it) {
       // std::cout << "(" << it->first << "," << it->second << "," << num_strands << ")\n";
+    std::cout << "J  \n";
+
+
       tau.ltimes_equal(id_R_id(it->first,it->second,num_strands));
+
+    std::cout << "K  \n";
+
     }
+
+    std::cout << "L  \n";
+
     tau.ltimes_equal(h_tensor_);
+
+    std::cout << "S  \n";
+
     return trace(tau);
   }
 
@@ -223,40 +243,16 @@ public:
  * @return     The quantum invariant as a rational function.
  */
   Laurent_p quantum_invariant(Plat_braid& b) {
-
-
-    // std::cout << "++++ enter quantum invariant\n";
-
     if(b.braid().empty()) { return Laurent_p(); }
-
     int num_strands = b.num_strands();
     auto it = b.braid().begin();
     Morphism tau = id_R_id(it->begin(),it->end(),num_strands);
     ++it;
 
-    // std::cout << "id R id:\n";
-    // std::cout << tau << "\n\n";
-
     for(; it!=b.braid().end(); ++it) {
-      // std::cout << "before times\n";
-
-      // std::cout << "    layer = ";
-      // for(auto pp : (*it)) {
-      //   std::cout << "[" << pp.first << "," << pp.second << "]";
-      // }
-      // std::cout << std::endl;
-
-
       tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands));
-      // std::cout << "after times\n";
-
     }
-
-    // std::cout << "before h\n";
     tau.ltimes_equal(h_tensor_);
-    // std::cout << "after h\n";
-
-
     return trace(tau);
   }
   /**
@@ -278,12 +274,9 @@ public:
    */
   template<typename IteratorPairs >
   Morphism id_R_id(IteratorPairs beg, IteratorPairs end, int num_strands) {
-
-    // std::cout << "     enter id_R_id\n";
-
     if(beg == end) { return id_morphism(std::pow(N,num_strands)); }
 
-    Morphism M;//(0,0,Laurent_punction());
+    Morphism M;//(0,0,Laurent_function());
     auto curr_idx = beg->first;
     //initialize to \operatorname{id}_N^{\otimes (i_1-1)} \otimes R^{n_1}
     if(beg->second < 0) {//n_1 < 0 => negative twists
@@ -292,12 +285,6 @@ public:
     else {//n_1 > 0 => positive twists
       M = (pow_R_[beg->second]).ltensor(id_morphism(std::pow(N,curr_idx)));
     }
-
-    // std::cout << "     now we have: ";
-    // std::cout << M << "\n";
-
-
-
     ++beg;
     auto prev_idx = curr_idx;
     while(beg != end) {
@@ -309,20 +296,11 @@ public:
         M.rtensor_equal( id_morphism(std::pow(N,curr_idx-prev_idx-2)).rtensor(pow_R_[beg->second]) );
       }
 
-      // std::cout << "     now we have: ";
-      // std::cout << M << "\n";
-
-
       prev_idx = curr_idx;
       ++beg;
     }
     //add the last \otimes id_N^{num_strands-|i_k|-1}
     M.rtensor_equal(id_morphism(std::pow(N,num_strands-curr_idx-2)));
-
-    // std::cout << "     now we have (final): ";
-    // std::cout << M << "\n";
-
-
     return M;
   }
 

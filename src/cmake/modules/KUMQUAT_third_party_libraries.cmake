@@ -1,6 +1,6 @@
 # This files manage third party libraries required by GUDHI
 
-find_package(Boost 1.82.0 REQUIRED COMPONENTS filesystem unit_test_framework program_options)
+find_package(Boost 1.82.0 REQUIRED)# COMPONENTS filesystem unit_test_framework program_options)
 
 # Boost_FOUND is not reliable
 if(NOT Boost_VERSION)

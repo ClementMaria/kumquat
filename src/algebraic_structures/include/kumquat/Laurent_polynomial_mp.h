@@ -83,18 +83,18 @@ public:
     return *this;
   }
 
-  inline bool operator==(const Laurent_polynomial_mp& rhs) { 
+  inline bool operator==(const Laurent_polynomial_mp& rhs) const { 
     return (poly_ == rhs.poly_);
    }
-  inline bool operator!=(const Laurent_polynomial_mp& rhs) { 
+  inline bool operator!=(const Laurent_polynomial_mp& rhs) const { 
     return !((*this) == rhs); 
   }
 
-  inline bool operator==(const int rhs) { 
+  inline bool operator==(const int rhs) const { 
     Laurent_polynomial_mp rf_rhs(0,rhs);
     return (*this) == rf_rhs;
    }
-  inline bool operator!=(const int rhs) { 
+  inline bool operator!=(const int rhs) const { 
     return !((*this) == rhs); 
   }
 /* @} */
@@ -264,7 +264,7 @@ public:
       // else { nrm += pp.second; }//plus coefficient
     }
 
-    if(nrm < 0) { std::cout << "sq_norm < 0?\n";}
+    if((int)nrm < 0) { std::cout << "sq_norm < 0?\n";}
 
     return (int)nrm;
   }
@@ -280,6 +280,14 @@ public:
     if(nrm < 0) { std::cout << "sq_norm < 0?\n";}
 
     return (int)nrm;
+  }
+
+  int spread() {
+    
+    if(poly_.empty()) { std::cout << "empty poly_\n"; return 0; }
+    int sprd = (poly_.rbegin()->first - poly_.begin()->first);
+    if(sprd <= 0 ) { std::cout << "spread <= 0\n"; }
+    return sprd;//highest degree - smallest degree
   }
 
 private:

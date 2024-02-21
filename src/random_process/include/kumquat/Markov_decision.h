@@ -199,12 +199,12 @@ public:
     std::vector<size_t> imp_state(state);
     //for all layers
     for(size_t i = 0; i<imp_state.size(); ++i) {
-      std::cout << "Layer " << i << "/" << imp_state.size()-1 << "\n";
+      std::cout << "     - Layer " << i << "/" << imp_state.size()-1 << "\n";
 
       size_t new_s = state[i];
       //try to change state locally to improve reward
       for(size_t j=0; j<size_layer(i); ++j) {
-        std::cout << "   state " << j << "/" << size_layer(i) << "\n";
+        std::cout << "              - state " << j << "/" << size_layer(i) << "\n";
 
         imp_state[i] = j;
         auto curr_rew = reward(imp_state);

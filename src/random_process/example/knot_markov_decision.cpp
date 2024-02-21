@@ -15,6 +15,9 @@
 #include <kumquat/Markov_decision.h>
 #include <kumquat/Braid.h>
 #include <kumquat/Jones_polynomial.h>
+#include <iostream>
+#include <fstream>
+#include <ctime>
 
 using namespace kumquat;
 
@@ -180,30 +183,69 @@ int main(int argc, char * argv[]) {
 
   std::cout << "                done.\n";
 
+  // //high reward for jones polynomials close to the trivial Jones,
+  // auto rew_jones = [&](std::vector<size_t> &samp)->P_float
+  // {
+  //   Plat_braid b = state_to_braid(samp);
+  //   auto num_comp = b.num_components();
+  //   if(num_comp > 1) { return 0; }
+  //   auto jones_poly = J.quantum_invariant(b);
+  //   int norm = jones_poly.sq_norm();
+  //   auto num_cross = b.num_crossings();
+
+  //   P_float to_decrease = (P_float)(norm) / (P_float)(sum_n_squared); //approximately between (0;1], closer to 0
+  //   P_float to_increase = (P_float)(num_cross)/(P_float)(max_num_crossings);//approx between (0;1] 
+  //   P_float rew = to_increase/to_decrease;
+
+  //   // if(num_comp > 1) { rew *= -1; }
+
+  //   std::cout << "------------------------------------------------------------------- #components = " << num_comp << "  #crossings = " << num_cross << "      reward = " << rew << "    sq_norm = " << norm << "\n";
+  //   std::cout << b.oriented_Gauss_code() << "\n";
+  //   return rew;
+  // };
+
+
+  time_t now = time(0);
+  // Convert time to tm structure
+  tm *local_time = localtime(&now);
+  // Define format string
+  char buffer[80];
+  strftime(buffer, 80, "%Y-%m-%d_%H:%M:%S", local_time);
+
+  std::string filename = "~/git_repo/kumquat/data/numstrands_" + std::to_string(num_strands) + "_numlayers_ " + std::to_string(num_layers) + "_maxtwists_" + std::to_string(max_twists) + "__" + buffer + ".dat";
+
+  std::ofstream outfile(filename);
+
   //high reward for jones polynomials close to the trivial Jones,
   auto rew_jones = [&](std::vector<size_t> &samp)->P_float
   {
     Plat_braid b = state_to_braid(samp);
-    
     auto num_comp = b.num_components();
     if(num_comp > 1) { return 0; }
-
     auto jones_poly = J.quantum_invariant(b);
-
-    int norm = jones_poly.sq_norm();
-
+    int sprd = jones_poly.spread();
     auto num_cross = b.num_crossings();
 
-    P_float to_decrease = (P_float)(norm) / (P_float)(sum_n_squared); //approximately between (0;1], closer to 0
-    P_float to_increase = (P_float)(num_cross)/(P_float)(max_num_crossings);//approx between (0;1] 
-    P_float rew = to_increase/to_decrease;
+    std::cout << "------------------------------------------------------- #components = " << num_comp << "  #crossings = " << num_cross << "  spread = " << sprd << "\n";
+//"  reward = " << rew << 
+
+    // P_float to_decrease = (P_float)(norm) / (P_float)(sum_n_squared); //approximately between (0;1], closer to 0
+    // P_float to_increase = (P_float)(num_cross)/(P_float)(max_num_crossings);//approx between (0;1] 
+    P_float rew = (P_float)(1) / (P_float)(sprd);
 
     // if(num_comp > 1) { rew *= -1; }
 
-    std::cout << "------------------------------------------------------------------- #components = " << num_comp << "  #crossings = " << num_cross << "      reward = " << rew << "    sq_norm = " << norm << "\n";
-    std::cout << b.oriented_Gauss_code() << "\n";
+    outfile << "--- #components = " << num_comp << "  #crossings = " << num_cross << "  reward = " << rew << "  spread = " << sprd << "\n";
+    outfile << b.oriented_Gauss_code() << "\n";
+
+    // std::cout << b.oriented_Gauss_code() << "\n";
     return rew;
   };
+
+
+
+
+
 
   //evaluate randomly the polynomial reward to later normalize it
   // std::cout << "Out of 10 rewards: ----------------------------\n\n";
@@ -237,7 +279,10 @@ int main(int argc, char * argv[]) {
   //sample the state and brute force improve it a few times
   std::vector<size_t> curr_samp;
   auto imp_samp = max_samp;
+
+  size_t count_turns=0;
   do {
+    std::cout << "======================================================= Turn #" << count_turns++ << "\n";
     curr_samp = imp_samp;
     imp_samp = mdp.local_improve(curr_samp, rew_jones);
   } while(curr_samp != imp_samp);
@@ -257,6 +302,8 @@ int main(int argc, char * argv[]) {
   std::cout << "Maximizing braid is: \n" << imp_braid << "\n";
 
   std::cout << "  with polynomial = " << jon << "      vs J(O) = " << J.quantum_invariant_unknot() << "\n";
+
+  outfile.close();
 
 
 return 0;

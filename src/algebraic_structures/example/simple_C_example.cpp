@@ -19,6 +19,8 @@ using namespace kumquat;
 
 int main() {
  
+  Complex_number c;
+
   // Complex_number a(1,1);
   // Complex_number b(0.5,2);
 

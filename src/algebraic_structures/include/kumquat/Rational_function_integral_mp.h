@@ -77,16 +77,16 @@ public:
     return *this;
   }
 
-  inline bool operator==(const Rational_function_integral_mp& rhs) { 
+  inline bool operator==(const Rational_function_integral_mp& rhs) const { 
     return (numerator_ == rhs.numerator_) && (denominator_ == rhs.denominator_);
    }
-  inline bool operator!=(const Rational_function_integral_mp& rhs) { return !((*this) == rhs); }
+  inline bool operator!=(const Rational_function_integral_mp& rhs) const { return !((*this) == rhs); }
 
-  inline bool operator==(const int& rhs) { 
-    Rational_function_integral_mp rf_rhs(rhs);
+  inline bool operator==(const int& rhs) const { 
+    const Rational_function_integral_mp rf_rhs(rhs);
     return (*this) == rf_rhs;
    }
-  inline bool operator!=(const int& rhs) { return !((*this) == rhs); }
+  inline bool operator!=(const int& rhs) const { return !((*this) == rhs); }
 /* @} */
 
 /** \name Model of ScalarGroupOperations

@@ -1197,11 +1197,16 @@ public:
  * Return \f$\mathtt{lhs} \otimes \mathtt{(*this)}\f$.
  **/
   Dense_matrix ltensor(const Dense_matrix& lhs) {
+    // std::cout << "ltensor with: ";
+    // std::cout << to_string() << "\n\n and\n\n";
+    // std::cout << lhs.to_string() << "\n\n";
+
     Dense_matrix res( num_rows()*lhs.num_rows()
                     , num_columns()*lhs.num_columns(), G_);
 
-    // for(size_t i=0; i<lhs.num_rows(); ++i) {
-    tbb::parallel_for(size_t(0),size_t(num_rows()),
+    // std::cout << "|" << res.num_rows() << "x" << res.num_columns() << "\n";
+
+    tbb::parallel_for(size_t(0),size_t(lhs.num_rows()),
       [&](size_t i)
       {
         for(size_t j=0; j<lhs.num_columns(); ++j) {

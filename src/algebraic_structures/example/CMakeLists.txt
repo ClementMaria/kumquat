@@ -14,5 +14,5 @@ target_link_libraries( number_theory_example LINK_PUBLIC ${Boost_LIBRARIES} ${GM
 add_executable ( laurent_polynomial_example laurent_polynomial_example.cpp )
 target_link_libraries( laurent_polynomial_example LINK_PUBLIC ${Boost_LIBRARIES} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})
 
-add_executable ( simple_C_example simple_C_example.cpp )
-target_link_libraries( simple_C_example LINK_PUBLIC ${Boost_LIBRARIES} Boost::boost)
+# add_executable ( simple_C_example simple_C_example.cpp )
+# target_link_libraries( simple_C_example LINK_PUBLIC ${Boost_LIBRARIES} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})

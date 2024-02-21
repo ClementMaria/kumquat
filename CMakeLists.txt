@@ -37,3 +37,5 @@ endforeach()
 #include(KUMQUAT_doxygen_target)
 
 message("++ KUMQUAT_MODULES list is:\"${KUMQUAT_MODULES}\"")
+
+message("++-- ${Boost_LIBRARIES}   |   ${GMPXX_LIBRARIES}   |   ${GMP_LIBRARIES}")

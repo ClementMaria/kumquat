@@ -12,16 +12,15 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_C_H_ 
-#define KUMQUAT_C_H_ 
+#ifndef KUMQUAT_COMPLEX_NUMBER_H_ 
+#define KUMQUAT_COMPLEX_NUMBER_H_ 
 
-#include <kumquat/Ring_over.h>
-#include <kumquat/Complex_number.h>
+#include <boost/multiprecision/mpc.hpp>
 
 namespace kumquat {
 
-// typedef Ring_over< Complex_number > C;
+ typedef boost::multiprecision::mpc_complex Complex_number;
 
 } //namespace kumquat
 
-#endif //KUMQUAT_C_H_ 
+#endif //KUMQUAT_COMPLEX_NUMBER_H_
