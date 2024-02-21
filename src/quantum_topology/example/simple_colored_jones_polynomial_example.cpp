@@ -18,17 +18,24 @@
 using namespace kumquat;
 
 int main() {
-  int N = 2;
-  Quantum_group_Uqsl2_gen_q<N> uq;
+  // int N = 2;
+  int num_strands = 2;
+  int max_twists = 5;
+  Quantum_group_Uqsl2_gen_q<3> uq(num_strands,max_twists);
   
-  int num_strands = 4;
-  int max_twists = 3;
-  std::vector< std::pair<int,int> > braid; braid.reserve(5);
-  braid.push_back(std::make_pair(2,2));
-  braid.push_back(std::make_pair(-1,1));
-  braid.push_back(std::make_pair(-3,1));
-  braid.push_back(std::make_pair(2,1));
-  Braid
-  
+  uq.display();
+
   return 0;
+
+
+  // int num_strands = 4;
+  // int max_twists = 3;
+  // std::vector< std::pair<int,int> > braid; braid.reserve(5);
+  // braid.push_back(std::make_pair(2,2));
+  // braid.push_back(std::make_pair(-1,1));
+  // braid.push_back(std::make_pair(-3,1));
+  // braid.push_back(std::make_pair(2,1));
+  // Braid
+  
+  // return 0;
 }

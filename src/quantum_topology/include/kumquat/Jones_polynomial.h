@@ -111,7 +111,7 @@ private:
   Morphism id_morphism(int n) {
     Morphism id_n(n,n,Ring_over<Laurent_p>());
     for(int i=0; i<n; ++i) {
-      id_n(i,i) = Laurent_p(0,1);
+      id_n(i,i) = Laurent_p(0,1);//monomial x^0 * 1
     }
     return id_n;
   }

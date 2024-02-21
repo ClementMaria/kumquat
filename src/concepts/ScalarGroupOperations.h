@@ -16,7 +16,7 @@ namespace kumquat {
 
 /** \brief The concept for a scalar with standard group operations, where the underlying group is denoted (G,+).
   * */
-struct ScalarGroupOperations : public ScalarSetOperations {
+struct AlgebraicElementGroup : public AlgebraicElementSet {
 /** \brief An integer type.
 */
   typedef unspecified Integer;
@@ -25,23 +25,23 @@ struct ScalarGroupOperations : public ScalarSetOperations {
  * Set *this <- *this + rhs.
  * return *this;
  * */
-  ScalarGroupOperations& operator+=(const ScalarGroupOperations& rhs); 
+  AlgebraicElementGroup& operator+=(const AlgebraicElementGroup& rhs); 
 /** Return the addition of two group elements.
  * 
  * Return (lhs + rhs), based on operator +=.
  * */
-  friend ScalarGroupOperations operator+(ScalarGroupOperations lhs, const ScalarGroupOperations& rhs);
+  friend AlgebraicElementGroup operator+(AlgebraicElementGroup lhs, const AlgebraicElementGroup& rhs);
 /** \brief Subtraction to the right.
  * 
  * Set *this <- *this - rhs.
  * return *this;
  * */
-  ScalarGroupOperations& operator-=(const ScalarGroupOperations& rhs);
+  AlgebraicElementGroup& operator-=(const AlgebraicElementGroup& rhs);
 /** Return the subtraction of an element to the other.
  * 
  * Return (lhs - rhs), based on operator -=.
  * */
-  friend ScalarGroupOperations operator-(ScalarGroupOperations lhs, const ScalarGroupOperations& rhs); 
+  friend AlgebraicElementGroup operator-(AlgebraicElementGroup lhs, const AlgebraicElementGroup& rhs); 
 };
 
 } //namespace kumquat

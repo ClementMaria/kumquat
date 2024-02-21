@@ -62,22 +62,21 @@ public:
     h_tensor_ = h_morphism(num_strands);
 
     pow_R_.reserve(max_twist+1); 
-    pow_R_.push_back(id_morphism(N)); pow_R_.push_back(braiding());
+    pow_R_.push_back(id_morphism(N*N)); pow_R_.push_back(braiding());
     pow_Rinv_.reserve(max_twist+1);
-    pow_Rinv_.push_back(id_morphism(N)); pow_Rinv_.push_back(braiding_inv());
+    pow_Rinv_.push_back(id_morphism(N*N)); pow_Rinv_.push_back(braiding_inv());
     for(int i=2; i<= max_twist; ++i) {
       
-      std::cout << " ____________________ Multiplication R * R^" << i-1 << "\n";
-      std::cout << "R == \n";
-      std::cout << pow_R_[1] << "\nand R^" << i-1 << "==\n";
-      std::cout << pow_R_[i-1] << "\n\n";
-      std::cout << "RESULTAT R^" << i << " == \n";
+      // std::cout << " ____________________ Multiplication R * R^" << i-1 << "\n";
+      // std::cout << "R == \n";
+      // std::cout << pow_R_[1] << "\nand R^" << i-1 << "==\n";
+      // std::cout << pow_R_[i-1] << "\n\n";
+      // std::cout << "RESULTAT R^" << i << " == \n";
       pow_R_.push_back(pow_R_[1]*pow_R_[i-1]);
-      std::cout << pow_R_[i] << "\n";
-      std::cout << "________________________________________________________";
+      // std::cout << pow_R_[i] << "\n";
+      // std::cout << "________________________________________________________";
       pow_Rinv_.push_back(pow_Rinv_[1]*pow_Rinv_[i-1]);
     }
-
   }
 
   void display() {

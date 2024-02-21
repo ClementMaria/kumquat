@@ -23,6 +23,66 @@ if(GMP_FOUND)
   endif()
 endif()
 
+find_package(FLINT REQUIRED)
+include_directories(SYSTEM ${FLINT_INCLUDE_DIRS})
+
+message(STATUS " -- flint include dirs:" ${FLINT_INCLUDE_DIR})
+message(STATUS " -- flint library dirs:" ${FLINT_LIBRARY_DIR})
+
+set(LIBS ${LIBS} ${FLINT_TARGETS})
+set(HAVE_SYMENGINE_FLINT True)
+set(PKGS ${PKGS} "FLINT")
+
+set(WITH_MPFR yes)
+if ("${FLINT_VERSION_MAJOR}" GREATER "2")
+    set(WITH_ARB yes)
+endif()
+
+
+find_package(MPC REQUIRED)
+include_directories(SYSTEM ${MPC_INCLUDE_DIRS})
+message(STATUS " -- mpc include dirs:" ${MPC_INCLUDE_DIR})
+message(STATUS " -- mpc library dirs:" ${MPC_LIBRARY_DIR})
+set(LIBS ${LIBS} ${MPC_TARGETS})
+set(HAVE_SYMENGINE_MPC True)
+set(WITH_MPFR yes)
+set(PKGS ${PKGS} "MPC")
+
+
+find_package(MPFR REQUIRED)
+include_directories(SYSTEM ${MPFR_INCLUDE_DIRS})
+message(STATUS " -- mpfr include dirs:" ${MPC_INCLUDE_DIR})
+message(STATUS " -- mpfr library dirs:" ${MPC_LIBRARY_DIR})
+set(LIBS ${LIBS} ${MPFR_TARGETS})
+set(HAVE_SYMENGINE_MPFR True)
+set(PKGS ${PKGS} "MPFR")
+
+
+
+find_package(Doxygen REQUIRED)
+if(DOXYGEN_FOUND)
+    # add_custom_target(doc ALL
+    #     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxygen/Doxyfile-prj.cfg
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+    #     COMMENT "Generating API documentation with Doxygen" VERBATIM)
+    # install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/ DESTINATION doc)
+endif(DOXYGEN_FOUND)
+
+
+
+# find_package(OpenMP REQUIRED)
+# if(OPENMP_FOUND)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#     set(WITH_SYMENGINE_THREAD_SAFE yes)
+# endif()
+# elseif (CMAKE_CXX_COMPILER_ID MATCHES Clang|GNU)
+# set(CMAKE_CXX_FLAGS_DEBUG
+#     "${CMAKE_CXX_FLAGS_DEBUG} -Wno-unknown-pragmas")
+# set(CMAKE_CXX_FLAGS_RELEASE
+#     "${CMAKE_CXX_FLAGS_RELEASE} -Wno-unknown-pragmas")
+
+    
+
 # from windows vcpkg eigen 3.4.0#2 : build fails with
 # error C2440: '<function-style-cast>': cannot convert from 'Eigen::EigenBase<Derived>::Index' to '__gmp_expr<mpq_t,mpq_t>'
 # cf. https://gitlab.com/libeigen/eigen/-/issues/2476
@@ -32,7 +92,7 @@ if (FORCE_EIGEN_DEFAULT_DENSE_INDEX_TYPE_TO_INT)
   add_definitions(-DEIGEN_DEFAULT_DENSE_INDEX_TYPE=int)
 endif()
 
-option(WITH_GUDHI_USE_TBB "Build with Intel TBB parallelization" ON)
+option(WITH_KUMQUAT_USE_TBB "Build with Intel TBB parallelization" ON)
 
 # Find TBB package for parallel sort - not mandatory, just optional.
 #if(WITH_KUMQUAT_USE_TBB)
@@ -77,7 +137,6 @@ endif()
 find_package(Eigen3 3.1.0)
 if (EIGEN3_FOUND)
   include( ${EIGEN3_USE_FILE} )
-  set(CGAL_WITH_EIGEN3_VERSION ${CGAL_VERSION})
 endif (EIGEN3_FOUND)
 
 # Required programs for unitary tests purpose

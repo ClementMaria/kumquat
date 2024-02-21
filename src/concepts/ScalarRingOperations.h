@@ -16,18 +16,18 @@ namespace kumquat {
 
 /** \brief The concept for a scalar with standard ring operations, where the unerlying ring is denoted (R,+,*).
   * */
-class ScalarRingOperations : ScalarGroupOperations {
+class AlgebraicElementRing : AlgebraicElementRing {
 /** \brief Multiplication to the right.
 * 
 * Set *this <- *this * rhs.
 * return *this;
 * */
-  ScalarRingOperations& operator*=(const ScalarRingOperations& rhs);
+  AlgebraicElementRing& operator*=(const AlgebraicElementRing& rhs);
 /** Return the multiplication of two ring elements.
  * 
  * Return (lhs * rhs), based on operator *=.
  * */
-  friend ScalarRingOperations operator*(ScalarRingOperations lhs, const ScalarRingOperations& rhs);
+  friend AlgebraicElementRing operator*(AlgebraicElementRing lhs, const AlgebraicElementRing& rhs);
 
 };
 

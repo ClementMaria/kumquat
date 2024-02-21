@@ -21,6 +21,8 @@ namespace kumquat {
  * if !(a<b) and !(b<a) iff (a==b) (set operation).
  */ 
 class ScalarPosetOperations : public ScalarSetOperations{
+  /** \brief Return true iff the two elements are comparable.*/
+  bool comparable(const ScalarSetOperations& rhs);
   /** \brief Strictly less than.*/
   inline bool operator<(const ScalarSetOperations& lhs, const ScalarSetOperations& rhs);
   /** \brief Less or equal than.*/

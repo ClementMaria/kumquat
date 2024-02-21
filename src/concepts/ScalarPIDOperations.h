@@ -16,18 +16,32 @@ namespace kumquat {
 
 /** \brief The concept for a scalar with standard ring operations, where the unerlying ring is denoted (R,+,*).
   * */
-class ScalarPIDOperations : ScalarRingOperations {
+class AlgebraicElementPID : AlgebraicElementRing {
+  /** \brief Return the value of an Euclidean function compatible with the division with remainder.
+  */
+  Integer Euclidean_function() {}
+  /** \brief Division to the right.
+   * 
+   * Set *this <- *this / rhs.
+   * return *this;
+   * */
+  AlgebraicElementPID& operator/=(const AlgebraicElementPID& rhs);
+  /** Return the division of one field element to the other.
+   * 
+   * Return (lhs / rhs), based on operator /=.
+   * */
+  friend AlgebraicElementPID operator/(AlgebraicElementPID lhs, const AlgebraicElementPID& rhs);  
   /** \brief Remainder of the division.
    * 
    * Set *this <- *this % rhs.
    * return *this;
    * */
-  ScalarPIDOperations& operator%=(const ScalarPIDOperations& rhs);
+  AlgebraicElementPID& operator%=(const AlgebraicElementPID& rhs);
   /** Return the remainder of the division of a scalar by another.
    * 
    * Return (lhs % rhs), based on operator %=.
    * */
-  friend ScalarPIDOperations operator%(ScalarPIDOperations lhs, const ScalarPIDOperations& rhs);
+  friend AlgebraicElementPID operator%(AlgebraicElementPID lhs, const AlgebraicElementPID& rhs);
 };
 
 } // namespace kumquat
