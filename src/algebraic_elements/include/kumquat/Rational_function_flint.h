@@ -15,12 +15,12 @@
 #ifndef KUMQUAT_RATIONAL_FUNCTION_FLINT
 #define KUMQUAT_RATIONAL_FUNCTION_FLINT
 
-#include "fmpz_poly_qxx.h"
+#include "flint/fmpz_poly_qxx.h"
 
 namespace kumquat {
 
 /** \class Rational_function_flint Rational_function_flint.h kumquat/Rational_function_flint.h 
-  * \brief .
+  * \brief A wrapper on the rational function type from flint.
   *
   * \implements AlgebraicElementSet
   * \implements AlgebraicElementGroup
@@ -29,10 +29,29 @@ namespace kumquat {
   * \implements AlgebraicElementPoset
   */
 class Rational_function_flint {
+public:
+/** \name Implementation of AlgebraicElementGroup.
+ * @{ */
+/** \brief An integer type for the \f$\mathbb{Z}\f$-module structure of the group.
+ * 
+ * Must be convertible to int.
+ */
+  typedef boost::multiprecision::mpz_int Integer;
+  /* @} */
+  /** \brief Type of coefficients of the numerator and denomiator (integer type).*/
+  typedef ... Coefficient;
+  /** \brief Type of polynomial for numerator and denomiator of the fraction.*/
+  typedef ... Polynomial;
+
 private:
-  typedef flint::fmpz_poly_qxx Rational_f;
+  typedef flint::fmpz_poly_qxx Rational_f;//the flint rational function type, numerator and denomiator are polynomials with multiprecision integer coefficients
 
 public:
+  /** \brief Default constructor set to 0.*/
+  template<typename IntegerType>
+  Rational_function_flint() {
+    rf_ = 0;
+  }
   /** \brief Creator from an integer value.*/
   template<typename IntegerType>
   Rational_function_flint(IntegerType& z) {
@@ -42,7 +61,8 @@ public:
    *
    * MonomialRange are ranges whose iterators have value type std::pair<int, Integer>
    */
-  Rational_function_flint(std::pair<int,Integer> monom)
+  template<typename IntegerType>
+  Rational_function_flint(std::pair<int,IntegerType> monom)
   {
     Rational_f num(0);
     Rational_f x("2  0 1");//monom X / 1
@@ -274,7 +294,11 @@ public:
   // std::string to_string() {}
 
 
-//Return true iff the denominator is a monomial X^d
+/** \brief Return true iff the rational function is a Laurent polynomial with 
+ * integer coefficients.
+ *
+ * Check whether the denominator is a monomial X^d.
+ */
   bool is_laurent() const {
     auto deg = rf_.den().degree();//degree of denominator
     for(int i=0; i<deg; ++i) {
@@ -283,8 +307,19 @@ public:
     if(val_.den().get_coeff(deg) != 1) { return false; }
     return true;
   }
+/** \brief Return a copy of the numerator as a polynomial with integer coefficients.*/
+  Polynomial numerator() const { return numerator_; }
+/** \brief Return a copy of the denominator as a polynomial with integer coefficients.*/
+  Polynomial denominator() const { return denominator_; }
+/** \brief Return a human readable string representing the rational function.*/
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << rf_.pretty("x");
+    return ss.str();
+  }
 
 private:
+/** \brief A Flint rational function.*/
   Rational_f rf_;
 };
 

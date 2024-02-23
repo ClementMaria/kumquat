@@ -33,6 +33,7 @@ class Rational_function_integral_mp {
 public:
 /** \brief An integer type for the coefficients.*/
   typedef boost::multiprecision::mpz_int Coefficient;//type of coefficients
+  typedef Coefficient Integer;
 /** The boost polynomial type.*/
   typedef boost::math::tools::polynomial<Coefficient> Polynomial;
 
