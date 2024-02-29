@@ -12,16 +12,13 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_C_H_ 
-#define KUMQUAT_C_H_ 
-
-#include <kumquat/Ring_over.h>
-#include <kumquat/Complex_number.h>
-
 namespace kumquat {
 
-// typedef Ring_over< Complex_number > C;
+/** \brief The concept for a scalar with standard field operations, where the underlying ring is denoted (R,+,*).
+ * 
+ * Same as AlgebraicElementPrincipalIdealDomain, with the garantee that operator%= always returns 0, the additive identity of the field. Inverses can be computed with 1/x.
+  * */
+class AlgebraicElementField : AlgebraicElementPrincipalIdealDomain {
+};
 
-} //namespace kumquat
-
-#endif //KUMQUAT_C_H_ 
+} // namespace kumquat

@@ -16,7 +16,7 @@ namespace kumquat {
 
 /** \brief The concept for a scalar with standard ring operations, where the unerlying ring is denoted (R,+,*).
   * */
-class AlgebraicElementPID : AlgebraicElementRing {
+class AlgebraicElementPrincipalIdealDomain : AlgebraicElementRing {
   /** \brief Return the value of an Euclidean function compatible with the division with remainder.
   */
   Integer Euclidean_function() {}
@@ -25,23 +25,23 @@ class AlgebraicElementPID : AlgebraicElementRing {
    * Set *this <- *this / rhs.
    * return *this;
    * */
-  AlgebraicElementPID& operator/=(const AlgebraicElementPID& rhs);
+  AlgebraicElementPrincipalIdealDomain& operator/=(const AlgebraicElementPrincipalIdealDomain& rhs);
   /** Return the division of one field element to the other.
    * 
    * Return (lhs / rhs), based on operator /=.
    * */
-  friend AlgebraicElementPID operator/(AlgebraicElementPID lhs, const AlgebraicElementPID& rhs);  
+  friend AlgebraicElementPrincipalIdealDomain operator/(AlgebraicElementPrincipalIdealDomain lhs, const AlgebraicElementPrincipalIdealDomain& rhs);  
   /** \brief Remainder of the division.
    * 
    * Set *this <- *this % rhs.
    * return *this;
    * */
-  AlgebraicElementPID& operator%=(const AlgebraicElementPID& rhs);
+  AlgebraicElementPrincipalIdealDomain& operator%=(const AlgebraicElementPrincipalIdealDomain& rhs);
   /** Return the remainder of the division of a scalar by another.
    * 
    * Return (lhs % rhs), based on operator %=.
    * */
-  friend AlgebraicElementPID operator%(AlgebraicElementPID lhs, const AlgebraicElementPID& rhs);
+  friend AlgebraicElementPrincipalIdealDomain operator%(AlgebraicElementPrincipalIdealDomain lhs, const AlgebraicElementPrincipalIdealDomain& rhs);
 };
 
 } // namespace kumquat

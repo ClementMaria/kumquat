@@ -1,3 +1,5 @@
+#from https://github.com/symengine/symengine/blob/master/cmake/
+
 function (libfind_library libname pkg)
     string(TOUPPER ${pkg} PKG)
     string(TOUPPER ${libname} LIBNAME)

@@ -12,8 +12,8 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-#ifndef KUMQUAT_MARKOV_DECISION_H_ 
-#define KUMQUAT_MARKOV_DECISION_H_
+#ifndef KUMQUAT_MARKOV_DECISION 
+#define KUMQUAT_MARKOV_DECISION
 
 #include <kumquat/R.h>
 #include <kumquat/Dense_matrix.h>
@@ -25,13 +25,13 @@ namespace kumquat {
  * multipartite graph V0 V1 ... Vt, represented by a set of transition matrices 
  * M0 ... M_t-1. 
  * 
- * Matrix Mi is a (Vi x Vi+1) dense matrix, representing the 
+ * Matrix Mi, i=0...t-1. is a (Vi x Vi+1) dense matrix, representing the 
  * transition of local state at time i to time i+1. Precisely, 
- * Mi[s] is a row vector of length Vi+1 containing the probability 
+ * Mi[s][...] is a row vector of length |Vi+1| containing the probability 
  * distribution of transitioning to the nodes of Vi+1, knowing that 
  * we are in the s-th node of Vi. 
  * 
- * Mi[p][q] is the probability to jumping to q \in Vi+1, knowing 
+ * In other terms, Mi[p][q] is the probability to jumping to q \in Vi+1, knowing 
  * that we are in p at time i.
  * 
  * One state of the universe is exactly a left to right path in the 
@@ -46,6 +46,55 @@ public:
   typedef R::Element Proba_float;
 
   // typedef NodeType Node_type;
+  //default constructor with empty states and matrices
+  Markov_decision() {}
+
+/** \brief Copy constructor.*/
+  Markov_decision(const Markov_decision& other) {
+    start_distribution_ = other.start_distribution_;
+    decision_mat_ = other.decision_mat_;
+    R_ = other.R_;
+  }
+/** \brief Move constructor.*/
+  Markov_decision(Markov_decision&& other) noexcept {
+    start_distribution_ = std::move(other.start_distribution_);
+    decision_mat_ = std::move(other.decision_mat_);
+    R_ = std::move(other.R_);
+  }
+/** brief Destructor.*/
+  ~Markov_decision() {};
+/**
+ * @brief Copy assignment.
+ * @details Copy assignment on all members.
+ * 
+ * @param other Original to copy.
+ * @return *this.
+ */
+  Markov_decision& operator=(const Markov_decision& other) {
+    if(this != &other) { 
+      start_distribution_ = other.start_distribution_;
+      decision_mat_ = other.decision_mat_;
+      R_ = other.R_;
+    }
+    return *this;
+  }
+/**
+ * @brief Move assignment.
+ * @details Move assignment on all members.
+ * 
+ * @param other Original to move.
+ * @return *this.
+ */
+  Markov_decision& operator=(Markov_decision&& other) noexcept
+  {
+    if(this != &other) { 
+      start_distribution_ = std::move(other.start_distribution_);
+      decision_mat_ = std::move(other.decision_mat_);
+      R_ = std::move(other.R_);
+    }
+    return *this;
+  }
+
 
   /** \brief Initialize the transition matrices with uniform 
    * probabilities. 
@@ -64,7 +113,7 @@ public:
       start_distribution_.push_back(unif);
     }
     //vector containing the transitions matrices
-    // decision_mat_.reserve( num_layers-1 ); 
+    decision_mat_.reserve( num_layers-1 ); 
   
     for(size_t t=0; t<num_layers-1; ++t) {
       size_t num_rows = num_states[t];
@@ -76,6 +125,72 @@ public:
     }
   }
 
+/**
+ * @brief Reinitializes the transition matrices such that the probability of transition from state[i] to state[i+1] is exactly alpha, and all other transition are uniform. 
+ * @details Useful to explore the surroundings of a state.
+ * 
+ * @param state The state to favor.
+ * @param alpha The fraction of probability.
+ */
+  void initialize(std::vector<size_t> state = std::vector<size_t>(), Proba_float alpha = 0.5)
+  {
+    if(state.empty()) 
+    {
+      //idd distribution for starting point
+      Proba_float unif = R_.element(1)/R_.element(size_layer(0));
+      for(size_t i=0; i<size_layer(0); ++i) {
+        start_distribution_[i] = unif;
+      }
+      //for each transition matrix    
+      for(size_t t=0; t<num_layers()-1; ++t) {
+        size_t num_rows = size_layer(t);
+        size_t num_cols = size_layer(t+1);
+        //fill the matrices with appropriately normalize uniform proba
+        auto f = [&]([[maybe_unused]] size_t i, 
+                     [[maybe_unused]] size_t j)->Proba_float { 
+          return (Proba_float)(1)/(Proba_float)num_cols; 
+        };
+        decision_mat_[t].fill(f);
+      }
+    }
+    else {//state != empty
+      //idd distribution for starting point
+      
+
+      // std::cout << "+++ size_layer(0) = " << size_layer(0) << "\n";
+      Proba_float unif_alpha = (Proba_float(1) - alpha)/Proba_float(size_layer(0));
+      for(size_t i=0; i<size_layer(0); ++i) {
+        if(i == state[0]) { start_distribution_[i] = alpha; }
+        else { start_distribution_[i] = unif_alpha; }
+      }
+      //for each transition matrix    
+      for(size_t t=0; t<num_layers()-1; ++t) {
+        
+        // std::cout << "+++ size_layer(" << t << ") = " << size_layer(t) << "\n";
+        // std::cout << "----- size_layer(t+1) = " << size_layer(t+1) << "\n";
+
+        size_t num_rows = size_layer(t);
+        size_t num_cols = size_layer(t+1);
+        //fill the matrices with appropriately normalize uniform proba
+        auto f = [&]([[maybe_unused]] size_t i, 
+                     [[maybe_unused]] size_t j)->Proba_float { 
+          if(i == state[t]) {
+            if(j == state[t+1]) { return alpha; }
+            else { 
+              return (Proba_float(1) - alpha)/Proba_float(num_cols);
+            }
+          }
+          else {//not in row state[t]
+            return (Proba_float)(1)/(Proba_float)num_cols;  
+          }
+        };
+        decision_mat_[t].fill(f);
+      }
+    }
+  }
+  
+
+ 
   /** \brief Return a state sampled from the distribution of the Markov process. 
    * 
    * Transverse the multipartite graph V0 ... Vt from left to right, 
@@ -199,23 +314,70 @@ public:
     std::vector<size_t> imp_state(state);
     //for all layers
     for(size_t i = 0; i<imp_state.size(); ++i) {
-      std::cout << "     - Layer " << i << "/" << imp_state.size()-1 << "\n";
+      // std::cout << "     - Layer " << i << "/" << imp_state.size()-1 << "\n";
+      //prepare batches of size size_batch
+      int size_batch = 20;
+      int num_batches = size_layer(i)/size_batch +1;
+      //local_best[b] == (new_s, rew) means that when trying to locally improve within layer i, the batch b (improve locally for states of labels in [b*size_batch, (b+1)*size_batch-1]), the best valiue attained is rew, when locally setting to state new_s
+      std::vector< std::pair<size_t, Proba_float> > local_best(num_batches, std::make_pair(state[i], max_rew));
 
-      size_t new_s = state[i];
-      //try to change state locally to improve reward
-      for(size_t j=0; j<size_layer(i); ++j) {
-        std::cout << "              - state " << j << "/" << size_layer(i) << "\n";
+      // for(int batch=0; batch < num_batches; ++batch) {
+      tbb::parallel_for(size_t(0), size_t(num_batches), 
+        [&](size_t batch) {
+          
+          std::vector<size_t> tmp_imp_state(imp_state);
+          //try to change state locally to improve reward
+          for(size_t j = batch * size_batch ; 
+                     j < std::min(size_layer(i), (batch+1)*size_batch); ++j) 
+          {
+            // std::cout << "          - state " << j << "/" << size_layer(i) << "\n";
 
-        imp_state[i] = j;
-        auto curr_rew = reward(imp_state);
-        if(curr_rew > max_rew) {
-          max_rew = curr_rew;
-          new_s = j;
+            tmp_imp_state[i] = j;
+            auto curr_rew = reward(tmp_imp_state);
+            if(curr_rew > local_best[batch].second) {
+              local_best[batch].second = curr_rew;
+              local_best[batch].first = j;
+            }
+          }
+        }
+      );
+
+      //now extract the best option among all parallel computations
+      auto max_rew_batch = max_rew;
+      auto max_state_batch = state[i];
+      for(auto pp : local_best) {
+        if(pp.second > max_rew_batch) {
+          max_rew_batch = pp.second;
+          max_state_batch = pp.first;
         }
       }
-      imp_state[i] = new_s;
+
+      max_rew = max_rew_batch;
+      imp_state[i] = max_state_batch;
+
     }
-    return imp_state;
+
+  return imp_state;
+    // auto max_rew = reward(state);
+    // std::vector<size_t> imp_state(state);
+    // //for all layers
+    // for(size_t i = 0; i<imp_state.size(); ++i) {
+    //   std::cout << "     - Layer " << i << "/" << imp_state.size()-1 << "\n";
+    //   size_t new_s = state[i];
+    //   //try to change state locally to improve reward
+    //   for(size_t j=0; j<size_layer(i); ++j) {
+    //     std::cout << "              - state " << j << "/" << size_layer(i) << "\n";
+
+    //     imp_state[i] = j;
+    //     auto curr_rew = reward(imp_state);
+    //     if(curr_rew > max_rew) {
+    //       max_rew = curr_rew;
+    //       new_s = j;
+    //     }
+    //   }
+    //   imp_state[i] = new_s;
+    // }
+    // return imp_state;
   }
 
   std::string to_string(std::vector<size_t> &state) {
@@ -224,56 +386,82 @@ public:
     return str;
   }
 
-  /** \brief Train the Markov decision process by sampling a state, compute its reward and turn it into an amplifying value alpha, and amplify the probabilities of transtion.
+  /** \brief Train the Markov decision process by sampling a batch of states in parallel, compute their rewards, and amplify the probabilities of transitions according to the rewards.
    * 
    * @param[in] num_iterations the number of runs for the training,
-   * @param[in] reward a reward function to apply on a state ; it returns values in (-1,1) that can be given to the amplify method.
+   * @param[in] reward a reward function to apply on a state ; it returns any value, that can be given to the amplify method.
+   * @param[in] batch_size number of samples taken in parallel, for which rewards are computed. The amplifying is then done on the samples, one after the other. batch_size should divide num_iterations
    **/
   template< typename Function >
-  std::vector<size_t> train(size_t num_iterations, Function &reward) {
-    
+  std::vector<size_t> train(size_t num_iterations, Function &reward, size_t batch_size) {
+
     Proba_float max_rew = -1;
     std::vector<size_t> max_state;
 
-    std::vector<size_t> prev_samp(0,num_layers());
-    int num_repetitions = 0;
-    for(size_t ite = 0; ite < num_iterations; ++ite) {
-      Proba_float rew;
-      auto samp = sample();
+    // std::vector<size_t> prev_samp(0,num_layers());
+    // int num_repetitions = 0;
+    for(size_t ite = 0; ite < num_iterations; ite += batch_size) {
       
-      if(prev_samp == samp) {
-        ++num_repetitions;
-        if(num_repetitions > 9) { return max_state; }
-      }
-      else {
-        prev_samp = samp;
-        num_repetitions = 1;
+      std::cout << "   " << ite << "/" << num_iterations << "\n";
+      // if(ite % (batch_size) == 0) {  std::cout << "-----------iteration #" << ite << "\n"; }
+      //after the parallel_for, samples_rew[i] contains a pair made of a sample and its reward value, as computed by thread #i
+      std::vector< std::pair< std::vector<size_t>, Proba_float > > samples_rew(batch_size);
+      tbb::parallel_for(size_t(0), size_t(batch_size),
+        [&](size_t i) {
+          std::vector<size_t> samp = sample();
+          auto rew = reward(samp); //between -1 and 1
+          samples_rew[i] = std::make_pair(samp, rew);
+        });
+      // if(prev_samp == samp) {
+      //   ++num_repetitions;
+      //   if(num_repetitions > 9) { return max_state; }
+      // }
+      // else {
+      //   prev_samp = samp;
+      //   num_repetitions = 1;
+      // }
+      // rew = reward(samp); //between -1 and 1
+      size_t thread_idx=0;
+      for(auto s_r : samples_rew) {
+        if(s_r.second > max_rew) {
+          max_state = s_r.first;
+          max_rew = s_r.second;
+          //////////////////////////////////new max
+          // std::cout << "train ite " << ite+thread_idx << "  max_rew [" << max_rew << "]   max_state: ";
+          // for(auto i : max_state) { std::cout << i << " "; }
+          // std::cout << std::endl;
+          //////////////////////////////////
+
+        }
+        ++thread_idx;
+        if(s_r.second != 0) { amplify(s_r.first,s_r.second); }
       }
 
-      rew = reward(samp); //between -1 and 1
-      if(rew > max_rew) { max_rew = rew; max_state = samp; }
+
       /////
-      std::cout << "#it: " << ite << " -- Reward = " << rew << "  ---  ";
-      for(auto x : samp) { std::cout << x << " "; }
-      std::cout << "    -- Max = " << max_rew << " [";
-      for(auto x : max_state) { std::cout << x << " "; }
-      std::cout << "] ";
-      std::cout << std::endl;
-      
+      // if(rew > 0) {
+      //   std::cout << "#it: " << ite << " -- Reward = " << rew << "  ---  ";
+      //   for(auto x : samp) { std::cout << x << " "; }
+      //   std::cout << "    -- Max = " << max_rew << " [";
+      //   for(auto x : max_state) { std::cout << x << " "; }
+      //   std::cout << "] ";
+      //   std::cout << std::endl;
+      // }
 
       /////
       // Proba_float factor = 10.*(Proba_float)(ite+1)/(Proba_float)num_iterations;
-      if(rew != 0) { amplify(samp,rew); }
+      // if(rew != 0) { amplify(samp,rew); }
 
       //max value of start distrib
-      Proba_float max_p_start = 0;
-      for(auto p : start_distribution_) { 
-        if(p > max_p_start) { max_p_start = p; }
-        // std::cout << p << " "; 
-      }
-      std::cout << "max start proba = " << max_p_start << "\n";
+      // Proba_float max_p_start = 0;
+      // for(auto p : start_distribution_) { 
+      //   if(p > max_p_start) { max_p_start = p; }
+      //   // std::cout << p << " "; 
+      // }
+      // std::cout << "max start proba = " << max_p_start << "   vs uniform = " << (Proba_float)(1)/(Proba_float)(size_layer(0)) << "\n";
         // std::cout << "\n\n";
     }
+    std::cout << "\n";
     return max_state;
   }
 
@@ -281,10 +469,12 @@ public:
   size_t num_layers() { return decision_mat_.size()+1; }
 /** Return the size of a layer given by its index.*/
   size_t size_layer(size_t i) {
-    if(i<decision_mat_.size()) {
+    // std::cout << "decision_mat_.size() = " << decision_mat_.size() << "   i = " << i << "\n";
+    if(i<=decision_mat_.size()) {
       if(i==0) { return start_distribution_.size(); }
       return decision_mat_[i-1].num_columns();
     }
+    // std::cout << "X\n";
     return 0;
   }
 private:

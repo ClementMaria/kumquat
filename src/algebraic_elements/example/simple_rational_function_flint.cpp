@@ -22,8 +22,8 @@
 
 #include <kumquat/Rational_function_flint.h> 
 
-  using Rational_function_flint Rf;
-  using boost::multiprecision::mpz_int Intmp;
+using Rational_function_flint Rf;
+using boost::multiprecision::mpz_int Intmp;
 
 int main (int argc, char* const argv[])
 { 
@@ -46,7 +46,9 @@ int main (int argc, char* const argv[])
   Rf e(d);
   Rf f = e;
 
-  
+  std::cout << a << "\n";
+
+
   return 0;
 }
 

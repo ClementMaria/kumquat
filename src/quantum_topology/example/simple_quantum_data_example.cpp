@@ -14,12 +14,13 @@
 
 #include <iostream>
 #include <kumquat/Quantum_data.h>
+#include <kumquat/Rational_function_integral_mp.h>
 
 using namespace kumquat;
 
 int main() {
 
-	Quantum_data qd;
+	Quantum_data<Rational_function_integral_mp> qd;
 	std::cout << "Quantum half X^2-X^{-2} = " << qd.quantum_half() << "\n\n";
 	std::cout << "Quantum monomials X^k, and 1 if k<0: \n";
 	for(int k=-1; k<=10; ++k) {

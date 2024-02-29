@@ -4,7 +4,7 @@
 #  GMP_INCLUDE_DIR       - the GMP include directory
 #  GMP_LIBRARIES_DIR     - directory where the GMP libraries are located
 #  GMP_LIBRARIES         - Link these to use GMP
-#  GMP_IN_CGAL_AUXILIARY - TRUE if the GMP found is the one distributed with CGAL in the auxiliary folder
+
 
 # TODO: support MacOSX
 

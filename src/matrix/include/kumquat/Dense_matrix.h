@@ -99,7 +99,7 @@ public:
   }
 private:
 //copy other into this
-  void copy_from(Dense_matrix& other) {
+  void copy_from(const Dense_matrix& other) {
     if(this != &other) {
       n_ = other.n_;
       m_ = other.m_;
@@ -997,15 +997,16 @@ public:
     tbb::parallel_for(size_t(0), size_t(num_rows()), 
       [&](size_t i) 
       {
-        for(size_t j = 0; j < rhs.num_columns(); ++j) {
+      tbb::parallel_for(size_t(0), size_t(rhs.num_columns()), 
+        [&](size_t j) 
+        {
           prod_mat(i,j) = G_.additive_identity();
           for(size_t k = 0 ; k < num_columns() ; ++k) {
             G_.plus_equal( prod_mat(i,j), 
                            G_.times( (*this)(i,k) , rhs(k,j) ) ) ;  
           }
-        }
-      }
-    );
+        });
+      });
     // for(size_t i = 0; i < num_rows(); ++i) {
     //   for(size_t j = 0; j < rhs.num_columns(); ++j) {
     //     prod_mat(i,j) = G_.additive_identity();
@@ -1056,15 +1057,16 @@ public:
     tbb::parallel_for(size_t(0), size_t(lhs.num_rows()), 
       [&](size_t i) 
       {
-        for(size_t j = 0; j < num_columns(); ++j) {
+      tbb::parallel_for(size_t(0), size_t(num_columns()), 
+        [&](size_t j) 
+        {
           prod_mat(i,j) = G_.additive_identity();
           for(size_t k = 0 ; k < lhs.num_columns() ; ++k) {
             G_.plus_equal( prod_mat(i,j), 
                            G_.times( lhs(i,k) , (*this)(k,j) ) ) ;  
           }
-        }
-      }
-    ); 
+        });
+      }); 
     // for(size_t i = 0; i < lhs.num_rows(); ++i) {
     //   for(size_t j = 0; j < num_columns(); ++j) {
     //     prod_mat(i,j) = G_.additive_identity();
@@ -1163,16 +1165,18 @@ public:
     tbb::parallel_for(size_t(0),size_t(num_rows()),
       [&](size_t i)
       {
-        for(size_t j=0; j<num_columns(); ++j) {
+
+      tbb::parallel_for(size_t(0),size_t(num_columns()),
+        [&](size_t j)
+        {
           for(size_t k=0; k<rhs.num_rows(); ++k) {
             for(size_t l=0; l<rhs.num_columns(); ++l) {
               res(i*rhs.num_rows() + k, j*rhs.num_columns()+l) = 
                                  G_.times((*this)(i,j), rhs(k,l));
             }
           }
-        }
-      }
-    );
+        });
+      });
     // for(size_t i=0; i<num_rows(); ++i) {
     //   for(size_t j=0; j<num_columns(); ++j) {
     //     for(size_t k=0; k<rhs.num_rows(); ++k) {
@@ -1209,16 +1213,18 @@ public:
     tbb::parallel_for(size_t(0),size_t(lhs.num_rows()),
       [&](size_t i)
       {
-        for(size_t j=0; j<lhs.num_columns(); ++j) {
-          for(size_t k=0; k<num_rows(); ++k) {
-            for(size_t l=0; l<num_columns(); ++l) {
-              res(i*num_rows() + k, j*num_columns()+l) = 
-                              G_.times(lhs(i,j), (*this)(k,l));
-            }
+      tbb::parallel_for(size_t(0),size_t(lhs.num_columns()),
+        [&](size_t j)
+        {        
+        for(size_t k=0; k<num_rows(); ++k) {
+          for(size_t l=0; l<num_columns(); ++l) {
+            res(i*num_rows() + k, j*num_columns()+l) = 
+                            G_.times(lhs(i,j), (*this)(k,l));
           }
         }
-      }
-    ); 
+        });
+      });
+
     // for(size_t i=0; i<lhs.num_rows(); ++i) {
     //   for(size_t j=0; j<lhs.num_columns(); ++j) {
     //     for(size_t k=0; k<num_rows(); ++k) {

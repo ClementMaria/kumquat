@@ -20,7 +20,7 @@ namespace kumquat {
  * if (a<b) and (b>a) iff a and b are not comparable,
  * if !(a<b) and !(b<a) iff (a==b) (set operation).
  */ 
-class ScalarPosetOperations : public ScalarSetOperations{
+class AlgebraicElementPoset : public AlgebraicElementPoset {
   /** \brief Return true iff the two elements are comparable.*/
   bool comparable(const ScalarSetOperations& rhs);
   /** \brief Strictly less than.*/

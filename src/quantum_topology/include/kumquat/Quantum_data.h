@@ -15,7 +15,6 @@
 #ifndef KUMQUAT_QUANTUM_DATA_H_ 
 #define KUMQUAT_QUANTUM_DATA_H_
 
-#include <kumquat/Rational_function_integral_mp.h>
 
 namespace kumquat {
 
@@ -26,12 +25,13 @@ namespace kumquat {
  * 
  **/
 
-// template<int N>
-
+template<typename RationalFunctionType>
 class Quantum_data {
 public:
-  typedef boost::multiprecision::mpz_int Integer;
-  typedef Rational_function_integral_mp Rational_f;
+  typedef RationalFunctionType Rational_f;
+  typedef typename Rational_f::Integer Integer;
+  // typedef boost::multiprecision::mpz_int Integer;
+  // typedef Rational_function_integral_mp Rational_f;
   
   Quantum_data() {};
 
@@ -40,7 +40,9 @@ public:
  * Define X = q^{1/4} everywhere.
  * */
 
-/** \brief Return \f$q^{1/2}-q^{-1/2} = X^2 - X^{-2} = (X^4-1)/(X^2)\f$ as a rational function.*/
+/** \brief Return 
+ * \f$q^{1/2}-q^{-1/2} = X^2 - X^{-2} = (X^4-1)/(X^2)\f$
+ * as a rational function.*/
   Rational_f quantum_half() {
     std::vector<Integer> num(5,0); num[0]=-1; num[4]=1;
     std::vector<Integer> den(3,0); den[2]=1;

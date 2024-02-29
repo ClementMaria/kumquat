@@ -92,6 +92,12 @@ public:
   }
 
 
+  void add_twist_idx(Crossing_index i, int num_twists, int layer_idx) {
+    braid_[layer_idx][i] = num_twists;
+  }
+  void push_layer() { braid_.emplace_back(); }
+
+
 /**
  * \brief Compute the number of compoennts of the standard closure of the braid.*/
   size_t num_components() {
@@ -244,6 +250,109 @@ private:
     return curr_idx;
   }
 
+public:
+/** \brief Simplify the braid as much as possible by performing Markov moves that reduce the number of crossings.
+ * 
+ * These moves preserve the topological type of the link obtained by the standard closure on the braid.
+ */
+  void greedy_simplify() {
+
+    // std::cout << "enter greedy simplify on  braid:\n";
+    // std::cout << (*this).to_string() << "\n";
+
+    if(braid_.size() <= 1) { return; }
+
+    bool keep_going = false;
+
+    do {
+      auto bottom_layer = braid_.begin();//bottom layer
+      auto top_layer = braid_.rbegin();//top layer
+
+      auto bottom_it = bottom_layer->begin(); 
+      auto bottom_end = bottom_layer->end();
+      auto top_it = top_layer->begin();
+      auto top_end = top_layer->end();
+      keep_going = false;
+      for(; (bottom_it != bottom_end) && (top_it != top_end); ) 
+      {
+        if(bottom_it->first == top_it->first) {
+          keep_going = true;
+          bottom_it->second += top_it->second;
+          //remove top_it
+          // std::cout << "remove s_" << top_it->first << " from top\n";
+          auto ttmp_it = top_it; 
+          // std::cout << "A\n";
+          ++top_it;
+          // std::cout << "B\n";
+          top_layer->erase(ttmp_it);
+          // std::cout << "     done erase\n";
+          //check whether this has cancelled bottom_it
+          if(bottom_it->second == 0) {
+          // std::cout << "remove s_" << bottom_it->first << " from bottom\n";
+
+            auto btmp_it = bottom_it; 
+            // std::cout << "C\n";
+            ++bottom_it;
+            // std::cout << "D\n";
+            bottom_layer->erase(btmp_it);
+            // std::cout << "     done erase\n";
+
+          }
+          else { ++bottom_it; }
+        }
+        else {
+          if(bottom_it->first < top_it->first) { ++bottom_it; }
+          else { ++top_it; }
+        }
+      }
+      if(top_layer->empty()) {
+        braid_.erase(std::next(top_layer).base());
+      }
+      if(bottom_layer->empty()) {
+        braid_.erase(bottom_layer);
+      }
+
+      // std::cout << "one iteration done ; result = \n";
+      // std::cout << (*this).to_string() << "\n";
+
+
+    } while(keep_going && braid_.size()>1);
+  
+    // compactify();
+  }
+
+/**
+ * @brief Return a string describing the braid.
+ * @details 
+ * @return A string.
+ */
+  std::string to_string() {
+    std::stringstream ss;
+    for(auto layer_it = braid().rbegin(); layer_it != braid().rend(); ++layer_it) {
+      if(layer_it->empty()) { std::cout << "  | ... | "; }
+      for(auto i_tw : *layer_it) {
+        ss << "(s_" << i_tw.first << ")^" << i_tw.second << " ";
+      }
+      ss << "\n";
+    }
+    return ss.str();
+  }
+
+/**
+ * @brief Attempt to merge consecutive layers.
+ * @details 
+ */
+  // void compactify() {
+  //   if(braid_.size() <= 1) { return; }
+
+  //   bool keep_going false;
+
+
+  //   do {
+
+  //   } while(keep_going && braid_.size() > 1);
+  // }
+
 
 private:
   /**
@@ -266,6 +375,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const Plat_braid& b) 
 {
   for(auto layer_it=b.braid().rbegin(); layer_it!=b.braid().rend(); ++layer_it) {
+    if(layer_it->empty()) { std::cout << "  | ... | "; }
     for(auto i_tw : *layer_it) {
       os << "(s_" << i_tw.first << ")^" << i_tw.second << " ";
     }

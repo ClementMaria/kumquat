@@ -14,10 +14,11 @@
 
 namespace kumquat {
 
-/** \brief The concept for a scalar with standard field operations, where the underlying ring is denoted (R,+,*).
-  * */
-class ScalarFieldOperations : ScalarRingOperations {
+/** Concept for a field (algebra). 
+ * 
+ * A Field is a Ring where all elements have multiplicative inverse, except 0. The Ring method multiplicative_inverse must always return a non zero value for a non-zero input.
+ */
+struct AlgebraicStructureField : public AlgebraicStructureRing {
+};  
 
-};
-
-} // namespace kumquat
+} //namespace kumquat

@@ -561,7 +561,7 @@ private:
 
 
 private:
-  Quantum_data q_data_;
+  Quantum_data<Rational_function_integral_mp> q_data_;
 /**
  * A certain tensor of h, fixed by the number of strands considered.
  */

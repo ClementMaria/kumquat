@@ -1,5 +1,7 @@
 # This files manage third party libraries required by GUDHI
 
+
+
 find_package(Boost 1.82.0 REQUIRED)# COMPONENTS filesystem unit_test_framework program_options)
 
 # Boost_FOUND is not reliable
@@ -25,7 +27,6 @@ endif()
 
 find_package(FLINT REQUIRED)
 include_directories(SYSTEM ${FLINT_INCLUDE_DIRS})
-
 message(STATUS " -- flint include dirs:" ${FLINT_INCLUDE_DIR})
 message(STATUS " -- flint library dirs:" ${FLINT_LIBRARY_DIR})
 
@@ -140,22 +141,22 @@ if (EIGEN3_FOUND)
 endif (EIGEN3_FOUND)
 
 # Required programs for unitary tests purpose
-FIND_PROGRAM( GCOVR_PATH gcovr )
-if (GCOVR_PATH)
-  message("gcovr found in ${GCOVR_PATH}")
-endif()
-FIND_PROGRAM( GPROF_PATH gprof )
-if (GPROF_PATH)
-  message("gprof found in ${GPROF_PATH}")
-endif()
-FIND_PROGRAM( DIFF_PATH diff )
-if (DIFF_PATH)
-  message("diff found in ${DIFF_PATH}")
-endif()
-FIND_PROGRAM( GNUPLOT_PATH gnuplot )
-if (GNUPLOT_PATH)
-  message("gnuplot found in ${GNUPLOT_PATH}")
-endif()
+# FIND_PROGRAM( GCOVR_PATH gcovr )
+# if (GCOVR_PATH)
+#   message("gcovr found in ${GCOVR_PATH}")
+# endif()
+# FIND_PROGRAM( GPROF_PATH gprof )
+# if (GPROF_PATH)
+#   message("gprof found in ${GPROF_PATH}")
+# endif()
+# FIND_PROGRAM( DIFF_PATH diff )
+# if (DIFF_PATH)
+#   message("diff found in ${DIFF_PATH}")
+# endif()
+# FIND_PROGRAM( GNUPLOT_PATH gnuplot )
+# if (GNUPLOT_PATH)
+#   message("gnuplot found in ${GNUPLOT_PATH}")
+# endif()
 
 # BOOST ISSUE result_of vs C++11
 add_definitions(-DBOOST_RESULT_OF_USE_DECLTYPE)

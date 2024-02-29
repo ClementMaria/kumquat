@@ -15,7 +15,7 @@
 #ifndef KUMQUAT_RATIONAL_FUNCTION_FLINT
 #define KUMQUAT_RATIONAL_FUNCTION_FLINT
 
-#include "flint/fmpz_poly_qxx.h"
+#include "fmpz_poly_qxx.h"
 
 namespace kumquat {
 
@@ -39,9 +39,9 @@ public:
   typedef boost::multiprecision::mpz_int Integer;
   /* @} */
   /** \brief Type of coefficients of the numerator and denomiator (integer type).*/
-  typedef ... Coefficient;
+  typedef flint::fmpzxx Coefficient;
   /** \brief Type of polynomial for numerator and denomiator of the fraction.*/
-  typedef ... Polynomial;
+  typedef flint::fmpz_polyxx Polynomial;
 
 private:
   typedef flint::fmpz_poly_qxx Rational_f;//the flint rational function type, numerator and denomiator are polynomials with multiprecision integer coefficients

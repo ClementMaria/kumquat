@@ -12,13 +12,22 @@
  *      - YYYY/MM Author: Description of the modification
  */
 
-namespace kumquat {
+#include <iostream>
+#include <fstream>      // std::ofstream
+#include <ctime>
+#include <string>
+#include <utility>  // for std::pair
+#include <numeric> //std::gcd
+#include <chrono>
 
-/** Concept for a field (algebra). 
- * 
- * A Field is a Ring where all elements have multiplicative inverse, except 0. The Ring method multiplicative_inverse must always return a non zero value for a non-zero input.
- */
-struct Field : public Ring {
-};  
+// #include <kumquat/Complex_number.h> 
 
-} //namespace kumquat
+// int main (int argc, char* const argv[])
+// { 
+//   kumquat::Complex_number c;
+//   c = 0;
+//   std::cout << c << "\n";
+//   return 0;
+// }
+
+

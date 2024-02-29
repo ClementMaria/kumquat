@@ -48,8 +48,76 @@ public:
 /** \brief A handle type to designate a morphism in the category. Morphism are matrices of dimension compatible with the vectors.*/
   // typedef unspecified Morphism_handle;
 
+  Jones_polynomial() : N(2) {}
+
+  /**
+   * @brief Copy constructor
+   */
+  Jones_polynomial(const Jones_polynomial& other) {
+    N = other.N;
+    num_strands_ = other.num_strands_;
+    h_tensor_ = other.h_tensor_;
+    pow_R_ = other.pow_R_;
+    pow_Rinv_ = other.pow_Rinv_;
+  }
+    /**
+     * @brief Move constructor.
+     */
+  Jones_polynomial(Jones_polynomial&& other) noexcept {
+    N = std::move(other.N);
+    num_strands_ = std::move(other.num_strands_);
+    h_tensor_ = std::move(other.h_tensor_);
+    pow_R_ = std::move(other.pow_R_);
+    pow_Rinv_ = std::move(other.pow_Rinv_);
+  }
+  /**
+   * @brief Copy assignment.
+   * @details Copy assignment on all members.
+   * 
+   * @param other Original to copy.
+   * @return *this.
+   */
+  Jones_polynomial& operator=(const Jones_polynomial& other) {
+    if(this != &other) { 
+      N = other.N;
+      num_strands_ = other.num_strands_;
+      h_tensor_ = other.h_tensor_;
+      pow_R_ = other.pow_R_;
+      pow_Rinv_ = other.pow_Rinv_;
+    }
+    return *this;
+  }
+/**
+ * @brief Move assignment.
+ * @details Move assignment on all members.
+ * 
+ * @param other Original to move.
+ * @return *this.
+ */
+  Jones_polynomial& operator=(Jones_polynomial&& other) noexcept
+  {
+    if(this != &other) {
+      N = std::move(other.N);
+      num_strands_ = std::move(other.num_strands_);
+      h_tensor_ = std::move(other.h_tensor_);
+      pow_R_ = std::move(other.pow_R_);
+      pow_Rinv_ = std::move(other.pow_Rinv_);
+    }
+    return *this;
+  }
+
+  ~Jones_polynomial() {}
+
+/**
+ * @brief Initialize the data to compute jones polynomials
+ * @details The matrices \f$h^{\otimes n}\f$ (with n the number of strands of a braid) and the powers \f$R^{k}\f$, for \f$k=-t \ldots +t\f$ (for t the maximal number of consecutive twists) are precomputed.
+ * 
+ * @param num_strands The exact number of strands of the braids on which the jones polynomial will be computed.
+ * @param max_twist The maximal number of consecutive twists of twist regions.
+ */
   Jones_polynomial(int num_strands, int max_twist) {
     N=2;
+    num_strands_ = num_strands;
     // h_tensor_(0,0,Laurent_punction());
     h_tensor_ = h_morphism(num_strands);
 
@@ -58,23 +126,13 @@ public:
     pow_Rinv_.reserve(max_twist+1);
     pow_Rinv_.push_back(id_morphism(N*N)); pow_Rinv_.push_back(braiding_inv());
     for(int i=2; i<= max_twist; ++i) {
-      
-      // std::cout << " ____________________ Multiplication R * R^" << i-1 << "\n";
-      // std::cout << "R == \n";
-      // std::cout << pow_R_[1] << "\nand R^" << i-1 << "==\n";
-      // std::cout << pow_R_[i-1] << "\n\n";
-      // std::cout << "RESULTAT R^" << i << " == \n";
       pow_R_.push_back(pow_R_[1]*pow_R_[i-1]);
-      // std::cout << pow_R_[i] << "\n";
-      // std::cout << "________________________________________________________";
       pow_Rinv_.push_back(pow_Rinv_[1]*pow_Rinv_[i-1]);
     }
 
     std::cout << "--- R = \n" << pow_R_[1] << "\n";
     std::cout << "--- R^-1 = \n" << pow_Rinv_[1] << "\n";
 
-
-    // display();
   }
 
   void display() {
@@ -194,49 +252,24 @@ public:
  * @return     The quantum invariant as a rational function.
  */
   Laurent_p quantum_invariant(Braid& b) {
-
-    std::cout << "G \n";
-
-
     if(b.braid().empty()) { return Laurent_p(); }
 
+    assert(num_strands_ == b.num_strands());
 
-    std::cout << "H  \n";
-
-    int num_strands = b.num_strands();
     auto it = b.braid().begin();
-    Morphism tau = id_R_id(it->first,it->second,num_strands);
+    Morphism tau = id_R_id(it->first,it->second,num_strands_);
     ++it;
 
-    // std::cout << "+++++++++++++++++++++++++++++++++\n\n";
-    // std::cout << tau << "\n";
-    // std::cout << "+++++++++++++++++++++++++++++++++\n\n";
-
-    std::cout << "I  \n";
-
     for(; it!=b.braid().end(); ++it) {
-      // std::cout << "(" << it->first << "," << it->second << "," << num_strands << ")\n";
-    std::cout << "J  \n";
-
-
-      tau.ltimes_equal(id_R_id(it->first,it->second,num_strands));
-
-    std::cout << "K  \n";
-
+      tau.ltimes_equal(id_R_id(it->first,it->second,num_strands_));
     }
-
-    std::cout << "L  \n";
-
     tau.ltimes_equal(h_tensor_);
-
-    std::cout << "S  \n";
-
     return trace(tau);
   }
 
 
 /**
- * @brief      Compute the quantum invariant on an input plat braid, and take the closing..., associated with the ribbon category.
+ * @brief      Compute the quantum invariant on an input plat braid, and take the standard closing, associated with the ribbon category.
  *
  * @param[in]  b     A description of a plat braid.
  *
@@ -244,17 +277,87 @@ public:
  */
   Laurent_p quantum_invariant(Plat_braid& b) {
     if(b.braid().empty()) { return Laurent_p(); }
-    int num_strands = b.num_strands();
+    assert(num_strands_ == b.num_strands());
     auto it = b.braid().begin();
-    Morphism tau = id_R_id(it->begin(),it->end(),num_strands);
+    Morphism tau = id_R_id(it->begin(),it->end(),num_strands_);
     ++it;
 
     for(; it!=b.braid().end(); ++it) {
-      tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands));
+      tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands_));
     }
     tau.ltimes_equal(h_tensor_);
+
+
+    // std::cout << "-----jones poly, overall morphism:\n";
+    // std::cout << tau << "\ntrace:\n";
+    // for(int i=0; i<tau.num_rows(); ++i) {
+    //   std::cout << "   + " << tau(i,i) << "\n";
+    // }
+    // std::cout << "\n";
+
     return trace(tau);
   }
+/**
+ * @brief Compute the Jones polynomial of the standard closure of the input braid, with hints.
+ * @details See quantum invariants for details. The hints are precomputed matrices 
+ * 
+ * @param b [description]
+ * @param hint_bottom [description]
+ * @param hint_top [description]
+ * @return [description]
+ *
+ */
+
+/**
+ * @brief Compute the Jones polynomial of the standard closure of the input braid, with hints.
+ * @details See quantum invariants for details. The hints \f$M_b\f$ and \f$M_t\f$ are precomputed matrices (that must be valid) for respectively the bottom and the top part of the braid. The function computes the morphism \f$M\f$ for the middle part [it_bot,it_top) of the braid, multiplies on the left and right to get the overall morphism \f$M_t M M_b\f$ and finally return \f$\operatorname{tr}(M_t M M_b)\f$.
+ * 
+ * Note that to get the valid Jones polynomial, the top hint \f$M_t\f$ must already contain the product with \f$h^{\otimes n}\f$.
+ *  
+ * The number of strands of the braid described by the iterators must agree with member num_strands_
+ *  
+ * @param it_bot [description]
+ * @param it_top [description]
+ * @param hint_top [description]
+ * @return [description]
+ */
+  template<typename LayerIterator>
+  Laurent_p quantum_invariant(LayerIterator it_bot, LayerIterator it_top, const Morphism& hint_bottom, const Morphism& hint_top) {
+    // assert(num_strands_ == b.num_strands());
+    Morphism tau = hint_bottom;   
+    for(auto it=++it_bot; it!=it_top; ++it) {
+      tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands_));
+    }
+    tau.ltimes_equal(hint_top);
+    // tau.ltimes_equal(h_tensor_);
+    return trace(tau);
+  }
+
+
+  template<typename LayerIterator>
+  Morphism quantum_morphism(LayerIterator beg, LayerIterator end) {
+    // assert(num_strands_ == b.num_strands());
+    if(beg == end) { return id_morphism(std::pow(N,num_strands_)); }
+    auto it = beg;
+    Morphism tau = id_R_id(it->begin(),it->end(),num_strands_);
+    ++it;   
+    for(; it!=end; ++it) {
+      tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands_));
+    }
+    return tau;
+  }
+
+    // auto it = b.braid().begin();
+    // Morphism tau = id_R_id(it->begin(),it->end(),num_strands_);
+    // ++it;
+
+    // for(; it!=b.braid().end(); ++it) {
+    //   tau.ltimes_equal(id_R_id(it->begin(),it->end(),num_strands_));
+    // }
+    // tau.ltimes_equal(h_tensor_);
+    // return trace(tau);
+
+
   /**
    * @brief      Compute and return the matrix for the morphism corresponding to a collection of independent parallel twist regions.
    *
@@ -333,15 +436,19 @@ public:
     return (Laurent_p(-1,1) + Laurent_p(1,1));
   }
 
+  Morphism h_tensor() { return h_tensor_; }
 private:
   int N;
+  int num_strands_;
 /**
  * A certain tensor of h, fixed by the number of strands considered.
  */
   Morphism h_tensor_;
-
+//std::map<size_t, Morphism> h_tensors_
   std::vector<Morphism> pow_R_;
   std::vector<Morphism> pow_Rinv_;
+//std::map<int, Morphism> pows_R_;
+//std::map<int, Morphism> pows_Rinv_;
 };
 
 } // namespace kumquat

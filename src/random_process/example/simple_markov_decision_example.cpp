@@ -75,7 +75,8 @@ int main() {
 
   //train until possibly stuck in a state
   size_t num_iteration = 30000;//generally converges
-  auto max_samp = mdp.train(num_iteration, rew_poly_balanced);
+  size_t batch_size = 10;
+  auto max_samp = mdp.train(num_iteration, rew_poly_balanced, batch_size);
 
   //sample the state and brute force improve it a few times
   std::vector<size_t> curr_samp;

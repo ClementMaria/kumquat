@@ -17,8 +17,8 @@ namespace kumquat {
 /** Concept for a pseudo ring (algebra), i.e., a ring without unit. 
  * 
  * As a group with multiplication, the concept Ring inherits all types and 
- * methods from the concept AbelianGroup. */
-struct PseudoRing : public AbelianGroup {
+ * methods from the concept AlgebraicStructureAbelianGroup. */
+struct AlgebraicStructurePseudoRing : public AlgebraicStructureAbelianGroup {
 /** Set a <- (a*b). */
     void times_equal(Element & a, Element b);
 /** Return a*b.*/

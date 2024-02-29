@@ -16,7 +16,7 @@ namespace kumquat {
 
 /** \brief The concept for a scalar with standard ring operations, where the unerlying ring is denoted (R,+,*).
   * */
-class AlgebraicElementRing : AlgebraicElementRing {
+class AlgebraicElementRing : AlgebraicElementGroup {
 /** \brief Multiplication to the right.
 * 
 * Set *this <- *this * rhs.

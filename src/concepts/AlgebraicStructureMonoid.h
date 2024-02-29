@@ -18,7 +18,7 @@ namespace kumquat {
  * 
  * A monoid is a set with a (not necessarily commutative) associative binary 
  * operation +, and a unit 0.*/
-struct Monoid : Set {
+struct AlgebraicStructureMonoid : AlgebraicStructureSet {
 /** Return the additive identity 0.*/
   Element additive_identity();
 /** Set a <- (a+b). */  

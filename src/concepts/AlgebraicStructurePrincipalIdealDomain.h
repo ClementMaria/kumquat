@@ -18,7 +18,7 @@ namespace kumquat {
  * 
  * As ring with extra structure, the concept PrincipalIdealDomain inherits all 
  * types and methods from the concept Ring. */
-struct PrincipalIdealDomain : public Ring {
+struct AlgebraicStructurePrincipalIdealDomain : public AlgebraicStructureRing {
 /** \brief Return the absolute value of an element (if ring of integers), or 
  * more generally a Euclidean function for Euclidean algorithm.
  */
