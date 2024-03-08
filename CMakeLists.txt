@@ -14,7 +14,11 @@ include(KUMQUAT_third_party_libraries NO_POLICY_SCOPE)
 
 # add_compile_options(-Wall -Wextra -Wpedantic -pthread -lmpc -lmpfr -lgmp)
 # regina includes
-add_compile_options(-I/usr/local/include/regina -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include/libxml2 -I/opt/homebrew/include -I/opt/homebrew/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include)
+
+#medea
+add_compile_options(-I/usr/local/include/regina  -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include/libxml2 -I/usr/local/include -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include)
+#MAC-
+# add_compile_options(-I/usr/local/include/regina -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include/libxml2 -I/opt/homebrew/include -I/opt/homebrew/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include)
 
 include(KUMQUAT_modules)
 

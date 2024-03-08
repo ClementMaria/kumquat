@@ -189,7 +189,7 @@ public:
           Plat_braid b_thread = state_to_braid(curr_state_thread, false);        
           //multiply by hand the matrices to get the Jones polynomial
           Proba_float rew;//rew is set to 0 if b_thread is not a knot
-          if(b_thread.num_components() > 1) { rew = 0; }
+          if(b_thread.num_components() > 1) { rew = 0.; }
           else {//we have a knot:
             Jones_polynomial::Morphism M = jones_poly_.quantum_morphism(
                              b_thread.braid().begin()+layer_idx, 
@@ -198,29 +198,33 @@ public:
             auto q_inv = jones_poly_.trace(M);//jones poly of b_thread
             int sprd = q_inv.spread();
 
-
             bool flag_unknot = false;
             if(sprd == 2 && (q_inv == jones_poly_.quantum_invariant_unknot())) {
-
               std::string oGc = b_thread.oriented_Gauss_code();
-
               //do our best to identify the unknot
               flag_unknot = unknot(oGc); 
-
               if(!flag_unknot) {
                 std::cout << "difficult Jones unknot: " << oGc << "\n";
                 candidates_cex_.insert(oGc);
               }
-
             }
-
             if(flag_unknot) { rew = 0.; }
             else {
-              //simplify with regina to get a better approximation of the number of crossings
+              //simplify with regina to get a better approx. of the num of crossings
+              b_thread.greedy_simplify();
               auto gausscode = b_thread.oriented_Gauss_code();
-              regina::Link regina_link(gausscode);
-              regina_link.intelligentSimplify();
-              auto num_cross = regina_link.crossings().size();
+              regina::Link L(gausscode);
+              
+              int min_num_cross_regina = b_thread.num_crossings();
+              for(int ite=0; ite<10; ++ite) {
+                regina::Link Lcp = L;
+                Lcp.intelligentSimplify();
+                int num_c_Lcp = Lcp.crossings().size();
+                if(num_c_Lcp < min_num_cross_regina) { min_num_cross_regina = num_c_Lcp; }
+              } 
+              auto num_cross = min_num_cross_regina;
+              // regina_link.intelligentSimplify();
+              // auto num_cross = regina_link.crossings().size();
               //compute the reward knowing #crossing and spread(jones)
               rew = rew_formula(num_cross,sprd);
             }
@@ -230,12 +234,20 @@ public:
       //extract the best reward and idx
       size_t best_label = state[layer_idx];
       Proba_float best_reward = -1;
+      // std::cout << "------ ";
       for(int j=0; j<size_layer; ++j) {
+        
+        // std::cout << thread_rew[j] << " ";
+
         if(thread_rew[j] > best_reward) {
           best_reward = thread_rew[j];
           best_label = j;
         }
       }
+
+      // std::cout << " ------ \n";
+
+
       //upgrade the current state and go to next layer
       curr_state[layer_idx] = best_label;
     }
@@ -264,11 +276,15 @@ public:
       auto end_li = std::chrono::high_resolution_clock::now();
       auto duration_li = duration_cast<std::chrono::seconds>(end_li-start_li);  
       std::cout << "--- in " << duration_li.count() << " sec. \n";
-      std::cout << "{";
+      std::cout << "current improved state = {";
       for(auto s : imp_samp) { std::cout << s << ", "; }
-      std::cout << "}" << std::endl;
+      std::cout << "}\n";
 
-      write_file();
+
+/////////////////////////////////////////////////////////////////////
+      analyze_state(imp_state);
+/////////////////////////////////////////////////////////////////////
+      // write_file();
 
     } while(curr_samp != imp_samp);
 
@@ -305,6 +321,17 @@ public:
  */
   std::vector<size_t> power_train(size_t num_power_trainings, size_t num_ite_training, size_t batch_size_training, Proba_float alpha, std::vector<size_t> starting_state = std::vector<size_t>()) {
     
+    std::cout << "Power train -> Starting state = ";
+    for(auto x : starting_state) { std::cout << x << " "; }
+    std::cout << std::endl;
+
+/////////////////////////////////////////////////////////////////////
+    if(!starting_state.empty()) {
+      analyze_state(starting_state);
+    }
+    else { std::cout << "                                    no starting state.\n"; }
+/////////////////////////////////////////////////////////////////////      
+
     // //open file for output
     time_t now = time(0);  // Convert time to tm structure
     tm *local_time = localtime(&now);
@@ -313,6 +340,7 @@ public:
     outfilename_ = "/Users/cmaria/git_repositories/kumquat/data/counter_examplesJO__" + std::string(buffer) + ".dat";
 
     flag_cex_ = false;
+
     //the reward function
     auto reward = [&](std::vector<size_t> &state)->Proba_float {
       return rew_jones(state);
@@ -320,7 +348,6 @@ public:
 
     std::vector<size_t> best_state_overall;
     Proba_float best_reward_overall = -1;
-
     std::vector<size_t> best_state_training, best_state_improve;
     
     if(!starting_state.empty()) {
@@ -340,34 +367,32 @@ public:
     do {
       std::cout << "Power training left: " << num_power_trainings << "        [" << flag_cex_ << "]\n";
       auto start = std::chrono::high_resolution_clock::now();
-
       //train mdp and keep best state encountered
-      
       std::cout << " - train\n";
       best_state_training = markov_dec_.train(num_ite_training, reward, batch_size_training);
+
+      std::cout << "Best state output by training = ";
+      for(auto x : best_state_training) { std::cout << x << " "; }
+      std::cout << std::endl;
 
       write_file();
 
       std::cout << " - improve\n";
-
       //improve exhaustive this state
       best_state_improve = improve_exhaustive(best_state_training);
-     
-      std::cout << " - reward\n";
 
+      std::cout << "Best state output by improve(best_state_training) = ";
+      for(auto x : best_state_improve) { std::cout << x << " "; }
+      std::cout << std::endl;
+
+      std::cout << " - reward\n";
+      //
       auto rew = reward(best_state_improve);
       if(rew > best_reward_overall) {
         best_reward_overall = rew;
         best_state_overall = best_state_improve;
       }
 
-      // std::cout << " - flag_cex\n";
-      // if(flag_cex_) {
-      //   for(auto cex : counter_examples_) {
-      //     out_ << cex << "\n";
-      //   }
-      //   out_ << "\n";
-      // }
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = duration_cast<std::chrono::seconds>(end-start);  
 
@@ -393,17 +418,6 @@ public:
   size_t size_layer(size_t i) {
     return markov_dec_.size_layer(i);
   }
-
-
-
-
-
-
-
-
-
-
-
 
 
   /**
@@ -539,17 +553,47 @@ public:
     int sprd = jones_poly.spread();
     //check if jones poly is trivial
     if(sprd == 2 && (jones_poly == jones_poly_.quantum_invariant_unknot())) {
-
       std::string oGc = b.oriented_Gauss_code();
-
       //do our best to identify the unknot
       bool flag_unknot = unknot(oGc); 
-
       if(flag_unknot) { return 0.; }//identified the unknot
       //otherwise, candidate counter example
       candidates_cex_.insert(oGc);
       std::cout << "difficult Jones unknot: " << oGc << "\n";
     }
+    //compute number of crossings after simplification
+    // auto num_cross_pbraid = b.num_crossings(); //<- naive
+    auto gausscode = b.oriented_Gauss_code();
+    regina::Link L(gausscode);
+     
+    int min_num_cross_regina = b.num_crossings();
+    for(int ite=0; ite<10; ++ite) {
+      regina::Link Lcp = L;
+      Lcp.intelligentSimplify();
+      int num_c_Lcp = Lcp.crossings().size();
+      if(num_c_Lcp < min_num_cross_regina) { min_num_cross_regina = num_c_Lcp; }
+    } 
+    auto num_cross = min_num_cross_regina;
+    // L.intelligentSimplify();
+    // auto jones_poly = L.jones();
+    // int sprd = jones_poly.maxExp() - jones_poly.minExp();
+    // std::cout << "------------- #components = " << num_comp << "  #crossings = " << num_cross_pbraid << "|" << num_cross << "  spread = " << sprd << "      spread/num_crossings = " << (double)(sprd) / (double)(num_cross) << "\n";
+    Proba_float rew = rew_formula(num_cross,sprd);
+    return rew;
+  };
+
+
+  void analyze_state(std::vector<size_t> &state) {
+    Plat_braid b = state_to_braid(samp);
+    b.greedy_simplify();
+    auto num_comp = b.num_components();
+    std::cout << "[#comp = " << num_comp <<"] "; 
+    if(num_comp > 1) { std::cout << "[rew = " << 0 << "] \n"; return; }//not connected => 0.
+    //compute the jones polynomial
+    auto jones_poly = jones_poly_.quantum_invariant(b);
+    int sprd = jones_poly.spread();
+    std::cout << "[spreadJ = " << sprd << "] ";
+    //compute number of crossings after simplification
     //compute number of crossings after simplification
     auto num_cross_pbraid = b.num_crossings(); //<- naive
     auto gausscode = b.oriented_Gauss_code();
@@ -558,13 +602,9 @@ public:
     // auto jones_poly = L.jones();
     // int sprd = jones_poly.maxExp() - jones_poly.minExp();
     auto num_cross = L.crossings().size();
-    // std::cout << "------------- #components = " << num_comp << "  #crossings = " << num_cross_pbraid << "|" << num_cross << "  spread = " << sprd << "      spread/num_crossings = " << (double)(sprd) / (double)(num_cross) << "\n";
-    Proba_float rew = rew_formula(num_cross,sprd);
-    return rew;
-  };
 
-
-
+    std::cout << "[#cross = " << num_cross << "] [rew = " << rew_formula(num_cross,sprd) << "] \n";
+  }
 
 
 /**
@@ -599,18 +639,25 @@ public:
 
   /** \brief Return true if this represents the unknot. If false, this may or may not be the unknot.*/
   bool unknot(std::string oGc) {
+    
+    std::cout << "____trivial jones polynomial for:\n";
+    std::cout << oGc << "\n_______\n";
+
     regina::Link K(oGc);
     
+    std::cout << "____#crossings = " << K.crossings().size() << "\n"; 
     std::cout << "    - K.intelligentSimplify()\n";
     K.intelligentSimplify();
+    std::cout << "____#crossings = " << K.crossings().size() << "\n"; 
     //do we have the trivial diagram?
-    if(K.crossings().size() == 0) { return true; }
-    
+    if(K.crossings().size() == 0) { 
+      std::cout << "       success\n";
+      return true; 
+    }
 // bool  simplifyExhaustive (int height=1, unsigned threads=1
       // std::cout << "    - K.simplifyExhaustive(1,16)\n";
       // K.simplifyExhaustive(1,16);
-
-    if(K.crossings().size() == 0) { return true; }
+    // if(K.crossings().size() == 0) { return true; }
 
     //check if knot group is Z after simplifications
     std::cout << "    - grpK.intelligentSimplify()\n";
@@ -621,12 +668,20 @@ public:
     grpK.proliferateRelators();//1
 
     std::cout << "    - grpK.identifyAbelian()\n";
-    if(grpK.identifyAbelian()) { return true; }
+    if(grpK.identifyAbelian()) { 
+      std::cout << "       success\n";
+      return true; 
+    }
     
     //check is the pi_1 of the complement (==knot group) is Z
     std::cout << "    - T.intelligentSimplify()\n";    
     auto T = K.complement();
+   
+    std::cout << "____#tetrahedra = " << T.size() << "\n"; 
+
     T.intelligentSimplify();
+
+    std::cout << "____#tetrahedra = " << T.size() << "\n"; 
 
     // std::cout << "    - T.simplifyExhaustive(1,16)\n";    
     // T.simplifyExhaustive(1,16);
@@ -644,7 +699,9 @@ public:
     grpT.proliferateRelators();//1
 
     std::cout << "    - grpT.identifyAbelian()\n";
-    if(grpT.identifyAbelian()) { return true; }
+    if(grpT.identifyAbelian()) { 
+      std::cout << "       success\n";
+      return true; }
 
 
     std::cout << "candidate: " << oGc << "\n";
